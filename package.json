@@ -1,10 +1,10 @@
 {
-  "name": "electron-vue-vite",
-  "version": "2.0.0",
+  "name": "指纹",
+  "version": "1.0.1",
   "main": "dist-electron/main/index.js",
-  "description": "Really simple Electron + Vue + Vite boilerplate.",
-  "author": "草鞋没号 <308487730@qq.com>",
-  "license": "MIT",
+  "description": "Really simple Electron + Vue + Vite boilerplate. + pinia + serialPort",
+  "author": "LWW",
+  "license": "LWW",
   "private": true,
   "keywords": [
     "electron",
@@ -28,9 +28,11 @@
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",
     "element-plus": "^2.6.2",
+    "mitt": "^3.0.1",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
-    "serialport": "^10.4.0"
+    "serialport": "^10.4.0",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

@@ -5,6 +5,7 @@ import { BaseURL } from '../config'
 const service = axios.create({
   baseURL: BaseURL(),
   timeout: 10000,
+  source: 'LWW-electron-serialPort',
   // @ts-ignore
   adapter: axiosAdapterUniapp
 })
