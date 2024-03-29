@@ -5,7 +5,7 @@
 import HelloWorld from './components/HelloWorld.vue'
 import { SerialPort } from 'serialport'
 import { ref, onMounted } from 'vue'
-import { strHexBuffer } from '../utils'
+import { strHexBuffer } from './utils'
 const serialPort = new SerialPort({ path: '/dev/tty.SLAB_USBtoUART', baudRate: 19200 }, function (err) {
   if (err) {
     console.error(err)
