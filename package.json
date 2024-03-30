@@ -24,20 +24,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mew/request": "^5.2.671",
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",
     "element-plus": "^2.6.2",
     "mitt": "^3.0.1",
+    "node-gyp": "^10.1.0",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
-    "serialport": "^10.4.0",
+    "serialport": "^9.2.0",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
+    "@types/serialport": "^8.0.5",
     "@vitejs/plugin-vue": "^4.1.0",
     "electron": "^25.0.1",
     "electron-builder": "^23.6.0",
+    "electron-rebuild": "^3.2.9",
     "prettier": "3.2.5",
     "typescript": "^5.0.2",
     "unplugin-auto-import": "^0.17.5",
