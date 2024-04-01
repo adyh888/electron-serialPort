@@ -42,7 +42,6 @@ export class SerialPortClass {
     })
     // 串口数据监听
     this.serialPort.on('data', (data: any) => {
-      console.log('data', data)
       //buffer转16进制的字符串
       let resHex = this.ab2hex(data)
       bus.emit('serialPortData', resHex)

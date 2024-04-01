@@ -25,7 +25,7 @@
         <div style="width: 90px; color: white">开/关:</div>
         <el-switch v-model="serialStatus" size="large" inline-prompt style="--el-switch-on-color: #3595fb; --el-switch-off-color: #ff4949" active-text="已连接" inactive-text="未连接" @change="switchChange" />
       </div>
-      <el-button type="primary" round @click="writeSerialPort">测试写数据</el-button>
+      <!--      <el-button type="primary" round @click="writeSerialPort">测试写数据</el-button>-->
     </div>
   </div>
 </template>
@@ -129,9 +129,9 @@ const listenSerialPort = () => {
   })
 }
 
-const writeSerialPort = () => {
-  serialPortClass.write('F5090000000009F5')
-}
+// const writeSerialPort = () => {
+//   serialPortClass.write('F5090000000009F5')
+// }
 //默认进入页面获取串口的状态
 const getSerialPortStoreStatus = () => {
   serialStatus.value = indexStore.serialPortStoreStatus

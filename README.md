@@ -1,6 +1,12 @@
-### electron  + vite + Vue3 + TypeScript +SerialPort
+### electron  + vite + Vue3 + TypeScript + SerialPort + pinia
+* 前提条件
 * node必须16.16.0以上版本。
+* 不需要安装python，node-gyp等对应的编码解析工具
+* 安装electron对应的版本
+* 用的node-serialPort方式导入
+* mac打包的时候 sudo npm run build 可能会出现打包空间不足的报错问题
 #### 1.0.1
 * 1.项目架构初始化
 * 2.导入环境包
 * 3.增加serialPort类
+* 4.增加全局的bus事件
