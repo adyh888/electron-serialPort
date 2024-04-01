@@ -7,7 +7,6 @@ import { strHexBuffer } from '../utils'
  */
 const { SerialPort } = require('serialport')
 import bus from '../utils/eventBus'
-
 /**
  * 封装串口类
  */
@@ -44,7 +43,9 @@ export class SerialPortClass {
     // 串口数据监听
     this.serialPort.on('data', (data: any) => {
       console.log('data', data)
-      // const hexString = buffer.toString('hex')
+      //buffer转16进制的字符串
+      let resHex = this.ab2hex(data)
+      bus.emit('serialPortData', resHex)
     })
     // 串口关闭
     this.serialPort.on('close', () => {
@@ -87,5 +88,15 @@ export class SerialPortClass {
         return
       }
     })
+  }
+
+  /**
+   * ArrayBuffer转16进度字符串示例
+   */
+  private ab2hex(buffer) {
+    const hexArr = Array.prototype.map.call(new Uint8Array(buffer), function (bit) {
+      return ('00' + bit.toString(16)).slice(-2)
+    })
+    return hexArr.join('')
   }
 }
