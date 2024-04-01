@@ -15,10 +15,10 @@ export function strHexBuffer(str: string) {
 /**
  * 消息弹窗
  */
-export function messageShow(message: string, type: string = 'success', show: boolean = true) {
+export function messageShow(message: string, messageType: any = 'success', show: boolean = true) {
   ElMessage({
+    type: messageType,
     showClose: show,
-    message,
-    type
+    message: message
   })
 }

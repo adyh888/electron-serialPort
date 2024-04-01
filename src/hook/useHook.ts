@@ -1,16 +1,25 @@
-// import { SerialPortClass } from '../common/SerialPortClass'
 import { useIndexStore } from '../store'
 import { messageShow } from '../utils'
+import { ipcRenderer } from 'electron'
 
 /**
- * 初始化的串口类的方法
+ *监听串口的状态和数据
  */
-// export const useInitSerial = async (serialPort: string, baudRate: number) => {
-//   let serialPortObj = new SerialPortClass(serialPort, baudRate)
-//   try {
-//     await serialPortObj.asyncSerialPortInit()
-//     useIndexStore().setSerialPortObj = serialPortObj
-//   } catch (err) {
-//     messageShow('串口异常', 'error')
-//   }
-// }
+export function useSerialPortListener() {
+  //打开串口
+  ipcRenderer.on('openSerialPort', (event, args) => {
+    console.log(11, args)
+  })
+  //窗口异常
+  ipcRenderer.on('catchSerialPort', (event, args) => {
+    console.log(12, args)
+  })
+  //关闭串口
+  ipcRenderer.on('closeSerialPort', (event, args) => {
+    console.log(13, args)
+  })
+  //监听串口数据
+  ipcRenderer.on('dataSerialPort', (event, args) => {
+    console.log(14, args)
+  })
+}

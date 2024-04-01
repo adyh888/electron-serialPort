@@ -1,5 +1,5 @@
 {
-  "name": "指纹",
+  "name": "tool-electron",
   "version": "1.0.1",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate. + pinia + serialPort",
@@ -28,10 +28,9 @@
     "axios": "^1.6.8",
     "element-plus": "^2.6.2",
     "mitt": "^3.0.1",
-    "node-gyp": "^10.1.0",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
-    "serialport": "^9.2.0",
+    "serialport": "^10.4.0",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
