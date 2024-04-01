@@ -24,8 +24,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mew/request": "^5.2.673",
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",
+    "axios-adapter-uniapp": "^0.1.4",
     "element-plus": "^2.6.2",
     "mitt": "^3.0.1",
     "pinia": "^2.1.7",

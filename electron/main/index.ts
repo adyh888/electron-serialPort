@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
-import { strHexBuffer } from '../../src/utils'
+// import { strHexBuffer } from '../../src/utils'
 
 const { SerialPort } = require('serialport')
 
@@ -175,9 +175,9 @@ ipcMain.on('closePort', (event, args) => {
 
 //写入串口
 ipcMain.on('writeSerialPort', (event, args) => {
-  const buffer = strHexBuffer(args)
+  // const buffer = strHexBuffer(args)
   // 打开串口
-  serialPort.write(buffer, err => {
+  serialPort.write(args, err => {
     if (err) {
       return
     }

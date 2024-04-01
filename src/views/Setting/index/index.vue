@@ -40,7 +40,7 @@ import { messageShow } from '../../../utils'
 import { useIndexStore } from '../../../store'
 import { ipcRenderer } from 'electron'
 // import { useInitSerial } from '../../../hook/useHook'
-// const { SerialPort } = require('serialport')
+const { SerialPort } = require('serialport')
 /**
  * data
  */
@@ -198,9 +198,9 @@ onMounted(() => {
   ipcRenderer.on('closeSerialPort', (event, args) => {
     console.log(25, args)
   })
-  // SerialPort.list().then((list: any) => {
-  //   console.log(9, list)
-  // })
+  SerialPort.list().then((list: any) => {
+    console.log(9, list)
+  })
 })
 </script>
 
