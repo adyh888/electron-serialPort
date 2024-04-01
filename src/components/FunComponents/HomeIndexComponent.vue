@@ -26,7 +26,7 @@ import { ref } from 'vue'
 const tabBar = ref([
   {
     id: 1,
-    img: './src/static/checkoutFinger.jpg',
+    img: './checkoutFinger.jpg',
     description: '检验指纹',
     showStatus: true,
     bg: { background: '#DBEEFF' },
@@ -35,7 +35,7 @@ const tabBar = ref([
   },
   {
     id: 2,
-    img: './src/static/userAdd.jpg',
+    img: './userAdd.jpg',
     description: '人员录入',
     showStatus: true,
     bg: { background: '#FFE9CC' },

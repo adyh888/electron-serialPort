@@ -1,9 +1,8 @@
 import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
-// import { strHexBuffer } from '../../src/utils'
-
-const { SerialPort } = require('serialport')
+import path from 'path'
+const NODE_ENV = process.env.NODE_ENV // 新增
 
 // The built directory structure
 //
@@ -36,9 +35,6 @@ if (!app.requestSingleInstanceLock()) {
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow | null = null
-//serialPort类
-let serialPort: any
-let serialErr: any
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
 const url = process.env.VITE_DEV_SERVER_URL
@@ -128,58 +124,3 @@ ipcMain.handle('open-win', (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg })
   }
 })
-
-// //node-serialPort
-// ipcMain.on('openSerialPort', (event, args) => {
-//   serialPort = new SerialPort({
-//     path: '/dev/tty.Bluetooth-Incoming-Port', // 串口号
-//     baudRate: 19200, // 波特率
-//     dataBits: 8, // 数据位
-//     parity: 'none', // 奇偶校验
-//     stopBits: 1, // 停止位
-//     autoOpen: false // 是否自动打开端口
-//   })
-//   // 打开串口
-//   serialPort.open(err => {
-//     if (err) {
-//       return
-//     }
-//     // 主进程=>向渲染进程回复
-//     win.webContents.send('openSerialPort', '端口打开成功')
-//   })
-//
-//   // serialPort.removeAllListeners() //清除所有监听器
-//   // 串口数据监听
-//   serialPort.on('data', data => {
-//     win.webContents.send('dataSerialPort', data)
-//   })
-//   // 串口关闭
-//   serialPort.on('close', () => {
-//     win.webContents.send('closeSerialPort', '端口关闭成功')
-//   })
-//   // 错误监听
-//   serialPort.on('error', err => {
-//     win.webContents.send('catchSerialPort', err)
-//   })
-// })
-//
-// //关闭串口
-// ipcMain.on('closePort', (event, args) => {
-//   // 打开串口
-//   serialPort.close(err => {
-//     if (err) {
-//       return
-//     }
-//   })
-// })
-//
-// //写入串口
-// ipcMain.on('writeSerialPort', (event, args) => {
-//   // const buffer = strHexBuffer(args)
-//   // 打开串口
-//   serialPort.write(args, err => {
-//     if (err) {
-//       return
-//     }
-//   })
-// })
