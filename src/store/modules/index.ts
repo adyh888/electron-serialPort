@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 export const useIndexStore = defineStore('index', () => {
-  const setSerialPortObj = ref({})
+  const serialPortStoreStatus = ref(false)
 
-  return { setSerialPortObj }
+  return { serialPortStoreStatus }
 })
 
 export * from './ac'

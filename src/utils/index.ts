@@ -1,4 +1,4 @@
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
 
 /**
  * send 字符串转字节数据在转buffer
@@ -20,5 +20,17 @@ export function messageShow(message: string, messageType: any = 'success', show:
     type: messageType,
     showClose: show,
     message: message
+  })
+}
+
+/**
+ * 消息弹出框
+ */
+export function messageBoxShow(title: string, message: string, type: any = 'success', duration: number = 1500) {
+  ElNotification({
+    title,
+    message,
+    type,
+    duration
   })
 }

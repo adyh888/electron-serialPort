@@ -1,33 +1,32 @@
 <template>
   <div style="display: flex; justify-content: center; align-items: center; width: 100vw">
-    <!--    <div style="padding: 20px">-->
-    <!--      <div style="display: flex; align-items: center; font-size: 1.5rem; margin: 30px 0; justify-content: center">-->
-    <!--        <div style="display: flex">-->
-    <!--          串口配置(-->
-    <!--          <div style="color: red" v-if="!serialStatus">未连接</div>-->
-    <!--          <div style="color: #3595fb" v-else>已连接</div>-->
-    <!--          )-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--      <div class="itemStyle">-->
-    <!--        <div style="width: 80px">串口号</div>-->
-    <!--        <el-select v-model="serialPortValue" placeholder="请选择串口号" style="width: 300px" @visible-change="visibleChange">-->
-    <!--          <el-option v-for="item in serialOptions" :key="item.value" :label="item.label" :value="item.value" />-->
-    <!--        </el-select>-->
-    <!--      </div>-->
-    <!--      <div class="itemStyle">-->
-    <!--        <div style="width: 80px">波特率</div>-->
-    <!--        <el-select v-model="baudRateValue" placeholder="请选择波特率" style="width: 300px">-->
-    <!--          <el-option v-for="item in baudRateOptions" :key="item.value" :label="item.label" :value="item.value" />-->
-    <!--        </el-select>-->
-    <!--      </div>-->
-    <!--      <div class="itemStyle">-->
-    <!--        <div style="width: 80px">开/关</div>-->
-    <!--        <el-switch v-model="serialStatus" size="large" inline-prompt style="&#45;&#45;el-switch-on-color: #3595fb; &#45;&#45;el-switch-off-color: #ff4949" active-text="已连接" inactive-text="未连接" @change="switchChange" />-->
-    <!--      </div>-->
-    <!--    </div>-->
-    <el-button @click="buttonClick">连接</el-button>
-    <el-button @click="buttonClick2">关闭</el-button>
+    <div style="padding: 20px">
+      <div style="display: flex; align-items: center; font-size: 1.5rem; margin: 30px 0; justify-content: center; color: white">
+        <div style="display: flex">
+          串口配置(
+          <div style="color: #ff4757" v-if="!serialStatus">未连接</div>
+          <div style="color: #3595fb" v-else>已连接</div>
+          )
+        </div>
+      </div>
+      <div class="itemStyle">
+        <div style="width: 90px; color: white">串口号:</div>
+        <el-select v-model="serialPortValue" :disabled="serialStatus" placeholder="请选择串口号" style="width: 300px" @visible-change="visibleChange">
+          <el-option v-for="item in serialOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
+      <div class="itemStyle">
+        <div style="width: 90px; color: white">波特率:</div>
+        <el-select v-model="baudRateValue" :disabled="serialStatus" placeholder="请选择波特率" style="width: 300px">
+          <el-option v-for="item in baudRateOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
+      <div class="itemStyle">
+        <div style="width: 90px; color: white">开/关:</div>
+        <el-switch v-model="serialStatus" size="large" inline-prompt style="--el-switch-on-color: #3595fb; --el-switch-off-color: #ff4949" active-text="已连接" inactive-text="未连接" @change="switchChange" />
+      </div>
+      <el-button type="primary" round @click="writeSerialPort">测试写数据</el-button>
+    </div>
   </div>
 </template>
 
@@ -38,12 +37,13 @@
 import { ref, onMounted } from 'vue'
 import { messageShow } from '../../../utils'
 import { useIndexStore } from '../../../store'
-import { ipcRenderer } from 'electron'
-// import { useInitSerial } from '../../../hook/useHook'
-const { SerialPort } = require('serialport')
+import { SerialPortClass } from '../../../common/SerialPortClass'
+import bus from '../../../utils/eventBus'
 /**
  * data
  */
+//串口类的实例
+const serialPortClass = new SerialPortClass()
 //选中串口的值
 const serialPortValue = ref('')
 //选中波特率的值
@@ -90,117 +90,63 @@ const serialStatus = ref(false)
 // pinia
 const indexStore = useIndexStore()
 
-// 串口
-let COM = null
-// 串口列表
-let ports = ref([])
-// 串口号
-const port = ref('COM1')
-// 串口配置
-const option = {
-  baudRate: 9600, // 波特率
-  dataBits: 8, // 数据位
-  parity: 'none', // 校验位
-  stopBits: 1, // 停止位
-  flowControl: false
-}
-// 串口是否打开
-const open = ref(false)
-// 是否是十六进制显示
-let hexDisplay = false
-// 是否是十六进制发送
-let hexSend = false
-// 消息
-const msg = ref([])
-
 //获取本机的串口列表
-// const getSerialPortList = async () => {
-//   let serialListRes = await serialPortList()
-//   if (serialListRes) {
-//     serialOptions.value = serialListRes.map(item => {
-//       return {
-//         value: item.path,
-//         label: item.path
-//       }
-//     })
-//   }
-// }
+const getSerialPortList = async () => {
+  let serialListRes = await serialPortClass.serialPortList()
+  if (serialListRes && serialListRes.length > 0) {
+    serialOptions.value = serialListRes.map(item => {
+      return {
+        value: item.path,
+        label: item.path
+      }
+    })
+  }
+}
 
 //切换开关
-// const switchChange = async val => {
-//   if (val && serialPortValue.value && baudRateValue.value) {
-//     await useInitSerial(serialPortValue.value, Number(baudRateValue.value))
-//     serialStatus.value = indexStore.setSerialPortObj.connectStatus
-//   } else {
-//     serialStatus.value = false
-//     indexStore.setSerialPortObj.close()
-//     messageShow('请选择连接的配置参数', 'warning')
-//   }
-// }
-
-//下拉选择框
-// const visibleChange = val => {
-//   if (val) {
-//     //获取串口列表
-//     getSerialPortList()
-//   }
-// }
-
-// 开关串口
-// const handleSwitch = checked => {
-//   if (checked) {
-//     COM = new SerialPort(port.value, option, false)
-//     COM.on('error', function () {
-//       open.value = false
-//     })
-//     // 接受消息
-//     COM.on('readable', () => {
-//       let content = ''
-//
-//       if (hexDisplay) {
-//         COM.read().map(item => {
-//           content += item.toString(16)
-//         })
-//       } else {
-//         content = COM.read().toString()
-//       }
-//
-//       if (content === '\n') {
-//         return
-//       }
-//       msg.value.push({ chat: 'roboto', content })
-//     })
-//     open.value = true
-//   } else {
-//     open.value = false
-//     COM.close(() => {})
-//   }
-// }
-
-const buttonClick = () => {
-  ipcRenderer.send('openSerialPort', 'hello from renderer process')
+const switchChange = val => {
+  if (val && serialPortValue.value && baudRateValue.value) {
+    serialPortClass.init(serialPortValue.value, Number(baudRateValue.value))
+  } else if (!serialPortValue.value && !baudRateValue.value) {
+    serialStatus.value = false
+    messageShow('请选择连接的配置参数', 'warning')
+  } else {
+    serialPortClass.close()
+  }
 }
 
-const buttonClick2 = () => {
-  ipcRenderer.send('closePort', 'close')
+//下拉选择框
+const visibleChange = async val => {
+  if (val) {
+    //获取串口列表
+    await getSerialPortList()
+  }
+}
+
+const listenSerialPort = () => {
+  bus.on('serialPortStatus', (data: boolean) => {
+    serialStatus.value = data
+  })
+}
+
+const writeSerialPort = () => {
+  serialPortClass.write('F5090000000009F5')
+}
+//默认进入页面获取串口的状态
+const getSerialPortStoreStatus = () => {
+  serialStatus.value = indexStore.serialPortStoreStatus
 }
 
 /**
  * life
  */
 onMounted(() => {
-  ipcRenderer.on('openSerialPort', (event, args) => {
-    console.log(11, args)
-  })
-  ipcRenderer.on('catchSerialPort', (event, args) => {
-    console.log(23, args)
-  })
-  ipcRenderer.on('closeSerialPort', (event, args) => {
-    console.log(25, args)
-  })
-  SerialPort.list().then((list: any) => {
-    console.log(9, list)
-  })
+  //进入页面先获取串口的状态
+  getSerialPortStoreStatus()
+  //获取串口列表
+  getSerialPortList()
+  //监听串口状态
+  listenSerialPort()
 })
 </script>
 
