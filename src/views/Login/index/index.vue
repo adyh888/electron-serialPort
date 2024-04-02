@@ -19,10 +19,12 @@
 /**
  * imports
  */
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { UserFilled, Lock } from '@element-plus/icons-vue'
 import { messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
+import { useMcStore, Request } from '../../../store'
+import { StorageCache } from '../../../common/StorageClass'
 /**
  * data
  */
@@ -30,17 +32,46 @@ const title = ref('检验/录入指纹系统')
 const username = ref('')
 const password = ref('')
 const router = useRouter()
+const storage = new StorageCache()
 /**
  * methods
  */
-const loginClick = () => {
+const loginClick = async () => {
   if (username.value !== '' || password.value !== '') {
-    // 登录
-    router.push('/home')
+    let json = {
+      username: username.value,
+      password: password.value
+    }
+    //1。先拿token
+    let tokenRes = await Request(useMcStore().getToken, json)
+    if (tokenRes) {
+      let authUserToken = tokenRes.data.access_token
+      storage.set('accessToken', authUserToken)
+      //2。在登录
+      let managerRes = await Request(useMcStore().managerSelect, json)
+      if (managerRes) {
+        storage.set('user', json)
+        // 登录
+        await router.push('/home')
+      }
+    } else {
+      return
+    }
   } else {
     messageShow('请输入账号和密码', 'error')
   }
 }
+
+/**
+ * life
+ */
+onMounted(() => {
+  let user = storage.get('user')
+  if (user) {
+    username.value = user.username
+    password.value = user.password
+  }
+})
 </script>
 
 <style scoped>

@@ -20,15 +20,18 @@
  * imports
  */
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 /**
  * data
  */
+const router = useRouter()
 const tabBar = ref([
   {
     id: 1,
     img: './checkoutFinger.jpg',
     description: '检验指纹',
     showStatus: true,
+    path: '/checkout',
     bg: { background: '#DBEEFF' },
     comment: '检验服务器与传感器数据是否一致',
     inputBg: { background: '#1890FF', height: '40px', borderRadius: '5px', marginTop: '10px' }
@@ -45,7 +48,7 @@ const tabBar = ref([
 ])
 
 const labelClick = item => {
-  console.log(item)
+  router.push(item.path)
 }
 </script>
 

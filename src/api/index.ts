@@ -1,22 +1,26 @@
+/**
+ * imports
+ */
 import axios from 'axios'
-import axiosAdapterUniapp from 'axios-adapter-uniapp'
 import { Ac, Dc, Gc, Lc, Mc, Tc, Uc } from '@mew/request'
 import { BaseURL } from '../config'
+import { StorageCache } from '../common/StorageClass'
+import { messageShow } from '../utils'
 const service = axios.create({
   baseURL: BaseURL(),
   timeout: 10000,
-  source: 'LWW-electron-serialPort',
-  // @ts-ignore
-  adapter: axiosAdapterUniapp
+  source: 'LWW-electron-serialPort'
 })
-// request拦截器
+const storage = new StorageCache()
+/**
+ * 请求拦截器
+ */
 service.interceptors.request.use(
   config => {
-    // @ts-ignore
-    uni.showLoading({
-      title: '数据加载中',
-      mask: true
-    })
+    const token = storage.get('accessToken')
+    if (token) {
+      config.headers['Authorization'] = 'Bearer ' + token
+    }
     return config
   },
   error => {
@@ -25,11 +29,15 @@ service.interceptors.request.use(
     return Promise.reject(error)
   }
 )
-
+/**
+ * 响应拦截器
+ */
 service.interceptors.response.use(
   response => {
-    // @ts-ignore
-    uni.hideLoading()
+    if (response.data.code === 1) {
+      messageShow(`${response.data.error}`, 'error')
+      return Promise.reject(response.data.error)
+    }
     return response
   },
   error => {

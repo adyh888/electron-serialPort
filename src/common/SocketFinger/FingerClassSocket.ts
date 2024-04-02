@@ -1,9 +1,10 @@
 /**
  * imports
  */
+import { FingerConf } from './index/interface/finger-conf.interface'
+import { SocketUtils } from './index/socket-utils'
 import * as _ from 'lodash'
-import { emitter } from '../utils/EventsBus'
-import { addZero } from '../utils/index'
+
 /**
  * enum
  */
@@ -53,9 +54,9 @@ export interface UserInfo {
 }
 
 /**
- * class
+ * 指纹 基本类
  */
-export class TfsD400Basic {
+export class fingerClassSocket extends SocketUtils {
   public isDebugMode: boolean
   public deviceId: string
 
@@ -64,18 +65,19 @@ export class TfsD400Basic {
    * 仅包含 指纹 的基本方法和属性
    * 微雪指纹模块链接 https://www.waveshare.net/shop/UART-Fingerprint-Reader.htm
    */
-  constructor(fingerConf) {
+  constructor(fingerConf: FingerConf) {
     let { host, port } = fingerConf
+    super(host, port)
     this.deviceId = fingerConf.deviceId
     console.log('finger begin to connect:', port, host)
-    emitter.on('connect_success', () => {
+    this.myevents.on('connect_success', () => {
       // this.flag=true
       console.log('finger connect success:', port, host)
     })
     /**
      * 缓冲区数据
      */
-    emitter.on('onData', (message: string) => {
+    this.myevents.on('onData', (message: string) => {
       // console.log(40,'card serial port on message',message)
       // <Buffer 02 03 04 00 00 00 00 c9 33>
       var buf: Buffer = Buffer.from(message, 'hex')
@@ -85,74 +87,74 @@ export class TfsD400Basic {
         //F5
         switch (buf[1]) {
           case 1: //01 第1次录入指纹
-            emitter.emit('record1', buf)
+            this.myevents.emit('record1', buf)
             break
           case 2: //02 第2次录入指纹
-            emitter.emit('record2', buf)
+            this.myevents.emit('record2', buf)
             break
           case 3: //03 第3次录入指纹
-            emitter.emit('record3', buf)
+            this.myevents.emit('record3', buf)
             break
           case 4: //04 删除指定用户
-            emitter.emit('deleteSingle', buf)
+            this.myevents.emit('deleteSingle', buf)
             break
           case 5: //05 删除所有用户
-            emitter.emit('deleteAll', buf)
+            this.myevents.emit('deleteAll', buf)
             break
           case 9: //09
             if (buf[4] == 0) {
               //0 获取用户数
-              emitter.emit('getTotalUser', buf)
+              this.myevents.emit('getTotalUser', buf)
             }
             if (buf[4] == 255) {
               //FF 获取容量
-              emitter.emit('getTotalCapacity', buf)
+              this.myevents.emit('getTotalCapacity', buf)
             }
             break
           case 11: //0B 比对1：1
-            emitter.emit('companyOneToOne', buf)
+            this.myevents.emit('companyOneToOne', buf)
             break
           case 12: //0C 比对1：N
-            emitter.emit('compareOneToMore', buf)
+            this.myevents.emit('compareOneToMore', buf)
             break
           case 38: //26 取DSP 模块版本号
-            emitter.emit('getVersion', buf)
+            this.myevents.emit('getVersion', buf)
             break
           case 40: //28 取DSP 比较等级
-            emitter.emit('compareGrade', buf)
+            this.myevents.emit('compareGrade', buf)
             break
           case 36: //24 采集图像并上传
-            emitter.emit('getImageAndUpload', buf)
+            this.myevents.emit('getImageAndUpload', buf)
             break
           case 35: //23 采集图像并提取特征值上传
-            emitter.emit('getImageFeatureUpload', buf)
+            this.myevents.emit('getImageFeatureUpload', buf)
             break
           case 68: //44 下传特征值与采集指纹比对
-            emitter.emit('downloadFeatureAndCompareToGetFeature', buf)
+            this.myevents.emit('downloadFeatureAndCompareToGetFeature', buf)
             break
           case 0x42: //42 下传指纹特征值与DSP 模块数据库指纹比对1：1
-            emitter.emit('downloadFeatureAndCompareOneToOne', buf)
+            this.myevents.emit('downloadFeatureAndCompareOneToOne', buf)
             break
           case 0x43: //43 下传指纹特征值与DSP 模块数据库指纹比对1：N
-            emitter.emit('downloadFeatureAndCompareOneToMore', buf)
+            this.myevents.emit('downloadFeatureAndCompareOneToMore', buf)
             break
           case 49: //31 上传DSP 模块数据库内指定用户特征值
-            emitter.emit('uploadDspOne', buf)
+            this.myevents.emit('uploadDspOne', buf)
             break
           case 65: //41 下传特征值并按指定用户号存入DSP 模块数据库
-            emitter.emit('downloadFeatureAndSaveToDsp', buf)
+            this.myevents.emit('downloadFeatureAndSaveToDsp', buf)
             break
           case 43: //2B 取已登录所有用户用户号及权限
-            emitter.emit('getRegAllUserInfo', buf)
+            this.myevents.emit('getRegAllUserInfo', buf)
             break
           case 44: //2C 使模块进入休眠状态
-            emitter.emit('sleep', buf)
+            this.myevents.emit('sleep', buf)
             break
           case 45: //2D 设置/读取指纹添加模式
-            emitter.emit('fingerAddMode', buf)
+            this.myevents.emit('fingerAddMode', buf)
             break
           case 46: //2E 设置/读取指纹采集等待超时时间
-            emitter.emit('overTime', buf)
+            this.myevents.emit('overTime', buf)
             break
           default:
             break
@@ -171,9 +173,9 @@ export class TfsD400Basic {
    * @param P3 数字
    */
   private getCmd(cmd: string, P1: number, P2: number, P3: number) {
-    let s1 = addZero(P1.toString(16), 2)
-    let s2 = addZero(P2.toString(16), 2)
-    let s3 = addZero(P3.toString(16), 2)
+    let s1 = this.addzero(P1.toString(16), 2)
+    let s2 = this.addzero(P2.toString(16), 2)
+    let s3 = this.addzero(P3.toString(16), 2)
     let str = cmd + s1 + s2 + s3 + '00'
     let bcc = this.bccCheck(str)
     return 'F5' + str + bcc + 'F5'
@@ -198,7 +200,7 @@ export class TfsD400Basic {
 
   private getUserBytes(uno: number): number[] {
     let str = uno.toString(16)
-    str = addZero(str, 4)
+    str = this.addzero(str, 4)
     // console.log('getUserBytes',str)
     let b: number[] = []
     b.push(parseInt(str.substr(0, 2), 16))
@@ -208,7 +210,7 @@ export class TfsD400Basic {
 
   private getUserStrArr(uno: number) {
     let str = uno.toString(16)
-    str = addZero(str, 4)
+    str = this.addzero(str, 4)
     console.log('getUserBytes', str)
     let s: string[] = []
     s.push(str.substr(0, 2))
@@ -233,7 +235,7 @@ export class TfsD400Basic {
     for (var i = 0; i < charArr.length; i++) {
       res = res ^ parseInt(charArr[i], 16)
     }
-    return addZero(res.toString(16).toUpperCase(), 2)
+    return this.addzero(res.toString(16).toUpperCase(), 2)
   }
 
   private static feature2hexData(feature: string): number[] {
@@ -264,7 +266,7 @@ export class TfsD400Basic {
       if (err) {
         return console.log('Error on write: ', err.message)
       }
-      // console.log('message written',cmd);
+      console.log('message written', cmd)
     })
   }
 
@@ -285,7 +287,7 @@ export class TfsD400Basic {
       })
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('deleteAll', buf => {
+      this.myevents.once('deleteAll', buf => {
         //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         const result = Q3[buf[4]]
         resolve({ result })
@@ -319,7 +321,7 @@ export class TfsD400Basic {
           })
           //接收报文后的响应
           // <Buffer f5 2d 00 01 00 00 2c f5>
-          emitter.once('fingerAddMode', buf => {
+          this.myevents.once('fingerAddMode', buf => {
             //buf[3] 0:allowedRepeat,1:notAllowedRepeat
             console.log('buf[3]', buf[3])
             let res
@@ -349,7 +351,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('record1', buf => {
+      this.myevents.once('record1', buf => {
         const result = Q3[buf[4]] //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         resolve({ result })
       })
@@ -369,7 +371,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('record2', buf => {
+      this.myevents.once('record2', buf => {
         const result = Q3[buf[4]] //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         resolve({ result })
       })
@@ -390,7 +392,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('record3', buf => {
+      this.myevents.once('record3', buf => {
         const result = Q3[buf[4]] //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         resolve({ result })
       })
@@ -411,7 +413,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('deleteSingle', buf => {
+      this.myevents.once('deleteSingle', buf => {
         const result = Q3[buf[4]] //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         resolve({ result })
       })
@@ -428,7 +430,7 @@ export class TfsD400Basic {
       if (this.isDebugMode) console.log('getTotalUser', cmd)
       this._send(cmd) //发送报文
       // <Buffer f5 09 00 00 00 00 09 f5>
-      emitter.once('getTotalUser', buf => {
+      this.myevents.once('getTotalUser', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         // console.log(total)
@@ -451,7 +453,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('getTotalCapacity', buf => {
+      this.myevents.once('getTotalCapacity', buf => {
         console.log(395, buf[4])
         const result = Q3[buf[4]]
         //buf[2] 用户数高位 buf[3]用户数低位
@@ -474,7 +476,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('getUserRight', buf => {
+      this.myevents.once('getUserRight', buf => {
         const result = Q3[buf[4]]
         //buf[2] 用户数高位 buf[3]用户数低位
         let str = buf[2].toString(16) + buf[3].toString(16)
@@ -500,7 +502,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('companyOneToOne', buf => {
+      this.myevents.once('companyOneToOne', buf => {
         const result = Q3[buf[4]]
         //buf[2] 用户数高位 buf[3]用户数低位
         let str = buf[2].toString(16) + buf[3].toString(16)
@@ -523,7 +525,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('compareOneToMore', buf => {
+      this.myevents.once('compareOneToMore', buf => {
         const result = Q3[buf[4]]
         //buf[2] 用户数高位 buf[3]用户数低位
         let str = buf[2].toString(16) + buf[3].toString(16)
@@ -546,7 +548,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('getVersion', buf => {
+      this.myevents.once('getVersion', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         // console.log(total)
@@ -567,7 +569,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('compareGrade', buf => {
+      this.myevents.once('compareGrade', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         resolve({ result, total })
@@ -587,7 +589,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('getImageAndUpload', buf => {
+      this.myevents.once('getImageAndUpload', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         resolve({ result, total })
@@ -606,7 +608,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('getImageFeatureUpload', buf => {
+      this.myevents.once('getImageFeatureUpload', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         resolve({ result, total })
@@ -628,7 +630,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('downloadFeatureAndCompareToGetFeature', buf => {
+      this.myevents.once('downloadFeatureAndCompareToGetFeature', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         resolve({ result, total })
@@ -650,7 +652,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('downloadFeatureAndCompareOneToOne', buf => {
+      this.myevents.once('downloadFeatureAndCompareOneToOne', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         resolve({ result, total })
@@ -677,7 +679,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('downloadFeatureAndCompareOneToMore', buf => {
+      this.myevents.once('downloadFeatureAndCompareOneToMore', buf => {
         console.log(655, buf)
         if (buf[4] == 5) {
           resolve({ result: Q3[buf[4]] }) //不存在
@@ -705,7 +707,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('uploadDspOne', (buf: Buffer) => {
+      this.myevents.once('uploadDspOne', (buf: Buffer) => {
         console.log('uploadDspOne', buf)
         if (buf.length < 8) throw new Error('通讯错误')
         const head = buf.subarray(0, 7)
@@ -750,7 +752,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       // 接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
-      emitter.once('downloadFeatureAndSaveToDsp', buf => {
+      this.myevents.once('downloadFeatureAndSaveToDsp', buf => {
         const result = Q3[buf[4]]
         const total = this.concatHighLow(buf[2], buf[3])
         // console.log(total)
@@ -772,7 +774,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('sleep', buf => {
+      this.myevents.once('sleep', buf => {
         let result = Q3[buf[4]]
         resolve({ result })
       })
@@ -792,7 +794,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('getRegAllUserInfo', (buf: Buffer) => {
+      this.myevents.once('getRegAllUserInfo', (buf: Buffer) => {
         const arr = buf.toString('hex').split('f5f5')
         console.log('arr:', arr)
         let head = Buffer.from(arr[0] + 'f5', 'hex')
@@ -832,7 +834,7 @@ export class TfsD400Basic {
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
-      emitter.once('overTime', buf => {
+      this.myevents.once('overTime', buf => {
         let result = Q3[buf[4]]
         resolve({ result })
       })

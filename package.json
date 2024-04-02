@@ -27,7 +27,7 @@
     "@mew/request": "^5.2.673",
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",
-    "axios-adapter-uniapp": "^0.1.4",
+    "crc": "^4.3.2",
     "element-plus": "^2.6.2",
     "events": "^3.3.0",
     "lodash": "^4.17.21",
