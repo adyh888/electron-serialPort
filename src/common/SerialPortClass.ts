@@ -6,7 +6,7 @@ import { strHexBuffer } from '../utils'
  * imports
  */
 const { SerialPort } = require('serialport')
-import bus from '../utils/eventBus'
+import { emitter2 } from '../utils/EventsBus'
 /**
  * 封装串口类
  */
@@ -37,23 +37,23 @@ export class SerialPortClass {
       if (err) {
         return
       }
-      bus.emit('serialPortStatus', true)
+      emitter2.emit('serialPortStatus', true)
       console.log('端口打开成功')
     })
     // 串口数据监听
     this.serialPort.on('data', (data: any) => {
       //buffer转16进制的字符串
       let resHex = this.ab2hex(data)
-      bus.emit('serialPortData', resHex)
+      emitter2.emit('serialPortData', resHex)
     })
     // 串口关闭
     this.serialPort.on('close', () => {
-      bus.emit('serialPortStatus', false)
+      emitter2.emit('serialPortStatus', false)
       console.log('串口关闭')
     })
     // 错误监听
     this.serialPort.on('error', (err: any) => {
-      bus.emit('serialPortStatus', false)
+      emitter2.emit('serialPortStatus', false)
     })
   }
 
@@ -90,7 +90,7 @@ export class SerialPortClass {
   }
 
   /**
-   * ArrayBuffer转16进度字符串示例
+   * ArrayBuffer转16进度字符串
    */
   private ab2hex(buffer) {
     const hexArr = Array.prototype.map.call(new Uint8Array(buffer), function (bit) {

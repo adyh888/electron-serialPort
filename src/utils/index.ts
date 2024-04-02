@@ -13,6 +13,19 @@ export function strHexBuffer(str: string) {
 }
 
 /**
+ * 高位填零
+ * @param str 传入字符串
+ * @param num 最终字符串长度
+ */
+export function addZero(str: string, num: number) {
+  let diArr = new Array(num)
+  diArr.fill('0')
+  str = diArr.join('') + str
+  str = str.substring(str.length - num)
+  return str
+}
+
+/**
  * 消息弹窗
  */
 export function messageShow(message: string, messageType: any = 'success', show: boolean = true) {

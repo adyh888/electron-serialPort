@@ -38,7 +38,7 @@ import { ref, onMounted } from 'vue'
 import { messageShow } from '../../../utils'
 import { useIndexStore } from '../../../store'
 import { SerialPortClass } from '../../../common/SerialPortClass'
-import bus from '../../../utils/eventBus'
+import { emitter2 } from '../../../utils/EventsBus'
 /**
  * data
  */
@@ -124,7 +124,7 @@ const visibleChange = async val => {
 }
 
 const listenSerialPort = () => {
-  bus.on('serialPortStatus', (data: boolean) => {
+  emitter2.on('serialPortStatus', (data: boolean) => {
     serialStatus.value = data
   })
 }

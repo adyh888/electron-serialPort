@@ -3,7 +3,7 @@
  * imports
  */
 import { onMounted } from 'vue'
-import bus from './utils/eventBus'
+import { emitter2 } from './utils/EventsBus'
 import { useIndexStore } from './store'
 import { messageBoxShow } from './utils'
 
@@ -17,7 +17,7 @@ const indexStore = useIndexStore()
  */
 //全局事件的监听
 const appListenEvent = () => {
-  bus.on('serialPortStatus', (data: boolean) => {
+  emitter2.on('serialPortStatus', (data: boolean) => {
     indexStore.serialPortStoreStatus = data
     if (!data) {
       messageBoxShow('错误', '串口设备断开连接', 'error')
