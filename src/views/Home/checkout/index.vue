@@ -314,7 +314,7 @@ const syncButtonDebounce = async () => {
     //删除指纹表里对应的槽位数据
     if (fingerMores.value.length > 0) {
       await asyncForEach(fingerMores.value, async item => {
-        const deleteRes = await finger.deleteSingle(item.fno)
+        const deleteRes = await finger.deleteSingle(item.no)
         if (deleteRes.result !== 'ACK_SUCCESS') {
           deleteStatus = true
         }
