@@ -21,7 +21,7 @@
  */
 import { onMounted, ref } from 'vue'
 import { UserFilled, Lock } from '@element-plus/icons-vue'
-import { messageShow } from '../../../utils'
+import { ElLoadingShow, messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
 import { useMcStore, Request } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
@@ -33,11 +33,13 @@ const username = ref('')
 const password = ref('')
 const router = useRouter()
 const storage = new StorageCache()
+const loading = ref<any>(null)
 /**
  * methods
  */
 const loginClick = async () => {
   if (username.value !== '' || password.value !== '') {
+    loadingShow()
     let json = {
       username: username.value,
       password: password.value
@@ -50,6 +52,7 @@ const loginClick = async () => {
       //2。在登录
       let managerRes = await Request(useMcStore().managerSelect, json)
       if (managerRes) {
+        loading.value.close()
         storage.set('user', json)
         // 登录
         await router.push('/home')
@@ -60,6 +63,11 @@ const loginClick = async () => {
   } else {
     messageShow('请输入账号和密码', 'error')
   }
+}
+
+//loading加载弹窗
+const loadingShow = () => {
+  loading.value = ElLoadingShow()
 }
 
 /**

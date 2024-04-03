@@ -1,4 +1,4 @@
-import { ElMessage, ElNotification } from 'element-plus'
+import { ElLoading, ElMessage, ElNotification } from 'element-plus'
 
 /**
  * send 字符串转字节数据在转buffer
@@ -76,4 +76,16 @@ export function debounce(func, delay) {
       func(...args)
     }, delay)
   }
+}
+
+/**
+ * loading 加载动画
+ *
+ */
+export const ElLoadingShow = () => {
+  return ElLoading.service({
+    lock: true,
+    text: '数据加载中...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
 }

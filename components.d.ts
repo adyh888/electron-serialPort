@@ -9,7 +9,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     BottomComponent: typeof import('./src/components/CommonComponents/BottomComponent.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
-    ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
@@ -30,8 +29,5 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SearchComponent: typeof import('./src/components/CommonComponents/SearchComponent.vue')['default']
     TableComponent: typeof import('./src/components/CommonComponents/TableComponent.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

@@ -14,7 +14,7 @@
     <div style="display: flex; flex-direction: row-reverse">
       <el-button style="margin-left: 20px" type="primary" @click="syncButton">重置</el-button>
       <el-button style="margin-left: 20px" type="primary" @click="syncButton">搜索</el-button>
-      <el-button style="width: 80px" type="primary" @click="syncButton">同步</el-button>
+      <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton">同步</el-button>
     </div>
   </div>
 </template>
@@ -28,7 +28,7 @@ import { inject } from 'vue'
 /**
  * injects
  */
-const { syncButton, formInline } = inject('dataProvide')
+const { syncButton, formInline, syncDisabled } = inject('dataProvide')
 </script>
 
 <style scoped>

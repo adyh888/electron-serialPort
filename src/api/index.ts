@@ -9,7 +9,7 @@ import { messageBoxShow, messageShow } from '../utils'
 import router from '../router'
 const service = axios.create({
   baseURL: BaseURL(),
-  timeout: 10000
+  timeout: 5000
 })
 const storage = new StorageCache()
 /**
@@ -20,7 +20,7 @@ service.interceptors.request.use(
     const token = storage.get('accessToken')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
-      config.headers['source'] = 'LWW-electron-serialPort'
+      config.headers['source'] = 'electron-fingerprint'
     }
     return config
   },
