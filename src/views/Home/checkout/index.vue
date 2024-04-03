@@ -62,8 +62,7 @@ import { FingerSupplier } from '../../../common/SocketFinger/index/interface/fin
 import { fingerClassSocket } from '../../../common/SocketFinger/FingerClassSocket'
 import { useDcStore, Request, useUcStore } from '../../../store'
 import { emitterFinger } from '../../../utils/EventsBus'
-import { asyncForEach, debounce, ElLoadingShow, messageBoxShow, messageShow } from '../../../utils'
-import { SocketUtils } from '../../../common/SocketFinger/index/socket-utils'
+import { asyncForEach, debounce, ElLoadingShow, messageBoxShow } from '../../../utils'
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
 import TableComponent from '../../../components/CommonComponents/TableComponent.vue'
 import SearchComponent from '../../../components/CommonComponents/SearchComponent.vue'
@@ -238,8 +237,8 @@ const abnormalDispose = async () => {
         }
       })
     }
-    tableList()
     console.log('指纹模块数据多', fingerMores.value)
+    tableList()
   } else if (fingerTotal.value < fingerCount.value) {
     //指纹模块的数量少，本地finger表的数据多
     fingerLocalMores.value = fingerDataLocalStorage.value.filter(item => !fingerData.value.some(item1 => item1.fno === item.no))
@@ -324,7 +323,7 @@ const syncButtonDebounce = async () => {
       } else {
         fingerMores.value = []
         loading.value.close()
-        messageShow('提示', '同步完成')
+        // messageShow('提示', '同步完成')
         await selectChange()
       }
       dialogVisible.value = false
@@ -344,7 +343,7 @@ const syncButtonDebounce = async () => {
       } else {
         fingerLocalMores.value = []
         loading.value.close()
-        messageShow('提示', '同步完成')
+        // messageShow('提示', '同步完成')
         await selectChange()
       }
       dialogVisible.value = false
@@ -353,6 +352,7 @@ const syncButtonDebounce = async () => {
     let deleteStatus = false
     //本地数据跟指纹模块数据相等，但是没有槽位或者特征值不对等
     await asyncForEach(fingerFilter.value, async item => {
+      // console.log(356, item.fno)
       const deleteRes = await finger.deleteSingle(item.fno)
       if (deleteRes.result !== 'ACK_SUCCESS') {
         deleteStatus = true
@@ -377,6 +377,7 @@ const syncButtonDebounce = async () => {
             awaitDspStatus = false
             downloadFeatureAndSaveToDspData.value.push({ ...downloadRes, fingerprint: item.fingerprint }) //TODO 获取空槽位对应的指纹槽位值
           }
+          // console.log(380, downloadFeatureAndSaveToDspData.value)
         }
       })
       if (awaitDspStatus) {
