@@ -5,11 +5,11 @@ import axios from 'axios'
 import { Ac, Dc, Gc, Lc, Mc, Tc, Uc } from '@mew/request'
 import { BaseURL } from '../config'
 import { StorageCache } from '../common/StorageClass'
-import { messageShow } from '../utils'
+import { messageBoxShow, messageShow } from '../utils'
+import router from '../router'
 const service = axios.create({
   baseURL: BaseURL(),
-  timeout: 10000,
-  source: 'LWW-electron-serialPort'
+  timeout: 10000
 })
 const storage = new StorageCache()
 /**
@@ -20,6 +20,7 @@ service.interceptors.request.use(
     const token = storage.get('accessToken')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
+      config.headers['source'] = 'LWW-electron-serialPort'
     }
     return config
   },
@@ -38,9 +39,14 @@ service.interceptors.response.use(
       messageShow(`${response.data.error}`, 'error')
       return Promise.reject(response.data.error)
     }
+
     return response
   },
   error => {
+    if (error.request.status === 401) {
+      messageBoxShow('错误', 'token失效，正在退出登录', 'error')
+      router.push('/')
+    }
     // @ts-ignore
     return Promise.reject(error)
   }

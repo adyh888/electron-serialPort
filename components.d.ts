@@ -9,18 +9,29 @@ declare module 'vue' {
   export interface GlobalComponents {
     BottomComponent: typeof import('./src/components/CommonComponents/BottomComponent.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
+    ElIcon: typeof import('element-plus/es')['ElIcon']
     ElImage: typeof import('element-plus/es')['ElImage']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
+    ElPagination: typeof import('element-plus/es')['ElPagination']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     HeadComponent: typeof import('./src/components/CommonComponents/HeadComponent.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     HomeIndexComponent: typeof import('./src/components/FunComponents/HomeIndexComponent.vue')['default']
+    PaginationComponent: typeof import('./src/components/CommonComponents/PaginationComponent.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchComponent: typeof import('./src/components/CommonComponents/SearchComponent.vue')['default']
+    TableComponent: typeof import('./src/components/CommonComponents/TableComponent.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

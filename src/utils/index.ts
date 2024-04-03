@@ -47,3 +47,33 @@ export function messageBoxShow(title: string, message: string, type: any = 'succ
     duration
   })
 }
+
+/**
+ * 异步等待
+ * @param array
+ * @param callback
+ */
+export async function asyncForEach(array: any, callback: any) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array)
+  }
+}
+
+/**
+ * 防抖函数
+ * @param func 函数
+ * @param delay 延迟
+ */
+export function debounce(func, delay) {
+  let timerId
+
+  return function (...args) {
+    if (timerId) {
+      clearTimeout(timerId)
+    }
+
+    timerId = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+}

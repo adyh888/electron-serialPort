@@ -1,6 +1,7 @@
 // import * as net from 'net'
+import { emitterFinger } from '../../../utils/EventsBus'
 const net = require('net')
-import * as events from 'events'
+// import * as events from 'events'
 
 /**
  * socket 通信基本类
@@ -9,7 +10,7 @@ import * as events from 'events'
  */
 export class SocketBasic {
   client: net.Socket
-  myevents: events.EventEmitter
+  myevents: emitterFinger
 
   host: string
   port: number
@@ -21,23 +22,20 @@ export class SocketBasic {
     this.host = host
     this.port = port
     //事件
-    this.myevents = new events.EventEmitter()
-    events.EventEmitter.defaultMaxListeners = 0
+    this.myevents = emitterFinger
+    // events.EventEmitter.defaultMaxListeners = 0
     //客户端
     this.client = new net.Socket()
     this.client.setEncoding('hex')
     this.client.connect(port, host, () => {
-      console.log('连接成功', port, host)
       this.myevents.emit('connect_success')
     })
     //缓冲区接收数据
     this.client.on('data', (message: string) => {
-      console.log('收到数据', message)
       this.myevents.emit('onData', message)
     })
     //错误事件
     this.client.on('error', err => {
-      console.log('连接失败', err)
       this.myevents.emit('connect_error', err)
     }) //打开错误将会发出一个错误事件
 

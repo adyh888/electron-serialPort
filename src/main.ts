@@ -5,6 +5,7 @@ import router from './router'
 import './samples/node-api'
 import 'element-plus/dist/index.css'
 import { pinia } from './store'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 // createApp(App)
 //   .mount('#app')
 //   .$nextTick(() => {
@@ -19,6 +20,11 @@ app.use(pinia)
 app.use(router)
 // 挂载应用到DOM元素
 app.mount('#app')
+
+// 注册ElementPlusIconsVue图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 // 在Vue应用挂载后的下一个tick中发送消息
 nextTick(() => {

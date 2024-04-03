@@ -81,7 +81,6 @@ export class fingerClassSocket extends SocketUtils {
       // console.log(40,'card serial port on message',message)
       // <Buffer 02 03 04 00 00 00 00 c9 33>
       var buf: Buffer = Buffer.from(message, 'hex')
-      console.log(17, buf)
 
       if (buf[0] == 245) {
         //F5
@@ -671,7 +670,7 @@ export class fingerClassSocket extends SocketUtils {
       let userBytes = this.getUserBytes(len)
       //发送报文
       const head = this.getCmd('43', userBytes[0], userBytes[1], 0)
-      let data: number[] = TfsD400Basic.feature2hexData(feature) //特征值字符串转buffer
+      let data: number[] = fingerClassSocket.feature2hexData(feature) //特征值字符串转buffer
       console.assert(data.length == 193, '特征值长度必须为193位')
       const body = this.getCmd2(0, 0, 0, data)
       let cmd = head + body
@@ -703,18 +702,18 @@ export class fingerClassSocket extends SocketUtils {
       //计算命令
       let userBytes = this.getUserBytes(fno)
       let cmd = this.getCmd('31', userBytes[0], userBytes[1], 0)
-      if (this.isDebugMode) console.log('uploadDspOne', cmd) //F50C000100000DF5
+      if (this.isDebugMode) console.log('uploadDspOne cmd:', cmd) //F50C000100000DF5
       this._send(cmd) //发送报文
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
       this.myevents.once('uploadDspOne', (buf: Buffer) => {
-        console.log('uploadDspOne', buf)
+        console.log('on uploadDspOne', buf)
         if (buf.length < 8) throw new Error('通讯错误')
         const head = buf.subarray(0, 7)
         const result = Q3[buf[4]]
         if (buf.length == 8) {
           // console.log(buf)
-          reject(result)
+          resolve(result)
         } else {
           const body = buf.subarray(8)
           //buf[2] 用户数高位 buf[3]用户数低位
@@ -724,6 +723,7 @@ export class fingerClassSocket extends SocketUtils {
           const right = body[3]
           const feature = body.subarray(4, 4 + 193).toString('hex')
           console.assert(feature.length === 193 * 2, `feature长度错误长度应为386，但现在为${feature.length}`)
+          console.log({ result, fno, right, feature })
           resolve({ result, fno, right, feature })
         }
       })
@@ -742,7 +742,7 @@ export class fingerClassSocket extends SocketUtils {
       const head = this.getCmd('41', lenBytes[0], lenBytes[1], 0)
       ///计算命令 body
       let userBytes = this.getUserBytes(fno)
-      let data: number[] = TfsD400Basic.feature2hexData(feature) //特征值字符串转buffer
+      let data: number[] = fingerClassSocket.feature2hexData(feature) //特征值字符串转buffer
       console.assert(data.length == 193, '特征值长度必须为193位')
       const right = 1 //用户权限1/2/3
       const body = this.getCmd2(userBytes[0], userBytes[1], right, data)
