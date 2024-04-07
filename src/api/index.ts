@@ -20,7 +20,7 @@ service.interceptors.request.use(
     const token = storage.get('accessToken')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
-      config.headers['source'] = 'electron-fingerprint'
+      config.headers['source'] = 'electron-fingerprint' + new Date().getTime()
     }
     return config
   },

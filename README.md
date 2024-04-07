@@ -1,4 +1,4 @@
-### electron  + vite + Vue3 + TypeScript + SerialPort + pinia
+### electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket
 * 前提条件
 * node必须16.16.0以上版本。
 * 不需要安装python，node-gyp等对应的编码解析工具
@@ -23,3 +23,5 @@
 #### 1.0.4
 * 1.指纹同步的异常判断
 * 2.修复字段的错误
+#### 1.0.5
+* 1.修复同等数据的对比判断

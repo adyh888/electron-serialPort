@@ -1,8 +1,8 @@
 {
   "name": "tool-electron",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "dist-electron/main/index.js",
-  "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia",
+  "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket",
   "author": "LWW",
   "license": "LWW",
   "private": true,
