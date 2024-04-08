@@ -23,7 +23,7 @@ import { onMounted, ref } from 'vue'
 import { UserFilled, Lock } from '@element-plus/icons-vue'
 import { ElLoadingShow, messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
-import { useMcStore, Request } from '../../../store'
+import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
 /**
  * data
@@ -34,6 +34,7 @@ const password = ref('')
 const router = useRouter()
 const storage = new StorageCache()
 const loading = ref<any>(null)
+const user = useIndexStore()
 /**
  * methods
  */
@@ -51,8 +52,9 @@ const loginClick = async () => {
       storage.set('accessToken', authUserToken)
       //2。在登录
       let managerRes = await Request(useMcStore().managerSelect, json)
-      if (managerRes) {
+      if (managerRes && managerRes.total > 0) {
         loading.value.close()
+        user.userInfo = managerRes.data[0]
         storage.set('user', json)
         // 登录
         await router.push('/home')

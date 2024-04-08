@@ -13,9 +13,19 @@
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
 import HomeIndexComponent from '../../../components/FunComponents/HomeIndexComponent.vue'
 import BottomComponent from '../../../components/CommonComponents/BottomComponent.vue'
-import { provide, ref } from 'vue'
-const HeadTitle = ref('Saber')
+import { onMounted, provide, ref } from 'vue'
+import { useIndexStore } from '../../../store'
 
+/**
+ * data
+ */
+const user = useIndexStore()
+const HeadTitle = ref(user.userInfo.username ?? '空')
+
+/**
+ * life
+ */
+onMounted(() => {})
 /**
  * provides
  */

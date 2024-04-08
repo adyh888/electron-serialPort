@@ -19,7 +19,7 @@
     <el-dialog v-model="dialogFormVisible" title="选择检验设备(必填)" width="700" align-center :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
       <div style="display: flex; justify-content: center; align-items: center; padding: 20px 0">
         <span style="width: 80px; font-size: 16px">设备名称:</span>
-        <el-select v-model="selectValue" placeholder="请选择设备" style="width: 500px">
+        <el-select v-model="selectValue" placeholder="请选择设备" style="width: 500px" @change="selectChangeDialog">
           <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
             <span style="float: left">{{ item.label }}</span>
             <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">{{ item.value }}</span>
@@ -60,7 +60,7 @@ import { onMounted, onUnmounted, ref, provide, reactive, UnwrapRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { FingerSupplier } from '../../../common/SocketFinger/index/interface/finger-conf.interface'
 import { fingerClassSocket } from '../../../common/SocketFinger/FingerClassSocket'
-import { useDcStore, Request, useUcStore } from '../../../store'
+import { useDcStore, Request, useUcStore, useIndexStore } from '../../../store'
 import { emitterFinger } from '../../../utils/EventsBus'
 import { asyncForEach, debounce, ElLoadingShow, messageBoxShow } from '../../../utils'
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
@@ -71,6 +71,7 @@ import PaginationComponent from '../../../components/CommonComponents/Pagination
  * data
  */
 const router = useRouter()
+const user = useIndexStore()
 //弹窗显示
 const dialogFormVisible = ref(true)
 const dialogVisible = ref(false)
@@ -82,7 +83,7 @@ const fingerCount = ref(0)
 const fingerDataLocalStorage = ref([])
 //finger指纹容器里的总数据
 const fingerTotal = ref(0)
-const HeadTitle = ref('Saber')
+const HeadTitle = ref(user.userInfo.username ?? '空')
 const BackShow = ref(true)
 //表格数据
 const tableData = ref([])
@@ -152,6 +153,9 @@ const confirm = type => {
   clearTimeout(loadingTimer.value)
 }
 
+//选中事件
+const selectChangeDialog = () => {}
+
 //获取设备列表
 const getDeviceList = async () => {
   let res = await Request(useDcStore().deviceSelect, {})
@@ -178,8 +182,6 @@ const selectChange = async () => {
       await fingerConnect(selectDeviceObj.value.serviceId, selectDeviceObj.value.fingerPort)
       emitterFinger.once('connect_success', async () => {
         console.log('连接成功')
-        //发送心跳
-        // socketHeartBeat()
         await selectFingerData(selectDeviceObj.value.value)
       })
     }

@@ -41,6 +41,7 @@ const tabBar = ref([
     img: './userAdd.jpg',
     description: '人员录入',
     showStatus: true,
+    path: '/add',
     bg: { background: '#FFE9CC' },
     comment: '添加人员信息，录入指纹等信息',
     inputBg: { background: '#FF9B18', height: '40px', borderRadius: '5px', marginTop: '10px' }
