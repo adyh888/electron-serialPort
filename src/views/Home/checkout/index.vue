@@ -29,7 +29,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancel">取消</el-button>
-          <el-button type="primary" @click="confirm"> 确定</el-button>
+          <el-button type="primary" @click="confirm(1)"> 确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -45,7 +45,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="syncConfirm"> 确定 </el-button>
+          <el-button type="primary" @click="syncConfirm(2)"> 确定 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -116,6 +116,14 @@ const fingerLocalMores = ref([])
 const fingerFilter = ref([])
 //获取更新到指纹模块的槽位的数据
 const downloadFeatureAndSaveToDspData = ref([])
+//socket心跳
+const socketInterval = ref<any>(0)
+//选择设备的id
+const selectDeviceObj = ref({})
+//loading加载弹窗状态
+const loadingShowTypeStatus = ref(0)
+//loading超时弹窗的定时器
+const loadingTimer = ref<any>(null)
 let finger = null
 /**
  * methods
@@ -129,9 +137,19 @@ const loadingShow = () => {
   loading.value = ElLoadingShow()
 }
 //确认按钮
-const confirm = () => {
+const confirm = type => {
+  loadingShowTypeStatus.value = type
+  if (!selectValue.value) {
+    messageBoxShow('提示', '请选择设备', 'warning')
+    return
+  }
   loadingShow()
+  loadingTimer.value = setTimeout(() => {
+    messageBoxShow('提示', '连接超时,请检查指纹设备', 'error')
+    loading.value?.close()
+  }, 12000)
   selectChange()
+  clearTimeout(loadingTimer.value)
 }
 
 //获取设备列表
@@ -153,12 +171,27 @@ const getDeviceList = async () => {
 const selectChange = async () => {
   if (selectValue.value) {
     loadingShow()
-    let selectFind = cities.value.find(item => item.value === selectValue.value)
-    if (selectFind) {
-      await fingerSelect(selectFind.value)
-      await fingerComparison(selectFind.serviceId, selectFind.fingerPort)
+    selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
+    if (Object.keys(selectDeviceObj.value).length !== 0) {
+      await fingerSelect(selectDeviceObj.value.value)
+      //连接指纹模块
+      await fingerConnect(selectDeviceObj.value.serviceId, selectDeviceObj.value.fingerPort)
+      emitterFinger.once('connect_success', async () => {
+        console.log('连接成功')
+        //发送心跳
+        // socketHeartBeat()
+        await selectFingerData(selectDeviceObj.value.value)
+      })
     }
   }
+}
+
+//指纹模块的数据跟本地对比的数据的过滤后的数据重新查询对比
+const selectFingerData = async deviceId => {
+  //把本地的指纹数据更新no槽位为null的数据
+  await syncDownload()
+  await fingerSelect(deviceId)
+  await fingerComparison()
 }
 
 //请求finger对应的指纹数据表
@@ -180,13 +213,9 @@ const fingerSelect = async deviceId => {
     })
   }
 }
-//指纹连接并查询数据里的数据跟指纹数量是否相等
-const fingerComparison = async (host, port) => {
-  console.log('实例finger')
-  if (finger) {
-    finger.close()
-    finger = null
-  }
+//连接指纹模块类
+const fingerConnect = async (host, port) => {
+  finger = null
   let fingerConf = {
     host,
     port,
@@ -200,8 +229,14 @@ const fingerComparison = async (host, port) => {
   emitterFinger.once('connect_error', err => {
     loading.value.close()
     messageBoxShow('错误', '检验失败，请查看设备是否在线', 'error')
+    emitterFinger.emit('close')
+    finger = null
     return
   })
+}
+
+//指纹连接并查询数据里的数据跟指纹数量是否相等
+const fingerComparison = async () => {
   let fingerAllUser = await finger.getRegAllUserInfo()
   if (fingerAllUser.result === 'ACK_SUCCESS') {
     fingerTotal.value = fingerAllUser.total
@@ -215,53 +250,65 @@ const fingerComparison = async (host, port) => {
   await abnormalDispose()
 }
 
-//将本地数据库的槽位为no的数据先写进指纹模块中
+//将本地数据库的槽位为no的数据先写进指纹模块中-并且本地的数据库中特征值不为空
 const syncDownload = async () => {
   if (fingerDataLocalStorage.value.length > 0) {
     //过滤本地数据，只获取指纹槽位为空的-并且本地的指纹特征值不为空的
-    let fingerLocalFilter = fingerDataLocalStorage.value.filter(item => item.no === null)
-    let awaitDspStatus = false
-    await asyncForEach(fingerDataLocalStorage.value, async item => {
-      const res = await finger.downloadFeatureAndCompareOneToMore(item.fingerprint)
-      if (res.result === 'ACK_NOUSER') {
-        //如果不存在就下载 到最小的空槽位
-        const downloadRes = await finger.downloadFeatureAndSaveToDsp(await finger.getEmptyFno(), item.fingerprint)
-        // console.log(427, downloadRes)
-        if (downloadRes.result !== 'ACK_SUCCESS') {
-          awaitDspStatus = true
-        } else {
-          awaitDspStatus = false
-          downloadFeatureAndSaveToDspData.value.push({ ...downloadRes, fingerprint: item.fingerprint }) //TODO 获取空槽位对应的指纹槽位值
-        }
-        // console.log(380, downloadFeatureAndSaveToDspData.value)
-      }
-    })
-    if (awaitDspStatus) {
-      messageBoxShow('错误', '指纹写入失败，请重新同步', 'error')
+    let fingerLocalNoFilter = fingerDataLocalStorage.value.filter(item => item.no === null)
+    let fingerLocalFingerprintFilter = fingerDataLocalStorage.value.filter(item => item.fingerprint === null)
+    if (fingerLocalFingerprintFilter.length > 0) {
+      messageBoxShow('错误', '本地存在异常的数据,特征值为空', 'error')
+      loading.value.close()
       dialogVisible.value = false
-    } else {
-      let updateRequestRes = false
-      //把下载的指纹槽位更新到本地数据库中
-      fingerDataLocalStorage.value.forEach(item => {
-        downloadFeatureAndSaveToDspData.value.forEach(item2 => {
-          if (item.fingerprint.slice(0, 266) === item2.fingerprint.slice(0, 266)) {
-            item.no = item2.total
+      return
+    }
+    // console.log(253, fingerLocalNoFilter)
+    if (fingerLocalNoFilter.length > 0) {
+      let fingerLocalNoFilterCount = 0
+      let downloadFeatureAndSaveToDspData = []
+      await asyncForEach(fingerLocalNoFilter, async item => {
+        // console.log(259, item.fingerprint)
+        const res = await finger.downloadFeatureAndCompareOneToMore(item.fingerprint)
+        // console.log(260, res)
+        if (res.result === 'ACK_NOUSER' || res.result === 'ACK_SUCCESS') {
+          //如果不存在就下载 到最小的空槽位
+          const downloadRes = await finger.downloadFeatureAndSaveToDsp(await finger.getEmptyFno(), item.fingerprint)
+          console.log(427, downloadRes)
+          if (downloadRes.result === 'ACK_SUCCESS') {
+            fingerLocalNoFilterCount++
+            downloadFeatureAndSaveToDspData.push({ ...downloadRes, fingerprint: item.fingerprint }) //TODO 获取空槽位对应的指纹槽位值
+          }
+        }
+      })
+      if (fingerLocalNoFilterCount === fingerLocalNoFilter.length) {
+        console.log(277, downloadFeatureAndSaveToDspData)
+        let updateRequestRes = false
+        //把下载的指纹槽位更新到本地数据库中
+        fingerLocalNoFilter.forEach(item => {
+          downloadFeatureAndSaveToDspData.forEach(item2 => {
+            if (item.fingerprint.slice(0, 240) === item2.fingerprint.slice(0, 240)) {
+              item.no = item2.total
+            }
+          })
+        })
+        console.log('槽位空的数据', fingerLocalNoFilter)
+        //将数据更新到本地数据库
+        await asyncForEach(fingerLocalNoFilter, async item => {
+          let fingerUpdateRes = await Request(useUcStore().fingerUpdate, { id: item.id, no: item.no, deviceId: selectDeviceObj.value.value })
+          if (fingerUpdateRes) {
+            updateRequestRes = true
           }
         })
-      })
-      //将数据更新到本地数据库
-      await asyncForEach(fingerDataLocalStorage.value, async item => {
-        let fingerUpdateRes = await Request(useUcStore().fingerUpdate, { id: item.id, no: item.no })
-        if (fingerUpdateRes) {
-          updateRequestRes = true
+        if (updateRequestRes) {
+          fingerFilter.value = []
+          downloadFeatureAndSaveToDspData = []
+          // loading.value.close()
+          // dialogVisible.value = false
         }
-      })
-      if (updateRequestRes) {
-        fingerFilter.value = []
-        downloadFeatureAndSaveToDspData.value = []
+      } else {
+        messageBoxShow('错误', '指纹写入失败，请重新同步', 'error')
         loading.value.close()
         dialogVisible.value = false
-        await selectChange()
       }
     }
   }
@@ -276,7 +323,7 @@ const abnormalDispose = async () => {
       fingerData.value.push(fingerRes)
     })
   }
-  // console.log(280, fingerData.value)
+  console.log('指纹传感器的数据', fingerData.value)
   //指纹模块的数量多，本地finger表的数据少
   if (fingerTotal.value > fingerCount.value) {
     let fingerRes = fingerData.value.filter(obj1 => !fingerDataLocalStorage.value.some(obj2 => obj1.fno === obj2.no))
@@ -302,7 +349,7 @@ const abnormalDispose = async () => {
   } else if (fingerTotal.value === fingerCount.value) {
     //指纹模块数量和本地的finer表的数据相等
     //指纹模块的数据和本地数据对比
-    fingerFilter.value = fingerData.value.filter(obj1 => !fingerDataLocalStorage.value.some(obj2 => obj1.feature.slice(0, 266) === obj2.fingerprint.slice(0, 266) && obj1.fno === obj2.no))
+    fingerFilter.value = fingerData.value.filter(obj1 => !fingerDataLocalStorage.value.some(obj2 => obj1.feature.slice(0, 240) === obj2.fingerprint.slice(0, 240) && obj1.fno === obj2.no))
     console.log('指纹模块数据和本地数据对比', fingerFilter.value)
     tableList()
   }
@@ -315,6 +362,7 @@ const tableList = () => {
     Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerMores.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
     syncDisabled.value = false
     fingerDataLocalStorage.value.unshift(...fingerMores.value)
+    console.log('本地拼接的数据', fingerDataLocalStorage.value)
   } else if (fingerLocalMores.value.length > 0) {
     //指纹模块的数量少，本地finger表的数据多
     messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
@@ -330,7 +378,7 @@ const tableList = () => {
     syncDisabled.value = false
     fingerDataLocalStorage.value.forEach(item => {
       fingerFilter.value.forEach(item1 => {
-        if (item.no === item1.fno || item.fingerprint.slice(0, 266) === item1.feature.slice(0, 266)) {
+        if (item.no === item1.fno || item.fingerprint.slice(0, 240) === item1.feature.slice(0, 240)) {
           item.errorStatus = true
         }
       })
@@ -341,15 +389,22 @@ const tableList = () => {
     Description.value = '以下数据，跟指纹模块同步，无需同步'
   }
   tableData.value = fingerDataLocalStorage.value
-  // console.log(310, tableData.value)
-  loading.value.close()
-  dialogFormVisible.value = false
+  if (loadingShowTypeStatus.value === 1) {
+    loading.value.close()
+    dialogFormVisible.value = false
+  }
 }
 
 //同步功能逻辑
-const syncConfirm = () => {
+const syncConfirm = type => {
+  loadingShowTypeStatus.value = type
   loadingShow()
+  loadingTimer.value = setTimeout(() => {
+    messageBoxShow('提示', '连接超时,请检查指纹设备', 'error')
+    loading.value?.close()
+  }, 12000)
   debounce(syncButtonDebounce, 500)()
+  clearTimeout(loadingTimer.value)
 }
 
 //同步下载按钮
@@ -359,46 +414,51 @@ const syncButton = () => {
 //同步的防抖
 const syncButtonDebounce = async () => {
   //指纹模块的数量多，本地finger表的数据少
-  if (fingerTotal.value > fingerCount.value) {
-    let deleteStatus = false
+  if (fingerMores.value.length > 0) {
+    let deleteStatus = true
+    let deleteResCount = 0
     //删除指纹表里对应的槽位数据
-    if (fingerMores.value.length > 0) {
-      await asyncForEach(fingerMores.value, async item => {
-        const deleteRes = await finger.deleteSingle(item.no)
-        if (deleteRes.result !== 'ACK_SUCCESS') {
-          deleteStatus = true
-        }
-      })
-      if (deleteStatus) {
-        messageBoxShow('错误', '指纹模块数据删除失败，请重新同步', 'error')
-      } else {
-        fingerMores.value = []
-        loading.value.close()
-        // messageShow('提示', '同步完成')
-        await selectChange()
+    // console.log(406, fingerMores.value)
+    await asyncForEach(fingerMores.value, async item => {
+      // console.log(408, item.no)
+      const deleteRes = await finger.deleteSingle(item.no)
+      console.log(433, deleteRes)
+      if (deleteRes.result === 'ACK_SUCCESS') {
+        deleteResCount++
+        if (deleteResCount === fingerMores.value.length) deleteStatus = false
       }
-      dialogVisible.value = false
+    })
+    if (deleteStatus) {
+      messageBoxShow('错误', '指纹模块数据删除失败，请重新同步', 'error')
+      loading.value.close()
+    } else {
+      fingerMores.value = []
+      await selectFingerData(selectDeviceObj.value.value)
+      await syncButtonDebounce()
     }
-  } else if (fingerTotal.value < fingerCount.value) {
+    dialogVisible.value = false
+  } else if (fingerLocalMores.value.length > 0) {
     //指纹模块的数量少，本地finger表的数据多
-    let addFingerStatus = false
-    if (fingerLocalMores.value.length > 0) {
-      await asyncForEach(fingerLocalMores.value, async item => {
-        const addFingerRes = await finger.downloadFeatureAndSaveToDsp(item.no, item.fingerprint)
-        if (addFingerRes.result !== 'ACK_SUCCESS') {
-          addFingerStatus = true
-        }
-      })
-      if (addFingerStatus) {
-        messageBoxShow('错误', '同步上传指纹失败，请重新同步', 'error')
-      } else {
-        fingerLocalMores.value = []
-        loading.value.close()
-        // messageShow('提示', '同步完成')
-        await selectChange()
+    let addFingerStatus = true
+    let addFingerResCount = 0
+    await asyncForEach(fingerLocalMores.value, async item => {
+      // console.log(387, item.no, item.fingerprint)
+      const addFingerRes = await finger.downloadFeatureAndSaveToDsp(item.no, item.fingerprint)
+      // console.log(389, addFingerRes)
+      if (addFingerRes.result === 'ACK_SUCCESS') {
+        addFingerResCount++
+        if (addFingerResCount === fingerLocalMores.value.length) addFingerStatus = false
       }
-      dialogVisible.value = false
+    })
+    if (addFingerStatus) {
+      messageBoxShow('错误', '同步上传指纹失败，请重新同步', 'error')
+      loading.value.close()
+    } else {
+      fingerLocalMores.value = []
+      await selectFingerData(selectDeviceObj.value.value)
+      await syncButtonDebounce()
     }
+    dialogVisible.value = false
   } else if (fingerFilter.value.length > 0) {
     let deleteStatus = true
     let deleteResCount = 0
@@ -409,14 +469,13 @@ const syncButtonDebounce = async () => {
       const deleteRes = await finger.deleteSingle(item.fno)
       if (deleteRes.result === 'ACK_SUCCESS') {
         deleteResCount++
-        if (deleteResCount === fingerFilter.value.length) {
-          deleteStatus = false
-        }
+        if (deleteResCount === fingerFilter.value.length) deleteStatus = false
       }
     })
     if (deleteStatus) {
       messageBoxShow('错误', '指纹模块数据删除失败，请重新同步', 'error')
       dialogVisible.value = false
+      loading.value.close()
     } else {
       //删除指纹对应的槽位指纹-成功
       //先对比Dsp是否已经存在，如果不存在下载到空余的最小槽位
@@ -426,14 +485,14 @@ const syncButtonDebounce = async () => {
         if (res.result === 'ACK_NOUSER') {
           //如果不存在就下载 到最小的空槽位
           const downloadRes = await finger.downloadFeatureAndSaveToDsp(await finger.getEmptyFno(), item.fingerprint)
-          // console.log(427, downloadRes)
+          // console.log(429, downloadRes)
           if (downloadRes.result !== 'ACK_SUCCESS') {
             awaitDspStatus = true
           } else {
             awaitDspStatus = false
             downloadFeatureAndSaveToDspData.value.push({ ...downloadRes, fingerprint: item.fingerprint }) //TODO 获取空槽位对应的指纹槽位值
           }
-          // console.log(380, downloadFeatureAndSaveToDspData.value)
+          // console.log(436, downloadFeatureAndSaveToDspData.value)
         }
       })
       if (awaitDspStatus) {
@@ -444,7 +503,7 @@ const syncButtonDebounce = async () => {
         //把下载的指纹槽位更新到本地数据库中
         fingerDataLocalStorage.value.forEach(item => {
           downloadFeatureAndSaveToDspData.value.forEach(item2 => {
-            if (item.fingerprint.slice(0, 266) === item2.fingerprint.slice(0, 266)) {
+            if (item.fingerprint.slice(0, 240) === item2.fingerprint.slice(0, 240)) {
               item.no = item2.total
             }
           })
@@ -459,14 +518,21 @@ const syncButtonDebounce = async () => {
         if (updateRequestRes) {
           fingerFilter.value = []
           downloadFeatureAndSaveToDspData.value = []
-          loading.value.close()
-          dialogVisible.value = false
-          await selectChange()
+          await selectFingerData(selectDeviceObj.value.value)
+          await syncButtonDebounce()
         }
       }
     }
+  } else {
+    loading.value.close()
+    dialogFormVisible.value = false
+    dialogVisible.value = false
+    loadingShowTypeStatus.value = 0
   }
 }
+
+//socket心跳包
+const socketHeartBeat = () => {}
 
 /**
  * life
@@ -475,10 +541,10 @@ onMounted(() => {
   getDeviceList()
 })
 onUnmounted(() => {
-  if (finger) {
-    finger.close()
-    finger = null
-  }
+  emitterFinger.emit('close')
+  finger = null
+  clearInterval(socketInterval.value)
+  socketInterval.value = null
 })
 /**
  * provides

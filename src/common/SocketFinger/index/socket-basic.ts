@@ -38,8 +38,13 @@ export class SocketBasic {
     this.client.on('error', err => {
       this.myevents.emit('connect_error', err)
     }) //打开错误将会发出一个错误事件
-
-    // this.client.on("close", () => {});
+    //关闭事件
+    this.myevents.on('close', err => {
+      this.close()
+    }) //打开错误将会发出一个错误事件
+    this.client.on('close', () => {
+      console.log('SOCKET关闭')
+    })
     /**
      * 超时
      * 当 socket 空闲超时时触发，仅是表明 socket 已经空闲。用户必须手动关闭连接。
@@ -76,6 +81,14 @@ export class SocketBasic {
     this.client.on('end', () => {
       this.myevents.emit('connect_end')
       this.connect()
+    })
+  }
+
+  send(str) {
+    this.client.write(str, 'hex', function (err) {
+      if (err) {
+        return console.log('Error on write: ', err.message)
+      }
     })
   }
 
