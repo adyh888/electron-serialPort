@@ -46,8 +46,8 @@ export class SerialPortClass {
     })
     // 串口关闭
     this.serialPort.on('close', () => {
-      this.myevents.emit('serialPortStatus', false)
       console.log('串口关闭')
+      this.myevents.emit('serialPortStatus', false)
     })
     // 错误监听
     this.serialPort.on('error', (err: any) => {

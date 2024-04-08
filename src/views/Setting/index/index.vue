@@ -40,7 +40,6 @@
 import { ref, onMounted, provide } from 'vue'
 import { messageShow } from '../../../utils'
 import { useIndexStore } from '../../../store'
-import { SerialPortClass } from '../../../common/SerialPortClass'
 import { SerialPortFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { emitter2 } from '../../../utils/EventsBus'
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
@@ -48,8 +47,7 @@ const { SerialPort } = require('serialport')
 /**
  * data
  */
-//串口类的实例
-// const serialPortClass = new SerialPortClass()
+
 //选中串口的值
 const serialPortValue = ref('')
 //选中波特率的值
@@ -121,8 +119,7 @@ const switchChange = val => {
       path: serialPortValue.value,
       baudRate: Number(baudRateValue.value)
     }
-    fingerSerialPortClass.value = new SerialPortFinger(classObj)
-    console.log(15, fingerSerialPortClass.value)
+    fingerSerialPortClass.value = new SerialPortFinger()
   } else if (!serialPortValue.value && !baudRateValue.value) {
     serialStatus.value = false
     messageShow('请选择连接的配置参数', 'warning')

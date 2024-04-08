@@ -125,6 +125,8 @@ const selectDeviceObj = ref({})
 const loadingShowTypeStatus = ref(0)
 //loading超时弹窗的定时器
 const loadingTimer = ref<any>(null)
+//本地的原始数据库数据
+const localFingerData = ref([])
 let finger = null
 /**
  * methods
@@ -201,7 +203,7 @@ const fingerSelect = async deviceId => {
   let fingerRes = await Request(useUcStore().fingerSelect, { deviceId })
   if (fingerRes && fingerRes.total > 0) {
     fingerCount.value = fingerRes.total
-    fingerDataLocalStorage.value = fingerRes.data.map(item => {
+    let res = fingerRes.data.map(item => {
       return {
         no: item.no,
         id: item.id,
@@ -213,6 +215,8 @@ const fingerSelect = async deviceId => {
         errorStatus: false
       }
     })
+    fingerDataLocalStorage.value = res
+    localFingerData.value = res
   }
 }
 //连接指纹模块类
@@ -326,6 +330,7 @@ const abnormalDispose = async () => {
     })
   }
   console.log('指纹传感器的数据', fingerData.value)
+  showViewData()
   //指纹模块的数量多，本地finger表的数据少
   if (fingerTotal.value > fingerCount.value) {
     let fingerRes = fingerData.value.filter(obj1 => !fingerDataLocalStorage.value.some(obj2 => obj1.fno === obj2.no))
@@ -349,8 +354,7 @@ const abnormalDispose = async () => {
     console.log('本地多出来的指纹数据', fingerLocalMores.value)
     tableList()
   } else if (fingerTotal.value === fingerCount.value) {
-    //指纹模块数量和本地的finer表的数据相等
-    //指纹模块的数据和本地数据对比
+    //指纹模块数量和本地的finer表的数据相等---指纹模块的数据和本地数据对比
     fingerFilter.value = fingerData.value.filter(obj1 => !fingerDataLocalStorage.value.some(obj2 => obj1.feature.slice(0, 240) === obj2.fingerprint.slice(0, 240) && obj1.fno === obj2.no))
     console.log('指纹模块数据和本地数据对比', fingerFilter.value)
     tableList()
@@ -360,24 +364,24 @@ const abnormalDispose = async () => {
 const tableList = () => {
   //指纹模块的数量多，本地finger表的数据少
   if (fingerMores.value.length > 0) {
-    messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
-    Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerMores.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
-    syncDisabled.value = false
+    // messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
+    // Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerMores.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
+    // syncDisabled.value = false
     fingerDataLocalStorage.value.unshift(...fingerMores.value)
     console.log('本地拼接的数据', fingerDataLocalStorage.value)
   } else if (fingerLocalMores.value.length > 0) {
     //指纹模块的数量少，本地finger表的数据多
-    messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
-    Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerLocalMores.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
-    syncDisabled.value = false
+    // messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
+    // Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerLocalMores.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
+    // syncDisabled.value = false
     let fingerLocalRes: UnwrapRef<any> = fingerDataLocalStorage.value.filter(item => !fingerLocalMores.value.some(item1 => item1.no === item.no))
     fingerLocalRes.unshift(...fingerLocalMores.value)
     fingerDataLocalStorage.value = fingerLocalRes
   } else if (fingerFilter.value.length > 0) {
     //本地数据跟指纹模块数据相等，但是没有槽位或者特征值不对等
-    messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
-    Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerFilter.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
-    syncDisabled.value = false
+    // messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
+    // Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${fingerFilter.value.length}条不匹配，可点击“同步下载”修改不匹配数据！`
+    // syncDisabled.value = false
     fingerDataLocalStorage.value.forEach(item => {
       fingerFilter.value.forEach(item1 => {
         if (item.no === item1.fno || item.fingerprint.slice(0, 240) === item1.feature.slice(0, 240)) {
@@ -385,15 +389,56 @@ const tableList = () => {
         }
       })
     })
-  } else {
-    syncDisabled.value = true
-    messageBoxShow('提示', '指纹模块与本地服务器数据正常')
-    Description.value = '以下数据，跟指纹模块同步，无需同步'
   }
-  tableData.value = fingerDataLocalStorage.value
+  // else {
+  //   syncDisabled.value = true
+  //   messageBoxShow('提示', '指纹模块与本地服务器数据正常')
+  //   Description.value = '以下数据，跟指纹模块同步，无需同步'
+  // }
+  // tableData.value = fingerDataLocalStorage.value
   if (loadingShowTypeStatus.value === 1) {
     loading.value.close()
     dialogFormVisible.value = false
+  }
+}
+
+//界面显示的数据处理
+const showViewData = () => {
+  if (fingerData.value.length > 0 && localFingerData.value.length > 0) {
+    let comparisonRes = []
+    //传感器大于本地的数量
+    if (fingerData.value.length > localFingerData.value.length || fingerData.value.length === localFingerData.value.length) {
+      comparisonRes = fingerData.value.filter(item => !localFingerData.value.some(item1 => item.fno === item1.no && item.feature.slice(0, 240) === item1.fingerprint.slice(0, 240)))
+      localFingerData.value.forEach(item => {
+        comparisonRes.forEach(item1 => {
+          if (item.no === item1.fno) {
+            item.errorStatus = true
+          }
+        })
+      })
+    } else if (fingerData.value.length < localFingerData.value.length) {
+      //传感器小于本地的数量
+      comparisonRes = localFingerData.value.filter(item => !fingerData.value.some(item1 => item1.fno === item.no && item1.feature.slice(0, 240) === item.fingerprint.slice(0, 240)))
+      localFingerData.value.forEach(item => {
+        comparisonRes.forEach(item1 => {
+          if (item.no === item1.no) {
+            item.errorStatus = true
+          }
+        })
+      })
+    }
+    if (comparisonRes.length > 0) {
+      messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
+      Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${comparisonRes.length}条不匹配，可点击“同步下载”修改不匹配数据！`
+      syncDisabled.value = false
+    } else {
+      syncDisabled.value = true
+      messageBoxShow('提示', '指纹模块与本地服务器数据正常')
+      Description.value = '以下数据，跟指纹模块同步，无需同步'
+      //把localFingerData.value中no按照数据从小到大排序
+      localFingerData.value = localFingerData.value.sort((a, b) => a.no - b.no)
+    }
+    tableData.value = localFingerData.value
   }
 }
 

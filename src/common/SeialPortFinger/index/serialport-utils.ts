@@ -1,18 +1,13 @@
 /**
  * imports
  */
-import { SerialPortClass } from '../index/serialport-basic'
 import * as crc from 'crc'
 import axios from 'axios'
 
 /**
  * 串口工具类
  */
-export class SerialPortUtils extends SerialPortClass {
-  constructor(path: string, baudRate: number) {
-    super(path, baudRate)
-  }
-
+export class SerialPortUtils {
   /**
    * 高位填零
    * @param str 传入字符串
