@@ -1,7 +1,7 @@
 /**
  * imports
  */
-import { SerialPortUtils } from '../SeialPortFinger/index/serialport-utils'
+import { SerialPortUtils } from './index/serialport-utils'
 import * as _ from 'lodash'
 const { SerialPort } = require('serialport')
 import { emitter2 } from '../../utils/EventsBus'
@@ -56,207 +56,13 @@ export class SerialPortFinger extends SerialPortUtils {
    */
   private serialPort: any = null
 
-  myEvents: emitter2
+  myEvents = emitter2
 
   /**
    * 指纹 基本类
    * 仅包含 指纹 的基本方法和属性
    * 微雪指纹模块链接 https://www.waveshare.net/shop/UART-Fingerprint-Reader.htm
    */
-  constructor() {
-    /**
-     * 缓冲区数据
-     */
-    // this.myEvents.on('onData', (message: string) => {
-    //   // console.log(40,'card serial port on message',message)
-    //   // <Buffer 02 03 04 00 00 00 00 c9 33>
-    //   var buf: Buffer = Buffer.from(message, 'hex')
-    //   console.log('接收:', buf)
-    //
-    //   if (buf[0] == 245) {
-    //     //F5
-    //     switch (buf[1]) {
-    //       case 1: //01 第1次录入指纹
-    //         this.myEvents.emit('record1', buf)
-    //         break
-    //       case 2: //02 第2次录入指纹
-    //         this.myEvents.emit('record2', buf)
-    //         break
-    //       case 3: //03 第3次录入指纹
-    //         this.myEvents.emit('record3', buf)
-    //         break
-    //       case 4: //04 删除指定用户
-    //         this.myEvents.emit('deleteSingle', buf)
-    //         break
-    //       case 5: //05 删除所有用户
-    //         this.myEvents.emit('deleteAll', buf)
-    //         break
-    //       case 9: //09
-    //         if (buf[4] == 0) {
-    //           //0 获取用户数
-    //           this.myEvents.emit('getTotalUser', buf)
-    //         }
-    //         if (buf[4] == 255) {
-    //           //FF 获取容量
-    //           this.myEvents.emit('getTotalCapacity', buf)
-    //         }
-    //         break
-    //       case 11: //0B 比对1：1
-    //         this.myEvents.emit('companyOneToOne', buf)
-    //         break
-    //       case 12: //0C 比对1：N
-    //         this.myEvents.emit('compareOneToMore', buf)
-    //         break
-    //       case 38: //26 取DSP 模块版本号
-    //         this.myEvents.emit('getVersion', buf)
-    //         break
-    //       case 40: //28 取DSP 比较等级
-    //         this.myEvents.emit('compareGrade', buf)
-    //         break
-    //       case 36: //24 采集图像并上传
-    //         this.myEvents.emit('getImageAndUpload', buf)
-    //         break
-    //       case 35: //23 采集图像并提取特征值上传
-    //         this.myEvents.emit('getImageFeatureUpload', buf)
-    //         break
-    //       case 68: //44 下传特征值与采集指纹比对
-    //         this.myEvents.emit('downloadFeatureAndCompareToGetFeature', buf)
-    //         break
-    //       case 0x42: //42 下传指纹特征值与DSP 模块数据库指纹比对1：1
-    //         this.myEvents.emit('downloadFeatureAndCompareOneToOne', buf)
-    //         break
-    //       case 0x43: //43 下传指纹特征值与DSP 模块数据库指纹比对1：N
-    //         this.myEvents.emit('downloadFeatureAndCompareOneToMore', buf)
-    //         break
-    //       case 49: //31 上传DSP 模块数据库内指定用户特征值
-    //         this.myEvents.emit('uploadDspOne', buf)
-    //         break
-    //       case 65: //41 下传特征值并按指定用户号存入DSP 模块数据库
-    //         this.myEvents.emit('downloadFeatureAndSaveToDsp', buf)
-    //         break
-    //       case 43: //2B 取已登录所有用户用户号及权限
-    //         this.myEvents.emit('getRegAllUserInfo', buf)
-    //         break
-    //       case 44: //2C 使模块进入休眠状态
-    //         this.myEvents.emit('sleep', buf)
-    //         break
-    //       case 45: //2D 设置/读取指纹添加模式
-    //         this.myEvents.emit('fingerAddMode', buf)
-    //         break
-    //       case 46: //2E 设置/读取指纹采集等待超时时间
-    //         this.myEvents.emit('overTime', buf)
-    //         break
-    //       default:
-    //         break
-    //     }
-    //   } else {
-    //     console.log('返回head格式错误')
-    //   }
-    // })
-  }
-  /**
-   * 指纹 基本类
-   * 仅包含 指纹 的基本方法和属性
-   * 微雪指纹模块链接 https://www.waveshare.net/shop/UART-Fingerprint-Reader.htm
-   */
-  // constructor(fingerConf: FingerConf) {
-  //   let { path, baudRate } = fingerConf
-  //   super(path, baudRate)
-  //   console.log('finger begin to connect:', path, baudRate)
-  //   this.myEvents.on('connect_success', () => {
-  //     // this.flag=true
-  //     console.log('finger connect success:', path, baudRate)
-  //   })
-  //   /**
-  //    * 缓冲区数据
-  //    */
-  //   this.myEvents.on('onData', (message: string) => {
-  //     // console.log(40,'card serial port on message',message)
-  //     // <Buffer 02 03 04 00 00 00 00 c9 33>
-  //     var buf: Buffer = Buffer.from(message, 'hex')
-  //     console.log('接收:', buf)
-  //
-  //     if (buf[0] == 245) {
-  //       //F5
-  //       switch (buf[1]) {
-  //         case 1: //01 第1次录入指纹
-  //           this.myEvents.emit('record1', buf)
-  //           break
-  //         case 2: //02 第2次录入指纹
-  //           this.myEvents.emit('record2', buf)
-  //           break
-  //         case 3: //03 第3次录入指纹
-  //           this.myEvents.emit('record3', buf)
-  //           break
-  //         case 4: //04 删除指定用户
-  //           this.myEvents.emit('deleteSingle', buf)
-  //           break
-  //         case 5: //05 删除所有用户
-  //           this.myEvents.emit('deleteAll', buf)
-  //           break
-  //         case 9: //09
-  //           if (buf[4] == 0) {
-  //             //0 获取用户数
-  //             this.myEvents.emit('getTotalUser', buf)
-  //           }
-  //           if (buf[4] == 255) {
-  //             //FF 获取容量
-  //             this.myEvents.emit('getTotalCapacity', buf)
-  //           }
-  //           break
-  //         case 11: //0B 比对1：1
-  //           this.myEvents.emit('companyOneToOne', buf)
-  //           break
-  //         case 12: //0C 比对1：N
-  //           this.myEvents.emit('compareOneToMore', buf)
-  //           break
-  //         case 38: //26 取DSP 模块版本号
-  //           this.myEvents.emit('getVersion', buf)
-  //           break
-  //         case 40: //28 取DSP 比较等级
-  //           this.myEvents.emit('compareGrade', buf)
-  //           break
-  //         case 36: //24 采集图像并上传
-  //           this.myEvents.emit('getImageAndUpload', buf)
-  //           break
-  //         case 35: //23 采集图像并提取特征值上传
-  //           this.myEvents.emit('getImageFeatureUpload', buf)
-  //           break
-  //         case 68: //44 下传特征值与采集指纹比对
-  //           this.myEvents.emit('downloadFeatureAndCompareToGetFeature', buf)
-  //           break
-  //         case 0x42: //42 下传指纹特征值与DSP 模块数据库指纹比对1：1
-  //           this.myEvents.emit('downloadFeatureAndCompareOneToOne', buf)
-  //           break
-  //         case 0x43: //43 下传指纹特征值与DSP 模块数据库指纹比对1：N
-  //           this.myEvents.emit('downloadFeatureAndCompareOneToMore', buf)
-  //           break
-  //         case 49: //31 上传DSP 模块数据库内指定用户特征值
-  //           this.myEvents.emit('uploadDspOne', buf)
-  //           break
-  //         case 65: //41 下传特征值并按指定用户号存入DSP 模块数据库
-  //           this.myEvents.emit('downloadFeatureAndSaveToDsp', buf)
-  //           break
-  //         case 43: //2B 取已登录所有用户用户号及权限
-  //           this.myEvents.emit('getRegAllUserInfo', buf)
-  //           break
-  //         case 44: //2C 使模块进入休眠状态
-  //           this.myEvents.emit('sleep', buf)
-  //           break
-  //         case 45: //2D 设置/读取指纹添加模式
-  //           this.myEvents.emit('fingerAddMode', buf)
-  //           break
-  //         case 46: //2E 设置/读取指纹采集等待超时时间
-  //           this.myEvents.emit('overTime', buf)
-  //           break
-  //         default:
-  //           break
-  //       }
-  //     } else {
-  //       console.log('返回head格式错误')
-  //     }
-  //   })
-  // }
 
   /**
    * 初始化串口
@@ -272,6 +78,7 @@ export class SerialPortFinger extends SerialPortUtils {
       stopBits: 1, // 停止位
       autoOpen: false // 是否自动打开端口
     })
+    console.log(17, this.serialPort)
     // 打开串口
     this.serialPort.open((err: any) => {
       if (err) {
@@ -282,6 +89,7 @@ export class SerialPortFinger extends SerialPortUtils {
     })
     // 串口数据监听
     this.serialPort.on('data', (data: any) => {
+      console.log('接收到的数据data', data)
       var buf: Buffer = Buffer.from(data, 'hex')
       console.log('接收:', buf)
       if (buf[0] == 245) {
@@ -481,7 +289,7 @@ export class SerialPortFinger extends SerialPortUtils {
     //   }
     //   // console.log('message written',cmd);
     // })
-    this.client.write(cmd)
+    this.write(cmd)
   }
 
   /**
@@ -493,12 +301,13 @@ export class SerialPortFinger extends SerialPortUtils {
     return new Promise(resolve => {
       //发送报文
       let cmd = 'F5050000000005F5'
-      this.client.write(cmd, 'hex', function (err) {
-        if (err) {
-          return console.log('Error on write: ', err.message)
-        }
-        // console.log('message written',cmd);
-      })
+      this.write(cmd)
+      // this.client.write(cmd, 'hex', function (err) {
+      //   if (err) {
+      //     return console.log('Error on write: ', err.message)
+      //   }
+      //   // console.log('message written',cmd);
+      // })
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
       this.myEvents.once('deleteAll', buf => {
@@ -527,12 +336,13 @@ export class SerialPortFinger extends SerialPortUtils {
         console.log('fingerAddMode', cmd)
         if (cmd) {
           //发送报文
-          this.client.write(cmd, 'hex', function (err) {
-            if (err) {
-              return console.log('Error on write: ', err.message)
-            }
-            console.log('message written', cmd)
-          })
+          this.write(cmd)
+          // this.client.write(cmd, 'hex', function (err) {
+          //   if (err) {
+          //     return console.log('Error on write: ', err.message)
+          //   }
+          //   console.log('message written', cmd)
+          // })
           //接收报文后的响应
           // <Buffer f5 2d 00 01 00 00 2c f5>
           this.myEvents.once('fingerAddMode', buf => {
@@ -1093,6 +903,7 @@ export class SerialPortFinger extends SerialPortUtils {
    * 发送写数据
    */
   write(data: string) {
+    console.log('发送的数据', data)
     const buffer = strHexBuffer(data)
     // 打开串口
     this.serialPort.write(buffer, err => {

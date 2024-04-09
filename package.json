@@ -1,6 +1,6 @@
 {
   "name": "tool-electron",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "dist-electron/main/index.js",
   "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket",
   "author": "LWW",
@@ -34,6 +34,7 @@
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "serialport": "^10.4.0",
+    "vue-cropper": "^1.1.1",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
@@ -43,6 +44,7 @@
     "electron-builder": "^23.6.0",
     "electron-rebuild": "^3.2.9",
     "prettier": "3.2.5",
+    "sass": "^1.74.1",
     "typescript": "^5.0.2",
     "unplugin-auto-import": "^0.17.5",
     "unplugin-vue-components": "^0.26.0",

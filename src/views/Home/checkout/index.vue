@@ -427,7 +427,7 @@ const showViewData = () => {
         })
       })
     }
-    if (comparisonRes.length > 0) {
+    if (comparisonRes.length > 0 && loadingShowTypeStatus.value === 1) {
       messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
       Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${comparisonRes.length}条不匹配，可点击“同步下载”修改不匹配数据！`
       syncDisabled.value = false
@@ -455,8 +455,20 @@ const syncConfirm = type => {
 }
 
 //同步下载按钮
-const syncButton = () => {
-  dialogVisible.value = true
+const syncButton = type => {
+  switch (type) {
+    case 1:
+      dialogVisible.value = true
+      break
+    case 2:
+      searchLocal()
+      break
+    case 3:
+      formInline.nickname = ''
+      formInline.username = ''
+      searchLocal()
+      break
+  }
 }
 //同步的防抖
 const syncButtonDebounce = async () => {
@@ -580,6 +592,13 @@ const syncButtonDebounce = async () => {
 
 //socket心跳包
 const socketHeartBeat = () => {}
+
+//本地的搜索
+const searchLocal = () => {
+  if (formInline.nickname !== '') tableData.value = localFingerData.value.filter(item => item.nickname === formInline.nickname)
+  if (formInline.username !== '') tableData.value = localFingerData.value.filter(item => item.username === formInline.username)
+  if (formInline.username === '' && formInline.nickname === '') tableData.value = localFingerData.value
+}
 
 /**
  * life

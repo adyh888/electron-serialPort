@@ -12,9 +12,9 @@
       <!--      </el-form-item>-->
     </el-form>
     <div style="display: flex; flex-direction: row-reverse">
-      <el-button style="margin-left: 20px" type="primary" @click="syncButton">重置</el-button>
-      <el-button style="margin-left: 20px" type="primary" @click="syncButton">搜索</el-button>
-      <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton">同步</el-button>
+      <el-button style="margin-left: 20px" type="primary" @click="syncButton(3)">重置</el-button>
+      <el-button style="margin-left: 20px" type="primary" @click="syncButton(2)">搜索</el-button>
+      <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(1)">同步</el-button>
     </div>
   </div>
 </template>

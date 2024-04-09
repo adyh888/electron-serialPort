@@ -19,8 +19,9 @@
 /**
  * imports
  */
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useOrganizationPermission } from '../../hook/useHook'
 /**
  * data
  */
@@ -51,6 +52,11 @@ const tabBar = ref([
 const labelClick = item => {
   router.push(item.path)
 }
+
+/**
+ * life
+ */
+onMounted(() => {})
 </script>
 
 <style scoped></style>

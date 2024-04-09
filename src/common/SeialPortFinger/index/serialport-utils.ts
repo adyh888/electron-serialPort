@@ -8,6 +8,7 @@ import axios from 'axios'
  * 串口工具类
  */
 export class SerialPortUtils {
+  constructor() {}
   /**
    * 高位填零
    * @param str 传入字符串

@@ -8,8 +8,10 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     BottomComponent: typeof import('./src/components/CommonComponents/BottomComponent.vue')['default']
+    CropperUploadComponent: typeof import('./src/components/CommonComponents/CropperUploadComponent.vue')['default']
     DialogComponent: typeof import('./src/components/FunComponents/DialogComponent.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCascader: typeof import('element-plus/es')['ElCascader']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
@@ -22,6 +24,7 @@ declare module 'vue' {
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    ElUpload: typeof import('element-plus/es')['ElUpload']
     HeadComponent: typeof import('./src/components/CommonComponents/HeadComponent.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     HomeIndexComponent: typeof import('./src/components/FunComponents/HomeIndexComponent.vue')['default']
