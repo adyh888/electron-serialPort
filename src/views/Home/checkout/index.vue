@@ -102,7 +102,13 @@ const formInline = reactive({
   nickname: ''
 })
 //分页总数据
-const total = ref(0)
+//分页器
+const pagination = reactive<any>({
+  pageNum: 1,
+  pageSize: 15,
+  total: 0
+})
+
 //指纹模块的数据
 const fingerData = ref([])
 //指纹模块的用户列表数据
@@ -438,7 +444,8 @@ const showViewData = () => {
       //把localFingerData.value中no按照数据从小到大排序
       localFingerData.value = localFingerData.value.sort((a, b) => a.no - b.no)
     }
-    tableData.value = localFingerData.value
+    getList()
+    // tableData.value = localFingerData.value
   }
 }
 
@@ -600,6 +607,32 @@ const searchLocal = () => {
   if (formInline.username === '' && formInline.nickname === '') tableData.value = localFingerData.value
 }
 
+// 本地分页-切割数据
+const paging = () => {
+  // 起始位置 = (当前页 - 1) x 每页的大小
+  const start = (pagination.pageNum - 1) * pagination.pageSize
+  // 结束位置 = 当前页 x 每页的大小
+  const end = pagination.pageNum * pagination.pageSize
+  tableData.value = localFingerData.value.slice(start, end)
+}
+
+// 获取列表数据
+const getList = async () => {
+  pagination.total = localFingerData.value.length
+  paging()
+}
+
+// 分页事件
+const handleSizeChange = (val: number) => {
+  pagination.page = 1
+  pagination.limit = val
+  getList()
+}
+const handleCurrentChange = (val: number) => {
+  pagination.page = val
+  getList()
+}
+
 /**
  * life
  */
@@ -615,7 +648,7 @@ onUnmounted(() => {
 /**
  * provides
  */
-provide('dataProvide', { HeadTitle, BackShow, tableData, columns, syncButton, formInline, total, syncDisabled })
+provide('dataProvide', { HeadTitle, BackShow, tableData, columns, syncButton, formInline, pagination, syncDisabled, handleSizeChange, handleCurrentChange })
 </script>
 
 <style scoped></style>
