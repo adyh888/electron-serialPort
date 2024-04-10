@@ -17,6 +17,16 @@ export enum Q3 {
   ACK_TIMEOUT = 8 //采集超时
 }
 
+export enum showErrFinger {
+  ACK_SUCCESS = '操作成功', //操作成功
+  ACK_FAIL = '操作失败', //操作失败
+  ACK_FULL = '指纹数据库已满', //指纹数据库已满
+  ACK_NOUSER = '无此用户', //无此用户
+  ACK_USER_OPD = '用户已存在', //用户已存在
+  ACK_FIN_OPD = '指纹已存在', //指纹已存在
+  ACK_TIMEOUT = '采集超时' //采集超时
+}
+
 export interface Res {
   result: string
 }

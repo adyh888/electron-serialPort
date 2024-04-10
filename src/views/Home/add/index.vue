@@ -34,7 +34,7 @@
                 <div style="width: 60px; text-align: justify; text-align-last: justify; margin-left: 5px">{{ item.title }}</div>
                 <div>:</div>
               </div>
-              <el-input v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
+              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
               <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15" />
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
                 <el-button type="primary" :icon="Edit" circle @click="editButton(item)" />
@@ -61,7 +61,10 @@ import { provide, ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useIndexStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { useOrganizationPermission } from '../../../hook/useHook'
+import { getDeviceList, getSerialPortStatus, useOrganizationPermission } from '../../../hook/useHook'
+import { emitter2 } from '../../../utils/EventsBus'
+import { messageBoxShow } from '../../../utils'
+import { showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 /**
  * data
  */
@@ -139,6 +142,7 @@ const rightData = ref([
     value: '',
     placeholder: '请录入卡号',
     mandatory: false,
+    disabled: true,
     setting: true,
     type: 'input'
   },
@@ -147,8 +151,10 @@ const rightData = ref([
     id: 3,
     title: '指纹',
     value: '',
+    fingerprint: '',
     placeholder: '请录入指纹',
     setting: true,
+    disabled: true,
     mandatory: false,
     type: 'input'
   },
@@ -165,29 +171,19 @@ const rightData = ref([
 const cascaderOptions = ref([])
 const options = [
   {
-    value: 'Option1',
-    label: 'Option1'
+    value: 2,
+    label: '普通用户'
   },
   {
-    value: 'Option2',
-    label: 'Option2'
-  },
-  {
-    value: 'Option3',
-    label: 'Option3'
-  },
-  {
-    value: 'Option4',
-    label: 'Option4'
-  },
-  {
-    value: 'Option5',
-    label: 'Option5'
+    value: 3,
+    label: '管理员'
   }
 ]
 // 裁剪的配置
 const urlList = reactive([])
-
+//指纹进度条弹窗
+const dialogFingerVisible = ref(false)
+const percentage = ref(0)
 /**
  * methods
  */
@@ -202,30 +198,108 @@ const cancel = () => {
 const confirm = type => {}
 
 //编辑按钮
-const editButton = item => {
+const editButton = async item => {
   console.log(item)
+  switch (item.id) {
+    case 3:
+      //指纹状态
+      let serialPortStatus = getSerialPortStatus()
+      if (serialPortStatus) {
+        messageBoxShow('提示', '请放入手指', 'warning')
+        let serialPort = user.SerialPortClass
+        let fno = await serialPort.getEmptyFno()
+        console.log('空槽位', fno)
+        dialogFingerVisible.value = true
+        onFingerEvent()
+        let fingerRes
+        try {
+          fingerRes = await serialPort.record(fno)
+        } catch (e) {
+          percentage.value = 0
+          messageBoxShow('提示', `指纹采集失败,${showErrFinger[e]}`, 'error')
+          dialogFingerVisible.value = false
+        }
+        if (fingerRes && fingerRes.result === '录入成功') {
+          percentage.value = 100
+          messageBoxShow('提示', '指纹录入成功')
+          rightData.value[2].value = fno
+          const fingerUser = await serialPort.uploadDspOne(fno)
+          console.log('录入用户的信息', fingerUser)
+          if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
+            rightData.value[2].fingerprint = fingerUser.feature
+          }
+          setTimeout(() => {
+            dialogFingerVisible.value = false
+          }, 1500)
+        }
+      } else {
+        await router.push('/setting')
+      }
+      break
+  }
 }
 
 //删除按钮
-const deleteButton = item => {
+const deleteButton = async item => {
   console.log(item)
-  router.push('/setting')
+  switch (item.id) {
+    case 3:
+      let serialPortStatus = getSerialPortStatus()
+      if (serialPortStatus) {
+        if (rightData.value[2].value) {
+          let serialPort = user.SerialPortClass
+          const res = await serialPort.deleteSingle(rightData.value[2].value)
+          console.log('删除指纹信息', res)
+          if (res && res.result === 'ACK_SUCCESS') {
+            rightData.value[2].value = ''
+            rightData.value[2].fingerprint = ''
+            messageBoxShow('提示', '指纹删除成功')
+          }
+        } else {
+          messageBoxShow('提示', '无对应的指纹需要删除', 'error')
+        }
+      } else {
+        messageBoxShow('提示', '指纹设备不在线', 'error')
+        setTimeout(() => {
+          router.push('/setting')
+        }, 1000)
+      }
+      break
+  }
 }
 
 //级联选择器
 const handleChange = () => {}
 
+//录入指纹
+const inputFinger = () => {}
+
+//录入指纹的事件监听
+const onFingerEvent = () => {
+  emitter2.once('record1', () => {
+    percentage.value = 30
+  })
+  emitter2.once('record2', () => {
+    percentage.value = 60
+  })
+  emitter2.once('record3', () => {
+    percentage.value = 90
+  })
+}
+
 /**
  * life
  */
-onMounted(() => {
+onMounted(async () => {
   cascaderOptions.value = useOrganizationPermission()
+  let deviceArr = await getDeviceList()
+  console.log(224, deviceArr)
 })
 
 /**
  * provides
  */
-provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle })
+provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage })
 </script>
 
 <style scoped>

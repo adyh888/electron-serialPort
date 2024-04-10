@@ -27,7 +27,6 @@
           <div style="width: 90px; color: white">开/关:</div>
           <el-switch v-model="serialStatus" size="large" inline-prompt style="--el-switch-on-color: #3595fb; --el-switch-off-color: #ff4949" active-text="已连接" inactive-text="未连接" @change="switchChange" />
         </div>
-        <el-button type="primary" round @click="writeSerialPort">测试写数据</el-button>
       </div>
     </div>
   </div>
@@ -57,38 +56,38 @@ const baudRateValue = ref('')
 const serialOptions = ref([])
 //波特率列表
 const baudRateOptions = ref([
-  {
-    value: '115200',
-    label: '115200'
-  },
-  {
-    value: '57600',
-    label: '57600'
-  },
-  {
-    value: '38400',
-    label: '38400'
-  },
+  // {
+  //   value: '115200',
+  //   label: '115200'
+  // },
+  // {
+  //   value: '57600',
+  //   label: '57600'
+  // },
+  // {
+  //   value: '38400',
+  //   label: '38400'
+  // },
   {
     value: '19200',
     label: '19200'
-  },
-  {
-    value: '9600',
-    label: '9600'
-  },
-  {
-    value: '4800',
-    label: '4800'
-  },
-  {
-    value: '2400',
-    label: '2400'
-  },
-  {
-    value: '1800',
-    label: '1800'
   }
+  // {
+  //   value: '9600',
+  //   label: '9600'
+  // },
+  // {
+  //   value: '4800',
+  //   label: '4800'
+  // },
+  // {
+  //   value: '2400',
+  //   label: '2400'
+  // },
+  // {
+  //   value: '1800',
+  //   label: '1800'
+  // }
 ])
 //串口状态
 const serialStatus = ref(false)
@@ -116,6 +115,8 @@ const getSerialPortList = async () => {
 const switchChange = val => {
   if (val && serialPortValue.value && baudRateValue.value) {
     fingerSerialPortClass.init(serialPortValue.value, Number(baudRateValue.value))
+    //把串口的类写入到pinia中
+    indexStore.SerialPortClass = fingerSerialPortClass
   } else if (!serialPortValue.value && !baudRateValue.value) {
     serialStatus.value = false
     messageShow('请选择连接的配置参数', 'warning')
@@ -138,11 +139,6 @@ const listenSerialPort = () => {
   })
 }
 
-const writeSerialPort = async () => {
-  // fingerSerialPortClass.write('F5090000000009F5')
-  let fno = await fingerSerialPortClass.getEmptyFno()
-  console.log('空槽位', fno)
-}
 //默认进入页面获取串口的状态
 const getSerialPortStoreStatus = () => {
   serialStatus.value = indexStore.serialPortStoreStatus

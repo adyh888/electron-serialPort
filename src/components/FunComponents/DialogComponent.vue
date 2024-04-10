@@ -17,6 +17,11 @@
         </div>
       </template>
     </el-dialog>
+    <el-dialog v-model="dialogFingerVisible" title="请录入指纹" width="300" align-center :close-on-click-modal="false" :close-on-press-escape="false">
+      <div style="display: flex; justify-content: center; height: 20vh; align-items: center">
+        <el-progress type="dashboard" :percentage="percentage" :color="colors" :width="200" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -27,9 +32,18 @@
 import { inject } from 'vue'
 
 /**
+ * data
+ */
+const colors = [
+  { color: '#e6a23c', percentage: 30 },
+  { color: '#5cb87a', percentage: 60 },
+  { color: '#1989fa', percentage: 90 },
+  { color: '#6f7ad3', percentage: 100 }
+]
+/**
  * injects
  */
-const { dialogFormVisible, selectChangeDialog, selectValue, cities, cancel, confirm } = inject('dataProvide')
+const { dialogFormVisible, selectChangeDialog, selectValue, cities, cancel, confirm, dialogFingerVisible, percentage } = inject('dataProvide')
 </script>
 
 <style scoped></style>

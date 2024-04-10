@@ -152,6 +152,10 @@ const confirm = type => {
     messageBoxShow('提示', '请选择设备', 'warning')
     return
   }
+  if (!selectDeviceObj.value.serviceId) {
+    messageBoxShow('提示', '没有配置服务器地址', 'warning')
+    return
+  }
   loadingShow()
   loadingTimer.value = setTimeout(() => {
     messageBoxShow('提示', '连接超时,请检查指纹设备', 'error')
@@ -162,7 +166,10 @@ const confirm = type => {
 }
 
 //选中事件
-const selectChangeDialog = () => {}
+const selectChangeDialog = () => {
+  selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
+  console.log(16, selectDeviceObj.value)
+}
 
 //获取设备列表
 const getDeviceList = async () => {

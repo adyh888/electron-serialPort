@@ -1,7 +1,7 @@
 /**
  * imports
  */
-import { useIndexStore } from '../store'
+import { Request, useDcStore, useIndexStore } from '../store'
 
 /**
  * 组织架构权限处理
@@ -21,6 +21,7 @@ export function useOrganizationPermission() {
 }
 
 /**
+ * 级联树
  * 公司-组织
  */
 function companyAndDepartment() {
@@ -43,6 +44,7 @@ function companyAndDepartment() {
 }
 
 /**
+ * 级联树
  * 集团-公司-组织-部门
  */
 function groupAndCompanyAndDepartment() {
@@ -74,4 +76,55 @@ function groupAndCompanyAndDepartment() {
       }
     ]
   }
+}
+
+/**
+ * 获取设备的信息
+ */
+export async function getDeviceList() {
+  let res = await Request(useDcStore().deviceSelect, userGradeJson())
+  if (res && res.data.length > 0) {
+    return res.data.map(item => {
+      return {
+        label: item.name,
+        value: item.id,
+        type: item.deviceType?.kind,
+        serviceId: item.serviceId,
+        fingerPort: item.fingerPort
+      }
+    })
+  }
+}
+
+/**
+ * 组织架构的传参处理
+ */
+export function userGradeJson() {
+  const user = useIndexStore()
+  const grade = user.userInfo.role?.grade
+  //TODO grade:1集团管理员，2:公司管理员 0:超级管理员
+  switch (grade) {
+    case 1:
+    case 0:
+    case -1:
+      return {
+        groupId: user.userInfo.group?.id,
+        companyId: user.userInfo.company?.id,
+        departmentId: user.userInfo.department?.id
+      }
+    case 2:
+      return {
+        companyId: user.userInfo.company?.id,
+        departmentId: user.userInfo.department?.id
+      }
+  }
+}
+
+/**
+ * 获取到串口状态
+ *
+ */
+export function getSerialPortStatus() {
+  const indexStore = useIndexStore()
+  return indexStore.serialPortStoreStatus
 }
