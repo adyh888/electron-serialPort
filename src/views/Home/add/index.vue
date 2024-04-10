@@ -35,6 +35,7 @@
                 <div>:</div>
               </div>
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
+              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" show-password v-if="item.type === 'password'" />
               <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15" />
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
                 <el-button type="primary" :icon="Edit" circle @click="editButton(item)" />
@@ -43,7 +44,7 @@
             </div>
           </div>
         </div>
-        <el-button type="primary" style="width: 300px; margin-top: 100px; height: 60px; font-size: 22px">确认</el-button>
+        <el-button type="primary" style="width: 300px; margin-top: 100px; height: 60px; font-size: 22px" @click="confirmSubmit">确认</el-button>
       </div>
     </div>
     <DialogComponent />
@@ -59,12 +60,13 @@ import DialogComponent from '../../../components/FunComponents/DialogComponent.v
 import CropperUploadComponent from '../../../components/CommonComponents/CropperUploadComponent.vue'
 import { provide, ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useIndexStore } from '../../../store'
+import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { getDeviceList, getSerialPortStatus, useOrganizationPermission } from '../../../hook/useHook'
+import { getDeviceList, getSerialPortStatus, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { messageBoxShow } from '../../../utils'
 import { showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
+import { deviceType } from '../../../enum'
 /**
  * data
  */
@@ -83,6 +85,7 @@ const leftData = ref([
     value: '',
     placeholder: '请选择组织架构',
     mandatory: true,
+    required: true,
     type: 'cascader'
   },
   {
@@ -91,6 +94,7 @@ const leftData = ref([
     value: '',
     placeholder: '请输入账号',
     mandatory: true,
+    required: true,
     type: 'input'
   },
   {
@@ -99,22 +103,24 @@ const leftData = ref([
     value: '',
     placeholder: '请输入昵称',
     mandatory: true,
+    required: true,
     type: 'input'
   },
-  {
-    id: 4,
-    title: '角色',
-    value: '',
-    placeholder: '请选择角色',
-    mandatory: true,
-    type: 'select'
-  },
+  // {
+  //   id: 4,
+  //   title: '角色',
+  //   value: '',
+  //   placeholder: '请选择角色',
+  //   mandatory: true,
+  //   type: 'select'
+  // },
   {
     id: 5,
     title: '工号',
     value: '',
     placeholder: '请输入工号',
     mandatory: false,
+    required: false,
     type: 'input'
   },
   {
@@ -123,6 +129,7 @@ const leftData = ref([
     value: '',
     placeholder: '请输入手机号',
     mandatory: false,
+    required: false,
     type: 'input'
   }
 ])
@@ -133,7 +140,9 @@ const rightData = ref([
     value: '',
     placeholder: '请输入密码',
     mandatory: true,
-    type: 'input',
+    disabled: false,
+    required: true,
+    type: 'password',
     setting: false
   },
   {
@@ -143,6 +152,7 @@ const rightData = ref([
     placeholder: '请录入卡号',
     mandatory: false,
     disabled: true,
+    required: false,
     setting: true,
     type: 'input'
   },
@@ -155,18 +165,21 @@ const rightData = ref([
     placeholder: '请录入指纹',
     setting: true,
     disabled: true,
+    required: false,
     mandatory: false,
     type: 'input'
-  },
-  {
-    id: 4,
-    title: '人脸',
-    value: '',
-    placeholder: '请录入人脸',
-    setting: false,
-    mandatory: false,
-    type: 'image'
   }
+  // {
+  //   id: 4,
+  //   title: '人脸',
+  //   value: '',
+  //   placeholder: '请录入人脸',
+  //   setting: false,
+  //   disabled: false,
+  //   required: false,
+  //   mandatory: false,
+  //   type: 'image'
+  // }
 ])
 const cascaderOptions = ref([])
 const options = [
@@ -184,6 +197,7 @@ const urlList = reactive([])
 //指纹进度条弹窗
 const dialogFingerVisible = ref(false)
 const percentage = ref(0)
+let userInfoForm = reactive<any>({ ...userGradeJson(), roleIdArr: [2], roleId2Arr: [2] }) //默认普通用户权限
 /**
  * methods
  */
@@ -202,39 +216,7 @@ const editButton = async item => {
   console.log(item)
   switch (item.id) {
     case 3:
-      //指纹状态
-      let serialPortStatus = getSerialPortStatus()
-      if (serialPortStatus) {
-        messageBoxShow('提示', '请放入手指', 'warning')
-        let serialPort = user.SerialPortClass
-        let fno = await serialPort.getEmptyFno()
-        console.log('空槽位', fno)
-        dialogFingerVisible.value = true
-        onFingerEvent()
-        let fingerRes
-        try {
-          fingerRes = await serialPort.record(fno)
-        } catch (e) {
-          percentage.value = 0
-          messageBoxShow('提示', `指纹采集失败,${showErrFinger[e]}`, 'error')
-          dialogFingerVisible.value = false
-        }
-        if (fingerRes && fingerRes.result === '录入成功') {
-          percentage.value = 100
-          messageBoxShow('提示', '指纹录入成功')
-          rightData.value[2].value = fno
-          const fingerUser = await serialPort.uploadDspOne(fno)
-          console.log('录入用户的信息', fingerUser)
-          if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
-            rightData.value[2].fingerprint = fingerUser.feature
-          }
-          setTimeout(() => {
-            dialogFingerVisible.value = false
-          }, 1500)
-        }
-      } else {
-        await router.push('/setting')
-      }
+      await inputFinger()
       break
   }
 }
@@ -272,7 +254,42 @@ const deleteButton = async item => {
 const handleChange = () => {}
 
 //录入指纹
-const inputFinger = () => {}
+const inputFinger = async () => {
+  //指纹状态
+  let serialPortStatus = getSerialPortStatus()
+  if (serialPortStatus) {
+    messageBoxShow('提示', '请放入手指', 'warning')
+    let serialPort = user.SerialPortClass
+    let fno = await serialPort.getEmptyFno()
+    console.log('空槽位', fno)
+    dialogFingerVisible.value = true
+    onFingerEvent()
+    let fingerRes
+    try {
+      fingerRes = await serialPort.record(fno)
+    } catch (e) {
+      percentage.value = 0
+      messageBoxShow('提示', `指纹采集失败,${showErrFinger[e]}`, 'error')
+      dialogFingerVisible.value = false
+    }
+    if (fingerRes && fingerRes.result === '录入成功') {
+      percentage.value = 100
+      messageBoxShow('提示', '指纹录入成功')
+      rightData.value[2].value = fno
+      const fingerUser = await serialPort.uploadDspOne(fno)
+      console.log('录入用户的信息', fingerUser)
+      if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
+        rightData.value[2].fingerprint = fingerUser.feature
+      }
+      setTimeout(() => {
+        dialogFingerVisible.value = false
+        percentage.value = 0
+      }, 1000)
+    }
+  } else {
+    await router.push('/setting')
+  }
+}
 
 //录入指纹的事件监听
 const onFingerEvent = () => {
@@ -287,13 +304,62 @@ const onFingerEvent = () => {
   })
 }
 
+//提交
+const confirmSubmit = async () => {
+  let requestData = []
+  let leftFilterArr = leftData.value.filter(item => item.required && item.value !== '')
+  let rightFilterArr = rightData.value.filter(item => item.required && item.value !== '')
+  if (rightFilterArr.length > 0) {
+    requestData = [...leftFilterArr, ...rightFilterArr]
+  } else {
+    requestData = leftFilterArr
+  }
+  if (requestData.length === 4) {
+    leftData.value.forEach(item => {
+      if (item.id === 2) {
+        userInfoForm.nickname = item.value
+      }
+      if (item.id === 3) {
+        userInfoForm.username = item.value
+      }
+      if (item.id === 5 && item.value !== '') {
+        userInfoForm.cardNo = item.value
+      }
+      if (item.id === 6 && item.value !== '') {
+        userInfoForm.phoneNo = item.value
+      }
+    })
+    rightData.value.forEach(item => {
+      if (item.id === 1) {
+        userInfoForm.password = item.value
+      }
+      if (item.id === 3 && item.value !== '') {
+        userInfoForm.fingerprint = item.fingerprint
+      }
+    })
+    let registerRes = await Request(useUcStore().userRegister, userInfoForm)
+    if (registerRes) {
+      messageBoxShow('提示', '人员录入成功', 'success', 2000)
+      setTimeout(() => {
+        cancel()
+      }, 1000)
+    }
+  } else {
+    messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
+  }
+}
+
 /**
  * life
  */
 onMounted(async () => {
   cascaderOptions.value = useOrganizationPermission()
-  let deviceArr = await getDeviceList()
-  console.log(224, deviceArr)
+  let deviceArr = await getDeviceList(2)
+  deviceArr.forEach(item => {
+    if (item.type === deviceType.dummy) {
+      userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
+    }
+  })
 })
 
 /**

@@ -2,6 +2,7 @@
  * imports
  */
 import { Request, useDcStore, useIndexStore } from '../store'
+import { deviceType } from '../enum'
 
 /**
  * 组织架构权限处理
@@ -81,10 +82,10 @@ function groupAndCompanyAndDepartment() {
 /**
  * 获取设备的信息
  */
-export async function getDeviceList() {
+export async function getDeviceList(type) {
   let res = await Request(useDcStore().deviceSelect, userGradeJson())
   if (res && res.data.length > 0) {
-    return res.data.map(item => {
+    let mapRes = res.data.map(item => {
       return {
         label: item.name,
         value: item.id,
@@ -93,6 +94,12 @@ export async function getDeviceList() {
         fingerPort: item.fingerPort
       }
     })
+    switch (type) {
+      case 1:
+        return mapRes.filter(item => item.type !== deviceType.dummy)
+      case 2:
+        return mapRes
+    }
   }
 }
 
@@ -110,7 +117,8 @@ export function userGradeJson() {
       return {
         groupId: user.userInfo.group?.id,
         companyId: user.userInfo.company?.id,
-        departmentId: user.userInfo.department?.id
+        departmentId: user.userInfo.department?.id,
+        teamId: user.userInfo.team?.id
       }
     case 2:
       return {

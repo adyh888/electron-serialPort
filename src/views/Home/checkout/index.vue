@@ -67,6 +67,7 @@ import HeadComponent from '../../../components/CommonComponents/HeadComponent.vu
 import TableComponent from '../../../components/CommonComponents/TableComponent.vue'
 import SearchComponent from '../../../components/CommonComponents/SearchComponent.vue'
 import PaginationComponent from '../../../components/CommonComponents/PaginationComponent.vue'
+import { getDeviceList } from '../../../hook/useHook'
 /**
  * data
  */
@@ -169,21 +170,6 @@ const confirm = type => {
 const selectChangeDialog = () => {
   selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
   console.log(16, selectDeviceObj.value)
-}
-
-//获取设备列表
-const getDeviceList = async () => {
-  let res = await Request(useDcStore().deviceSelect, {})
-  if (res && res.data.length > 0) {
-    cities.value = res.data.map(item => {
-      return {
-        label: item.name,
-        value: item.id,
-        serviceId: item.serviceId,
-        fingerPort: item.fingerPort
-      }
-    })
-  }
 }
 
 //选中事件
@@ -643,8 +629,9 @@ const handleCurrentChange = (val: number) => {
 /**
  * life
  */
-onMounted(() => {
-  getDeviceList()
+onMounted(async () => {
+  //获取设备列表
+  cities.value = await getDeviceList(1)
 })
 onUnmounted(() => {
   emitterFinger.emit('close')

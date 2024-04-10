@@ -23,6 +23,10 @@ const useUcStore = defineStore('uc', {
     },
     async fingerUpdate(json: FingerUpdateProperty) {
       return await uc.finger.update(json)
+    },
+    //用户注册
+    async userRegister(json: any) {
+      return await uc.registerUser(json)
     }
   }
 })
