@@ -1,6 +1,10 @@
+/**
+ * imports
+ * 工具
+ */
 import { ElLoading, ElMessage, ElNotification } from 'element-plus'
 import { useIndexStore } from '../store'
-
+import * as fs from 'fs'
 /**
  * send 字符串转字节数据在转buffer
  * str:字符串
@@ -93,4 +97,23 @@ export const ElLoadingShow = () => {
   //储存到store里
   storeIndex.loadingGlobal = loadingGlobal
   return loadingGlobal
+}
+
+/**
+ * 图片转buffer
+ */
+export async function imageToBuffer(imagePath: string): Promise<Buffer> {
+  try {
+    const fileData = await fs.promises.readFile(imagePath)
+    return Buffer.from(fileData)
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.error('文件不存在:', imagePath)
+    } else if (error.code === 'EACCES') {
+      console.error('权限不足:', imagePath)
+    } else {
+      console.error('读取文件时发生错误:', error)
+    }
+    throw error
+  }
 }

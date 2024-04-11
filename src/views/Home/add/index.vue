@@ -64,14 +64,13 @@ import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
 import { getDeviceList, getSerialPortStatus, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
-import { messageBoxShow } from '../../../utils'
+import { imageToBuffer, messageBoxShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType } from '../../../enum'
+import axios from 'axios'
 /**
  * data
  */
-//串口的类
-const fingerSerialPortClass = new SerialPortFinger()
 const dialogFormVisible = ref(false)
 const BackShow = ref(true)
 const selectValue = ref('')
@@ -351,6 +350,37 @@ const confirmSubmit = async () => {
   }
 }
 
+//图片转buffer示例
+const imgToBuffer = () => {
+  // 使用示例
+  imageToBuffer('./public/userAdd.jpg')
+    .then(buffer => {
+      // 这里你可以处理转换后的Buffer
+      console.log(357, buffer) // 打印Buffer
+      console.log('Buffer 长度:', buffer.length)
+      let data = JSON.parse(JSON.stringify(buffer))
+      let json = {
+        uid: 362,
+        name: '刘卫伟',
+        jpeg: data.data
+      }
+      axios({
+        method: 'post',
+        data: json,
+        url: 'http://172.16.10.40:8274/registerJpeg'
+      })
+        .then(res => {
+          console.log(370, res)
+        })
+        .catch(error => {
+          console.log(372, error)
+        })
+    })
+    .catch(error => {
+      console.error('处理图片时发生错误:', error)
+    })
+}
+
 /**
  * life
  */
@@ -362,6 +392,7 @@ onMounted(async () => {
       userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
     }
   })
+  imgToBuffer()
 })
 
 /**

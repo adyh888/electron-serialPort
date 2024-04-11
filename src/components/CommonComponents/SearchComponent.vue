@@ -1,20 +1,22 @@
 <template>
   <div>
-    <el-form :inline="true" :model="formInline" class="demo-form-inline">
-      <el-form-item label="账号">
-        <el-input v-model="formInline.nickname" placeholder="请输入账号" clearable />
-      </el-form-item>
-      <el-form-item label="姓名">
-        <el-input v-model="formInline.username" placeholder="请输入姓名" clearable />
-      </el-form-item>
-      <!--      <el-form-item>-->
-      <!--        <el-button type="primary" @click="onSubmit">Query</el-button>-->
-      <!--      </el-form-item>-->
+    <el-form :model="formDataList" class="demo-form-inline">
+      <el-row>
+        <el-col :span="6" v-for="item in formDataList" :key="item.model">
+          <el-form-item :label="item.label">
+            <el-cascader v-model="item.value" :options="item.options" :placeholder="item.placeholder" v-if="item.type === 'cascader'" />
+            <el-input v-model="item.value" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
+            <el-select v-model="item.value" :placeholder="item.placeholder" v-if="item.type === 'select'"> <el-option v-for="item in item.options" :key="item.value" :label="item.label" :value="item.value" /> </el-select> </el-form-item
+        ></el-col>
+      </el-row>
     </el-form>
     <div style="display: flex; flex-direction: row-reverse">
-      <el-button style="margin-left: 20px" type="primary" @click="syncButton(3)">重置</el-button>
-      <el-button style="margin-left: 20px" type="primary" @click="syncButton(2)">搜索</el-button>
-      <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(1)">同步</el-button>
+      <div v-for="item in buttonData">
+        <el-button style="margin-left: 20px" type="primary" @click="syncButton(item.buttonEvent)" v-if="item.model === 'reset'">重置</el-button>
+        <el-button style="margin-left: 20px" type="primary" @click="syncButton(item.buttonEvent)" v-if="item.model === 'search'">搜索</el-button>
+        <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(item.buttonEvent)" v-if="item.model === 'sync'">同步</el-button>
+        <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(item.buttonEvent)" v-if="item.model === 'add'">添加</el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -28,7 +30,7 @@ import { inject } from 'vue'
 /**
  * injects
  */
-const { syncButton, formInline, syncDisabled } = inject('dataProvide')
+const { syncButton, syncDisabled, formDataList, buttonData } = inject('dataProvide')
 </script>
 
 <style scoped>

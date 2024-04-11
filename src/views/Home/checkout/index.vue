@@ -98,10 +98,24 @@ const columns = ref([
 ])
 const Description = ref('')
 const loading = ref<any>(null)
-const formInline = reactive({
-  username: '',
-  nickname: ''
-})
+//表单数据
+const formDataList = ref([
+  {
+    model: 'nickname',
+    value: '',
+    type: 'input',
+    label: '账号',
+    placeholder: '请输入账号'
+  },
+  {
+    model: 'username',
+    value: '',
+    type: 'input',
+    label: '用户名',
+    placeholder: '请输入用户名'
+  }
+])
+
 //分页总数据
 //分页器
 const pagination = reactive<any>({
@@ -134,6 +148,13 @@ const loadingShowTypeStatus = ref(0)
 const loadingTimer = ref<any>(null)
 //本地的原始数据库数据
 const localFingerData = ref([])
+//按钮的数据
+const buttonData = ref([
+  { buttonEvent: 3, model: 'reset' },
+  { buttonEvent: 2, model: 'search' },
+  { buttonEvent: 1, model: 'sync' }
+])
+const emptyText = ref('暂无异常的指纹数据')
 let finger = null
 /**
  * methods
@@ -464,9 +485,10 @@ const syncButton = type => {
       searchLocal()
       break
     case 3:
-      formInline.nickname = ''
-      formInline.username = ''
-      searchLocal()
+      formDataList.value.forEach(item => {
+        item.value = ''
+      })
+      tableData.value = localFingerData.value
       break
   }
 }
@@ -590,14 +612,22 @@ const syncButtonDebounce = async () => {
   }
 }
 
-//socket心跳包
-const socketHeartBeat = () => {}
-
 //本地的搜索
 const searchLocal = () => {
-  if (formInline.nickname !== '') tableData.value = localFingerData.value.filter(item => item.nickname.includes(formInline.nickname))
-  if (formInline.username !== '') tableData.value = localFingerData.value.filter(item => item.username.includes(formInline.username))
-  if (formInline.username === '' && formInline.nickname === '') tableData.value = localFingerData.value
+  filterData(formDataList.value)
+}
+
+//过滤筛选数据
+const filterData = data => {
+  for (const dataItem of data) {
+    if (dataItem.model === 'username' && dataItem.value !== '' && dataItem.model === 'nickname' && dataItem.value !== '') {
+      tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value) && item.nickname.includes(dataItem.value))
+    } else if (dataItem.model === 'username' && dataItem.value !== '') {
+      tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value))
+    } else if (dataItem.model === 'nickname' && dataItem.value !== '') {
+      tableData.value = localFingerData.value.filter(item => item.nickname.includes(dataItem.value))
+    }
+  }
 }
 
 // 本地分页-切割数据
@@ -642,7 +672,7 @@ onUnmounted(() => {
 /**
  * provides
  */
-provide('dataProvide', { HeadTitle, BackShow, tableData, columns, syncButton, formInline, pagination, syncDisabled, handleSizeChange, handleCurrentChange })
+provide('dataProvide', { HeadTitle, BackShow, tableData, columns, syncButton, pagination, syncDisabled, handleSizeChange, handleCurrentChange, formDataList, buttonData, emptyText })
 </script>
 
 <style scoped></style>
