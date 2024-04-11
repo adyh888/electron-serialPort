@@ -1,7 +1,7 @@
 <template>
   <div style="display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; text-align: center">
     <div>
-      <div style="font-size: 28px; color: white; font-weight: 500; letter-spacing: 4px">{{ title }}</div>
+      <div style="font-size: 28px; color: white; font-weight: 500; letter-spacing: 4px" @click="configClick">{{ title }}</div>
       <div class="content">
         <el-input class="inputClass" v-model="username" style="width: 350px; color: white" placeholder="请输入账号" :prefix-icon="UserFilled" />
       </div>
@@ -35,6 +35,7 @@ const router = useRouter()
 const storage = new StorageCache()
 const loading = ref<any>(null)
 const user = useIndexStore()
+const configCount = ref(0)
 /**
  * methods
  */
@@ -70,6 +71,15 @@ const loginClick = async () => {
 //loading加载弹窗
 const loadingShow = () => {
   loading.value = ElLoadingShow()
+}
+
+//config配置页面
+const configClick = () => {
+  configCount.value++
+  if (configCount.value > 5) {
+    router.push('/config')
+    configCount.value = 0
+  }
 }
 
 /**

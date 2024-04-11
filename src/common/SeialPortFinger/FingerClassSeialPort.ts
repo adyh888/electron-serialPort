@@ -67,7 +67,8 @@ export class SerialPortFinger extends SerialPortUtils {
   private serialPort: any = null
 
   myEvents = emitter2
-
+  private isUploadDspOne: boolean = false
+  private uploadDspOneStr: string = ''
   /**
    * 指纹 基本类
    * 仅包含 指纹 的基本方法和属性
@@ -98,10 +99,11 @@ export class SerialPortFinger extends SerialPortUtils {
       console.log('端口打开成功')
     })
     // 串口数据监听
-    this.serialPort.on('data', (data: any) => {
-      console.log('接收到的数据data', data)
-      var buf: Buffer = Buffer.from(data, 'hex')
-      console.log('接收:', buf)
+    this.serialPort.on('data', (data: Buffer) => {
+      // console.log('接收到的数据data', data.toString('hex'))
+      // var buf: Buffer = Buffer.from(data, 'hex')
+      const buf = data
+      console.log('接收:', buf.toString('hex'))
       if (buf[0] == 245) {
         //F5
         switch (buf[1]) {
@@ -158,7 +160,9 @@ export class SerialPortFinger extends SerialPortUtils {
             this.myEvents.emit('downloadFeatureAndCompareOneToMore', buf)
             break
           case 49: //31 上传DSP 模块数据库内指定用户特征值
-            this.myEvents.emit('uploadDspOne', buf)
+            this.isUploadDspOne = true
+            this.uploadDspOneStr = buf.toString('hex')
+            // this.myEvents.emit('uploadDspOne', buf)
             break
           case 65: //41 下传特征值并按指定用户号存入DSP 模块数据库
             this.myEvents.emit('downloadFeatureAndSaveToDsp', buf)
@@ -178,6 +182,14 @@ export class SerialPortFinger extends SerialPortUtils {
           default:
             break
         }
+      } else if (this.isUploadDspOne) {
+        // 上传指纹特征值时会有多个数据包
+        this.uploadDspOneStr += buf.toString('hex')
+        if (this.uploadDspOneStr.length == 414) {
+          // console.log('上传DSP模块数据库内指定用户特征值', this.uploadDspOneStr)
+          this.isUploadDspOne = false
+          this.myEvents.emit('uploadDspOne', Buffer.from(this.uploadDspOneStr, 'hex'))
+        }
       } else {
         console.log('返回head格式错误')
       }
@@ -185,10 +197,14 @@ export class SerialPortFinger extends SerialPortUtils {
       // let resHex = this.ab2hex(data)
       // myEvents.emit('serialPortData', resHex)
     })
-    // 串口关闭
+    // 串口关闭事件监听
     this.serialPort.on('close', () => {
       this.myEvents.emit('serialPortStatus', false)
       console.log('串口关闭')
+    })
+    //串口关闭
+    this.myEvents.on('serialPortClose', () => {
+      this.close()
     })
     // 错误监听
     this.serialPort.on('error', (err: any) => {
@@ -742,7 +758,7 @@ export class SerialPortFinger extends SerialPortUtils {
       //接收报文后的响应
       // <Buffer f5 09 0f a0 ff 00 59 f5>
       this.myEvents.once('uploadDspOne', (buf: Buffer) => {
-        console.log('uploadDspOne', buf)
+        console.log('uploadDspOne', buf.toString('hex'))
         if (buf.length < 8) throw new Error('通讯错误')
         const head = buf.subarray(0, 7)
         const result = Q3[buf[4]]
@@ -754,7 +770,7 @@ export class SerialPortFinger extends SerialPortUtils {
           //buf[2] 用户数高位 buf[3]用户数低位
           // let fno = parseInt(body[1].toString(16).padStart(2,'0') + body[2].toString(16).padStart(2,'0'));
           let fno = this.concatHighLow(body[1], body[2])
-          console.log(686, fno, head, body)
+          console.log(686, fno, head.toString('hex'), body.toString('hex'))
           const right = body[3]
           const feature = body.subarray(4, 4 + 193).toString('hex')
           console.assert(feature.length === 193 * 2, `feature长度错误长度应为386，但现在为${feature.length}`)
@@ -832,13 +848,13 @@ export class SerialPortFinger extends SerialPortUtils {
         const arr = buf.toString('hex').split('f5f5')
         console.log('arr:', arr)
         let head = Buffer.from(arr[0] + 'f5', 'hex')
-        console.log('head:', head)
+        console.log('head:', head.toString('hex'))
         const result = Q3[head[4]] //buf[4] 0:ACK_SUCCESS,1:ACK_FAIL
         if (result != 'ACK_SUCCESS') {
           reject(result)
         } else {
           let body = Buffer.from('f5' + arr[1], 'hex')
-          console.log('body:', body)
+          console.log('body:', body.toString('hex'))
           const total = this.concatHighLow(body[1], body[2])
           console.log('total:', total)
           const data: UserInfo[] = []
@@ -878,10 +894,15 @@ export class SerialPortFinger extends SerialPortUtils {
   async record(fno: number): Promise<Res> {
     return new Promise(async (resolve, reject) => {
       // 先删除指定
-      await this.deleteSingle(fno)
-
+      let res = await this.deleteSingle(fno)
+      console.log(883, res)
+      if (res.result == 'ACK_SUCCESS' || res.result == 'ACK_NOUSER') {
+        console.log('删除成功')
+      } else {
+        reject({ result: '删除失败' })
+      }
       // 1
-      let res = await this.record1(fno)
+      res = await this.record1(fno)
       // 2
       if (res.result == 'ACK_SUCCESS') {
         res = await this.record2(fno)

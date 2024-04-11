@@ -7,6 +7,7 @@ import { BaseURL } from '../config'
 import { StorageCache } from '../common/StorageClass'
 import { messageBoxShow, messageShow } from '../utils'
 import router from '../router'
+import { useIndexStore } from '../store'
 const service = axios.create({
   baseURL: BaseURL(),
   timeout: 5000
@@ -26,7 +27,6 @@ service.interceptors.request.use(
   },
   error => {
     // 请求错误处理
-    // @ts-ignore
     return Promise.reject(error)
   }
 )
@@ -43,11 +43,20 @@ service.interceptors.response.use(
     return response
   },
   error => {
+    const storeIndex = useIndexStore()
+    console.log('响应拦截器', error)
     if (error.request.status === 401) {
       messageBoxShow('错误', 'token失效，正在退出登录', 'error')
       router.push('/')
     }
-    // @ts-ignore
+    if (error.code === 'ERR_NETWORK') {
+      messageBoxShow('错误', '网络连接失败，请检查网络', 'error')
+      storeIndex.loadingGlobal.close()
+    }
+    if (error.code === 'ERR_CONNECTION') {
+      messageBoxShow('错误', '网络连接失败，请检查网络', 'error')
+      storeIndex.loadingGlobal.close()
+    }
     return Promise.reject(error)
   }
 )

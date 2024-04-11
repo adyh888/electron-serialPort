@@ -58,18 +58,20 @@
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
 import DialogComponent from '../../../components/FunComponents/DialogComponent.vue'
 import CropperUploadComponent from '../../../components/CommonComponents/CropperUploadComponent.vue'
-import { provide, ref, reactive, onMounted } from 'vue'
+import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
 import { getDeviceList, getSerialPortStatus, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { messageBoxShow } from '../../../utils'
-import { showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
+import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType } from '../../../enum'
 /**
  * data
  */
+//串口的类
+const fingerSerialPortClass = new SerialPortFinger()
 const dialogFormVisible = ref(false)
 const BackShow = ref(true)
 const selectValue = ref('')

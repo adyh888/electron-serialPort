@@ -1,4 +1,5 @@
 import { ElLoading, ElMessage, ElNotification } from 'element-plus'
+import { useIndexStore } from '../store'
 
 /**
  * send 字符串转字节数据在转buffer
@@ -83,9 +84,13 @@ export function debounce(func, delay) {
  *
  */
 export const ElLoadingShow = () => {
-  return ElLoading.service({
+  const storeIndex = useIndexStore()
+  let loadingGlobal = ElLoading.service({
     lock: true,
     text: '数据加载中...',
     background: 'rgba(0, 0, 0, 0.7)'
   })
+  //储存到store里
+  storeIndex.loadingGlobal = loadingGlobal
+  return loadingGlobal
 }

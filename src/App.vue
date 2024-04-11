@@ -2,7 +2,7 @@
 /**
  * imports
  */
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { emitter2 } from './utils/EventsBus'
 import { useIndexStore } from './store'
 import { messageBoxShow } from './utils'
@@ -29,6 +29,9 @@ const appListenEvent = () => {
  */
 onMounted(() => {
   appListenEvent()
+})
+onUnmounted(() => {
+  emitter2.emit('serialPortClose')
 })
 </script>
 

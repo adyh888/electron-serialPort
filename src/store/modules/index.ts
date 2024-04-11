@@ -4,7 +4,8 @@ export const useIndexStore = defineStore('index', () => {
   const serialPortStoreStatus = ref(false)
   const SerialPortClass = reactive({})
   const userInfo = ref({})
-  return { serialPortStoreStatus, userInfo, SerialPortClass }
+  const loadingGlobal = ref({})
+  return { serialPortStoreStatus, userInfo, SerialPortClass, loadingGlobal }
 })
 
 export * from './ac'

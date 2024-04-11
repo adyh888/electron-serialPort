@@ -21,7 +21,6 @@
  */
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useOrganizationPermission } from '../../hook/useHook'
 /**
  * data
  */

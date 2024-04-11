@@ -6,7 +6,7 @@
         <span style="margin-left: 5px">返回</span>
       </div>
       <div v-else></div>
-      <div style="padding: 10px; background: #1b84fa; width: 5%; color: white; border-radius: 5px; text-align: center">
+      <div style="padding: 10px 15px; background: #1b84fa; color: white; border-radius: 5px; text-align: center">
         <span>{{ HeadTitle }}</span>
       </div>
     </div>

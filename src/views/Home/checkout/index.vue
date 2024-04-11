@@ -595,8 +595,8 @@ const socketHeartBeat = () => {}
 
 //本地的搜索
 const searchLocal = () => {
-  if (formInline.nickname !== '') tableData.value = localFingerData.value.filter(item => item.nickname === formInline.nickname)
-  if (formInline.username !== '') tableData.value = localFingerData.value.filter(item => item.username === formInline.username)
+  if (formInline.nickname !== '') tableData.value = localFingerData.value.filter(item => item.nickname.includes(formInline.nickname))
+  if (formInline.username !== '') tableData.value = localFingerData.value.filter(item => item.username.includes(formInline.username))
   if (formInline.username === '' && formInline.nickname === '') tableData.value = localFingerData.value
 }
 

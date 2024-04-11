@@ -4,6 +4,7 @@ import Login from '../views/Login/index/index.vue'
 import Home from '../views/Home/index/index.vue'
 import Checkout from '../views/Home/Checkout/index.vue'
 import Add from '../views/Home/Add/index.vue'
+import Config from '../views/Setting/config/index.vue'
 const routes = [
   {
     path: '/',
@@ -29,6 +30,11 @@ const routes = [
     path: '/add',
     name: 'Add',
     component: Add
+  },
+  {
+    path: '/config',
+    name: 'Config',
+    component: Config
   }
 ]
 
