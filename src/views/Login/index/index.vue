@@ -1,7 +1,9 @@
 <template>
   <div style="display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; text-align: center">
     <div>
-      <div style="font-size: 28px; color: white; font-weight: 500; letter-spacing: 4px" @click="configClick">{{ title }}</div>
+      <div style="font-size: 28px; color: white; font-weight: 500; letter-spacing: 4px" @click="configClick">
+        {{ title }}<span style="font-size: 16px">@{{ version }}</span>
+      </div>
       <div class="content">
         <el-input class="inputClass" v-model="username" style="width: 350px; color: white" placeholder="请输入账号" :prefix-icon="UserFilled" />
       </div>
@@ -36,6 +38,7 @@ const storage = new StorageCache()
 const loading = ref<any>(null)
 const user = useIndexStore()
 const configCount = ref(0)
+const version = ref('')
 /**
  * methods
  */
@@ -86,6 +89,8 @@ const configClick = () => {
  * life
  */
 onMounted(() => {
+  // @ts-ignore
+  version.value = __Admin_VERSION__ as string
   let user = storage.get('user')
   if (user) {
     username.value = user.username
