@@ -2,7 +2,6 @@
   <div style="background: #ececec; width: 100vw; height: 100vh">
     <HeadComponent />
     <UserListComponent />
-    <button @click="test">测试</button>
   </div>
 </template>
 
@@ -27,9 +26,6 @@ const HeadTitle = ref(user.userInfo.username ?? '空')
 /**
  * methods
  */
-const test = () => {
-  router.push('/add')
-}
 
 /**
  * provides

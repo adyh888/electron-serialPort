@@ -1,4 +1,4 @@
-### electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket
+### electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket + ElementPlus
 * 前提条件
 * node必须16.16.0以上版本。
 * 不需要安装python，node-gyp等对应的编码解析工具
@@ -44,8 +44,9 @@
 * 3.增加环境配置页面
 * 4.增加生命周期卸载关闭串口解决堵塞的问题
 * 5.增加图片转buffer的node环境函数
-#### 1.0.8.1
+#### 1.0.9
 * 1.封装通用的search组件
 * 2.增加用户列表页
+* 3.增加用户编辑删除功能
 
 

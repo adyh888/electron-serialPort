@@ -44,4 +44,7 @@ declare module 'vue' {
     TableComponent: typeof import('./src/components/CommonComponents/TableComponent.vue')['default']
     UserListComponent: typeof import('./src/components/FunComponents/UserListComponent.vue')['default']
   }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
+  }
 }

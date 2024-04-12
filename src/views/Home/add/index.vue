@@ -3,7 +3,7 @@
     <HeadComponent />
     <div style="margin: 10px 20px; background: white; height: 85vh; border-radius: 10px">
       <div style="text-align: center; padding: 20px">
-        <div style="font-size: 26px; font-weight: 500; margin-top: 20px">人员录入</div>
+        <div style="font-size: 26px; font-weight: 500; margin-top: 20px">{{ registerType ? '人员录入' : '人员编辑' }}</div>
         <div style="display: flex; justify-content: space-between; margin-top: 20px">
           <div style="width: 50%">
             <div style="display: flex; align-items: center; font-size: 22px; font-weight: 500">
@@ -62,7 +62,7 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { getDeviceList, getSerialPortStatus, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
+import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { imageToBuffer, messageBoxShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
@@ -162,7 +162,7 @@ const rightData = ref([
     id: 3,
     title: '指纹',
     value: '',
-    fingerprint: '',
+    fingerFeatureData: '',
     placeholder: '请录入指纹',
     setting: true,
     disabled: true,
@@ -170,17 +170,6 @@ const rightData = ref([
     mandatory: false,
     type: 'input'
   }
-  // {
-  //   id: 4,
-  //   title: '人脸',
-  //   value: '',
-  //   placeholder: '请录入人脸',
-  //   setting: false,
-  //   disabled: false,
-  //   required: false,
-  //   mandatory: false,
-  //   type: 'image'
-  // }
 ])
 const cascaderOptions = ref([])
 const options = [
@@ -199,6 +188,8 @@ const urlList = reactive([])
 const dialogFingerVisible = ref(false)
 const percentage = ref(0)
 let userInfoForm = reactive<any>({ ...userGradeJson(), roleIdArr: [2], roleId2Arr: [2] }) //默认普通用户权限
+//类型判断是注册还是编辑
+const registerType = ref(true)
 /**
  * methods
  */
@@ -224,18 +215,18 @@ const editButton = async item => {
 
 //删除按钮
 const deleteButton = async item => {
-  console.log(item)
+  console.log(229, item)
   switch (item.id) {
     case 3:
       let serialPortStatus = getSerialPortStatus()
       if (serialPortStatus) {
-        if (rightData.value[2].value) {
+        if (rightData.value[2].value && rightData.value[2].value !== '已录入' && rightData.value[2].value !== '未录入') {
           let serialPort = user.SerialPortClass
           const res = await serialPort.deleteSingle(rightData.value[2].value)
           console.log('删除指纹信息', res)
           if (res && res.result === 'ACK_SUCCESS') {
             rightData.value[2].value = ''
-            rightData.value[2].fingerprint = ''
+            rightData.value[2].fingerFeatureData = ''
             messageBoxShow('提示', '指纹删除成功')
           }
         } else {
@@ -280,7 +271,7 @@ const inputFinger = async () => {
       const fingerUser = await serialPort.uploadDspOne(fno)
       console.log('录入用户的信息', fingerUser)
       if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
-        rightData.value[2].fingerprint = fingerUser.feature
+        rightData.value[2].fingerFeatureData = fingerUser.feature
       }
       setTimeout(() => {
         dialogFingerVisible.value = false
@@ -335,15 +326,20 @@ const confirmSubmit = async () => {
         userInfoForm.password = item.value
       }
       if (item.id === 3 && item.value !== '') {
-        userInfoForm.fingerprint = item.fingerprint
+        userInfoForm.fingerFeatureData = item.fingerFeatureData
       }
     })
-    let registerRes = await Request(useUcStore().userRegister, userInfoForm)
-    if (registerRes) {
-      messageBoxShow('提示', '人员录入成功', 'success', 2000)
-      setTimeout(() => {
-        cancel()
-      }, 1000)
+    //注册
+    if (registerType.value) {
+      let registerRes = await Request(useUcStore().userRegister, userInfoForm)
+      if (registerRes) {
+        messageBoxShow('提示', '人员录入成功', 'success', 2000)
+        setTimeout(() => {
+          cancel()
+        }, 1000)
+      }
+    } else {
+      //编辑
     }
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
@@ -381,18 +377,62 @@ const imgToBuffer = () => {
     })
 }
 
+//
+
 /**
  * life
  */
 onMounted(async () => {
-  cascaderOptions.value = useOrganizationPermission()
+  //路由传参的值
+  let params = history.state
+  if (params && params.type === 'edit') {
+    registerType.value = false
+    cascaderOptions.value = getUseOrganizationPermission(params)
+    leftData.value.forEach(item => {
+      if (item.id === 1) {
+        item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
+      }
+      if (item.id === 2) {
+        item.value = params.nickname
+      }
+      if (item.id === 3) {
+        item.value = params.username
+      }
+      if (item.id === 5) {
+        item.value = params.employeeNo
+      }
+      if (item.id === 6) {
+        item.value = params.phoneNo
+      }
+    })
+    rightData.value.forEach(item => {
+      if (item.id === 2) {
+        item.value = params.cardStatus
+      }
+      if (item.id === 3) {
+        item.value = params.fingerStatus
+      }
+    })
+    rightData.value.push({
+      id: 4,
+      title: '人脸',
+      value: '',
+      placeholder: '请录入人脸',
+      setting: false,
+      disabled: false,
+      required: false,
+      mandatory: false,
+      type: 'image'
+    })
+  } else {
+    cascaderOptions.value = useOrganizationPermission()
+  }
   let deviceArr = await getDeviceList(2)
   deviceArr.forEach(item => {
     if (item.type === deviceType.dummy) {
       userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
     }
   })
-  imgToBuffer()
 })
 
 /**

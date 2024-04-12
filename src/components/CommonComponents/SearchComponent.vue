@@ -15,7 +15,7 @@
         <el-button style="margin-left: 20px" type="primary" @click="syncButton(item.buttonEvent)" v-if="item.model === 'reset'">重置</el-button>
         <el-button style="margin-left: 20px" type="primary" @click="syncButton(item.buttonEvent)" v-if="item.model === 'search'">搜索</el-button>
         <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(item.buttonEvent)" v-if="item.model === 'sync'">同步</el-button>
-        <el-button style="width: 80px" type="primary" :disabled="syncDisabled" @click="syncButton(item.buttonEvent)" v-if="item.model === 'add'">添加</el-button>
+        <el-button type="primary" :disabled="syncDisabled" @click="syncButton(item.buttonEvent)" v-if="item.model === 'add'">添加</el-button>
       </div>
     </div>
   </div>

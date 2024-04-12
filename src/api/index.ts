@@ -35,16 +35,16 @@ service.interceptors.request.use(
  */
 service.interceptors.response.use(
   response => {
+    // console.log('响应拦截器成功', response)
     if (response.data.code === 1) {
       messageShow(`${response.data.error}`, 'error')
       return Promise.reject(response.data.error)
     }
-
-    return response
+    return Promise.resolve(response)
   },
   error => {
     const storeIndex = useIndexStore()
-    console.log('响应拦截器', error)
+    // console.log('响应拦截器失败', error)
     if (error.request.status === 401) {
       messageBoxShow('错误', 'token失效，正在退出登录', 'error')
       router.push('/')
@@ -53,9 +53,10 @@ service.interceptors.response.use(
       messageBoxShow('错误', '网络连接失败，请检查网络', 'error')
       storeIndex.loadingGlobal.close()
     }
-    if (error.code === 'ERR_CONNECTION') {
+    if (error.code === 'ECONNABORTED') {
       messageBoxShow('错误', '网络连接失败，请检查网络', 'error')
       storeIndex.loadingGlobal.close()
+      return Promise.reject(error.code)
     }
     return Promise.reject(error)
   }

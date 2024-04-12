@@ -1,7 +1,7 @@
 /**
  * imports
  */
-import { Request, useDcStore, useIndexStore } from '../store'
+import { Request, useDcStore, useIndexStore, useUcStore } from '../store'
 import { deviceType } from '../enum'
 
 /**
@@ -135,4 +135,78 @@ export function userGradeJson() {
 export function getSerialPortStatus() {
   const indexStore = useIndexStore()
   return indexStore.serialPortStoreStatus
+}
+
+/**
+ * 删除user用户列表
+ */
+export async function deleteUser(id) {
+  //1：先删除设备用户
+  let deviceUserRes = await Request(useUcStore().deviceUserDelete, { uid: id })
+  if (deviceUserRes.code === 0) {
+    //2：删除user表用户
+    return await Request(useUcStore().userDelete, { id: id, isDelete: true })
+  }
+}
+
+/**
+ * 组织架构权限处理-自定义的值
+ */
+export function getGradeValue() {
+  const user = useIndexStore()
+  switch (user.userInfo.role?.grade) {
+    case 1:
+      return 'group'
+    case 2:
+      return 'company'
+    default:
+      return ''
+  }
+}
+/**
+ * 组织架构权限处理
+ * @param data 组织架构数据
+ */
+export function getUseOrganizationPermission(data) {
+  if (data.companyId && data.departmentId && data.groupId && data.teamId) {
+    //返回集团-公司-组织-班组树
+    return [
+      {
+        value: data.groupId,
+        label: data.groupName,
+        children: [
+          {
+            value: data.companyId,
+            label: data.companyName,
+            children: [
+              {
+                value: data.departmentId,
+                label: data.departmentName,
+                children: [
+                  {
+                    value: data.teamId,
+                    label: data.teamName
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  } else if (data.companyId && data.departmentId) {
+    //返回集团-公司-组织树
+    return [
+      {
+        value: data.companyId,
+        label: data.companyName,
+        children: [
+          {
+            value: data.departmentId,
+            label: data.departmentName
+          }
+        ]
+      }
+    ]
+  }
 }

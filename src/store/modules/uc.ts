@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia'
 import { uc } from '../../api'
 import { Request } from '../../utils/request'
-import { DeviceUserSelectProperty, FingerSelectProperty, FingerUpdateProperty, UserSelectProperty } from '@mew/request/dist/ms/uc'
+import { DeviceUserDeleteProperty, DeviceUserSelectProperty, FingerSelectProperty, FingerUpdateProperty, UserDeleteProperty, UserSelectProperty, UserUpdateProperty } from '@mew/request/dist/ms/uc'
 
 //创建容器并导出容器
 const useUcStore = defineStore('uc', {
@@ -17,9 +17,18 @@ const useUcStore = defineStore('uc', {
     async userSelect(json: UserSelectProperty) {
       return await uc.user.select(json)
     },
+    async userDelete(json: UserDeleteProperty) {
+      return await uc.user.delete(json)
+    },
+    async userUpdate(json: UserUpdateProperty) {
+      return await uc.user.update(json)
+    },
     //设备用户信息
     async deviceUserSelect(json: DeviceUserSelectProperty) {
       return await uc.device_user.select(json)
+    },
+    async deviceUserDelete(json: DeviceUserDeleteProperty) {
+      return await uc.device_user.delete(json)
     },
     //finger信息
     async fingerSelect(json: FingerSelectProperty) {
