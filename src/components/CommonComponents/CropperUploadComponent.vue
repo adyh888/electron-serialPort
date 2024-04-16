@@ -3,7 +3,7 @@
     <div class="img-item" v-for="(item, index) in fileList" :key="index">
       <img :src="item.src" />
       <el-icon class="uploader-close" @click="delFn(index)"><Close /></el-icon>
-      <div v-if="item.isSuccess" class="uploader-Check">
+      <div v-if="item.isSuccess || uploadSuccess" class="uploader-Check">
         <el-icon><Check /></el-icon>
       </div>
       <div class="button-div" v-if="item.file && isCropper">
@@ -57,10 +57,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, inject } from 'vue'
 import { Plus, Close, Check } from '@element-plus/icons-vue'
 import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
+
 const props = defineProps({
   // 额外值
   otherData: {
@@ -275,46 +276,52 @@ const onSubmit = () => {
 }
 
 // 真实上传
-const uploadFileFn = item => {
-  if (props.sendUrl == '') return false
-  const successFn = url => {
-    const index = fileList.findIndex(n => {
-      if (n.file && n.file.uid == item.file.uid) {
-        return true
-      }
-      return false
-    })
-    if (index != -1) {
-      fileList.splice(index, 1, {
-        src: url,
-        file: item.file,
-        isSuccess: true
-      })
-    }
-  }
-  // successFn(item.src);
-  const formData = new FormData()
-  formData.append('file', item.file)
-  if (props.otherData) {
-    Object.keys(props.otherData).forEach(key => {
-      formData.append(key, props.otherData[key])
-    })
-  }
-  fetch(props.sendUrl, {
-    method: 'POST',
-    body: formData,
-    headers: props.headers,
-    'Content-type': 'multipart/form-data'
-  })
-    .then(respone => respone.json())
-    .then(res => {
-      // 接口成功后替换url
-      successFn('成功的url')
-    })
-    .catch(error => {
-      // 接口失败的
-    })
-}
+// const uploadFileFn = item => {
+//   if (props.sendUrl == '') return false
+//   const successFn = url => {
+//     const index = fileList.findIndex(n => {
+//       if (n.file && n.file.uid == item.file.uid) {
+//         return true
+//       }
+//       return false
+//     })
+//     if (index != -1) {
+//       fileList.splice(index, 1, {
+//         src: url,
+//         file: item.file,
+//         isSuccess: true
+//       })
+//     }
+//   }
+//   // successFn(item.src);
+//   const formData = new FormData()
+//   formData.append('imageBytes', item.file)
+//   if (props.otherData) {
+//     Object.keys(props.otherData).forEach(key => {
+//       formData.append(key, props.otherData[key])
+//     })
+//   }
+//   //接口请求
+//   fetch(props.sendUrl, {
+//     method: 'POST',
+//     body: formData,
+//     headers: props.headers,
+//     'Content-type': 'multipart/form-data'
+//   })
+//     .then(respone => respone.json())
+//     .then(res => {
+//       // 接口成功后替换url
+//       successFn('成功的url')
+//     })
+//     .catch(error => {
+//       // 接口失败的
+//     })
+// }
+
+/**
+ * injects
+ */
+const { uploadFileFn, uploadSuccess } = inject('dataProvide')
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

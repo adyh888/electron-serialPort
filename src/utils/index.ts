@@ -117,3 +117,7 @@ export async function imageToBuffer(imagePath: string): Promise<Buffer> {
     throw error
   }
 }
+
+/**
+ * buffer转图片
+ */

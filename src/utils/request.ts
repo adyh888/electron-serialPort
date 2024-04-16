@@ -4,6 +4,7 @@
 import to from 'await-to-js'
 import { useLcStore } from '../store'
 import { messageShow } from './index'
+import axios from 'axios'
 
 /**
  * 请求的封装
@@ -33,4 +34,82 @@ async function ErrorLogInsert(data: any) {
   const [err, res] = await to(useLcStore().logErrorInsert(json))
   if (err) messageShow('错误日志记录失败', 'error')
   if (res) messageShow('错误日志记录成功,请查看错误接口日志')
+}
+
+/**
+ * 人脸删除接口
+ */
+export function faceDeleteRequest(uuid: string) {
+  return new Promise((resolve, reject) => {
+    let json = {
+      uuid
+    }
+    axios({
+      method: 'post',
+      url: 'http://172.16.10.190:8274/unregisterFace',
+      data: json,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 5000
+    })
+      .then(res => {
+        resolve(res)
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
+/**
+ * 人脸注册接口
+ */
+export function faceAddRequest(json: any) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('jpeg', json.file)
+    formData.append('name', json.name)
+    formData.append('uid', json.uid)
+    axios({
+      method: 'post',
+      url: 'http://172.16.10.190:8274/registerJpegV2',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 5000
+    })
+      .then(res => {
+        resolve(res)
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
+/**
+ * 人脸验证接口
+ */
+export function faceVerifyRequest(json: any) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('imageBytes', json.file)
+    axios({
+      method: 'post',
+      url: 'http://172.16.10.190:8274/doRecognizeV2',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 5000
+    })
+      .then(res => {
+        resolve(res)
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
 }

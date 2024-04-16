@@ -36,7 +36,12 @@
               </div>
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" show-password v-if="item.type === 'password'" />
-              <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15" />
+              <div>
+                <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
+                <div style="margin-top: 5px">
+                  <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="http://172.16.10.190:8274/doRecognizeV2" />
+                </div>
+              </div>
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
                 <el-button type="primary" :icon="Edit" circle @click="editButton(item)" />
                 <el-button type="danger" style="margin-left: 25px" :icon="Delete" circle @click="deleteButton(item)" />
@@ -64,10 +69,12 @@ import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
 import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
-import { imageToBuffer, messageBoxShow } from '../../../utils'
+import { ElLoadingShow, imageToBuffer, messageBoxShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType } from '../../../enum'
 import axios from 'axios'
+import { faceAddRequest, faceDeleteRequest, faceVerifyRequest } from '../../../utils/request'
+import to from 'await-to-js'
 /**
  * data
  */
@@ -187,12 +194,22 @@ const urlList = reactive([])
 //指纹进度条弹窗
 const dialogFingerVisible = ref(false)
 const percentage = ref(0)
-let userInfoForm = reactive<any>({ ...userGradeJson(), roleIdArr: [2], roleId2Arr: [2] }) //默认普通用户权限
+let userInfoForm = reactive<any>({ ...userGradeJson() }) //默认普通用户权限
 //类型判断是注册还是编辑
 const registerType = ref(true)
+//路由传参的对象
+const routerParams = ref<any>({})
+//上传成功提示
+const uploadSuccess = ref(false)
+const loading = ref<any>(null)
 /**
  * methods
  */
+
+//loading加载弹窗
+const loadingShow = () => {
+  loading.value = ElLoadingShow()
+}
 //选中事件
 const selectChangeDialog = () => {}
 
@@ -205,7 +222,6 @@ const confirm = type => {}
 
 //编辑按钮
 const editButton = async item => {
-  console.log(item)
   switch (item.id) {
     case 3:
       await inputFinger()
@@ -215,7 +231,6 @@ const editButton = async item => {
 
 //删除按钮
 const deleteButton = async item => {
-  console.log(229, item)
   switch (item.id) {
     case 3:
       let serialPortStatus = getSerialPortStatus()
@@ -325,13 +340,14 @@ const confirmSubmit = async () => {
       if (item.id === 1) {
         userInfoForm.password = item.value
       }
-      if (item.id === 3 && item.value !== '') {
+      if (item.id === 3 && item.value !== '' && item.fingerFeatureData !== '') {
         userInfoForm.fingerFeatureData = item.fingerFeatureData
       }
     })
     //注册
     if (registerType.value) {
-      let registerRes = await Request(useUcStore().userRegister, userInfoForm)
+      //注册
+      let registerRes = await Request(useUcStore().userRegister, { ...userInfoForm, roleIdArr: [2], roleId2Arr: [2] })
       if (registerRes) {
         messageBoxShow('提示', '人员录入成功', 'success', 2000)
         setTimeout(() => {
@@ -340,6 +356,13 @@ const confirmSubmit = async () => {
       }
     } else {
       //编辑
+      let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
+      if (updateUserRes) {
+        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+        setTimeout(() => {
+          cancel()
+        }, 1000)
+      }
     }
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
@@ -377,7 +400,42 @@ const imgToBuffer = () => {
     })
 }
 
-//
+//图片上传
+const uploadFileFn = async (item: any) => {
+  await loadingShow()
+  let json = {
+    uid: routerParams.value.id,
+    name: routerParams.value.username,
+    file: item.file
+  }
+  //代表face数据库有face信息
+  if (routerParams.value.faceUuid !== '') {
+    //1：先删除人脸数据，调用陈龙的人脸删除接口
+    let faceDeleteRes = await Request(faceDeleteRequest, routerParams.value.faceUuid)
+    console.log(407, faceDeleteRes)
+    if (faceDeleteRes && faceDeleteRes.status === 200) {
+      //2：人脸删除成功，上传新的人脸
+      if (faceDeleteRes.data.success) {
+        let faceAddRes = await Request(faceAddRequest, json)
+        if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+          uploadSuccess.value = true
+          messageBoxShow('提示', '人员人脸录入成功', 'success')
+        }
+      }
+    }
+  } else {
+    // 人脸对比
+    // let faceVerifyRes = await faceVerifyRequest(json)
+    // console.log(415, faceVerifyRes)
+    // 人脸注册--上传新的人脸
+    let faceAddRes = await Request(faceAddRequest, json)
+    if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+      uploadSuccess.value = true
+      messageBoxShow('提示', '人员人脸录入成功', 'success')
+    }
+  }
+  loading.value.close()
+}
 
 /**
  * life
@@ -386,8 +444,20 @@ onMounted(async () => {
   //路由传参的值
   let params = history.state
   if (params && params.type === 'edit') {
+    routerParams.value = params
     registerType.value = false
     cascaderOptions.value = getUseOrganizationPermission(params)
+    rightData.value.push({
+      id: 4,
+      title: '人脸',
+      value: '',
+      placeholder: '请录入人脸',
+      setting: false,
+      disabled: false,
+      required: false,
+      mandatory: false,
+      type: 'image'
+    })
     leftData.value.forEach(item => {
       if (item.id === 1) {
         item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
@@ -412,33 +482,26 @@ onMounted(async () => {
       if (item.id === 3) {
         item.value = params.fingerStatus
       }
-    })
-    rightData.value.push({
-      id: 4,
-      title: '人脸',
-      value: '',
-      placeholder: '请录入人脸',
-      setting: false,
-      disabled: false,
-      required: false,
-      mandatory: false,
-      type: 'image'
+      if (item.id === 4) {
+        item.faceStatus = params.faceStatus
+      }
     })
   } else {
     cascaderOptions.value = useOrganizationPermission()
+    //注册类型 -虚拟设备号
+    let deviceArr = await getDeviceList(2)
+    deviceArr.forEach(item => {
+      if (item.type === deviceType.dummy) {
+        userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
+      }
+    })
   }
-  let deviceArr = await getDeviceList(2)
-  deviceArr.forEach(item => {
-    if (item.type === deviceType.dummy) {
-      userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
-    }
-  })
 })
 
 /**
  * provides
  */
-provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage })
+provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage, uploadFileFn, uploadSuccess })
 </script>
 
 <style scoped>

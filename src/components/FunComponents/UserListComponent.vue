@@ -9,7 +9,7 @@
       <div style="height: 54vh">
         <TableComponent />
       </div>
-      <div style="display: flex; flex-direction: row-reverse">
+      <div style="display: flex; flex-direction: row-reverse; margin-top: 25px">
         <PaginationComponent />
       </div>
     </div>
@@ -258,6 +258,7 @@ const userSelect = async () => {
         fingerStatus: item.bindFinger ? '已录入' : '未录入',
         faceId: item.faceId,
         faceStatus: item.faceId ? '已录入' : '未录入',
+        faceUuid: (item.faceId && item.face && item.face.uuid) ?? '',
         phoneNo: item.phoneNo,
         status: item.status
       }
