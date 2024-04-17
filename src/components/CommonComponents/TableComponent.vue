@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-table v-loading="tableLoading" :data="tableData" border style="width: 100%" :empty-text="emptyText" :cell-style="cellStyle">
+    <el-table v-loading="tableLoading" :data="tableData" border max-height="500" style="width: 100%" :empty-text="emptyText" :cell-style="cellStyle">
       <el-table-column type="index" label="序号" width="65" align="center" />
       <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
         <template #default="scope" v-if="column.prop === 'status'">

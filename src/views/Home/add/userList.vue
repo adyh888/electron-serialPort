@@ -11,7 +11,7 @@
  */
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
 import UserListComponent from '../../../components/FunComponents/UserListComponent.vue'
-import { provide, ref } from 'vue'
+import { provide, ref, onMounted } from 'vue'
 import { useIndexStore } from '../../../store'
 import { useRouter } from 'vue-router'
 
@@ -27,6 +27,12 @@ const HeadTitle = ref(user.userInfo.username ?? '空')
  * methods
  */
 
+/**
+ * life
+ */
+onMounted(() => {
+  user.paramsArr = []
+})
 /**
  * provides
  */

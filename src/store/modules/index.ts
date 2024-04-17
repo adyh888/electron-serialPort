@@ -6,7 +6,8 @@ export const useIndexStore = defineStore('index', () => {
   const userInfo = ref({})
   const loadingGlobal = ref({})
   const faceRequestUrl = ref([])
-  return { serialPortStoreStatus, userInfo, SerialPortClass, loadingGlobal, faceRequestUrl }
+  const paramsArr = ref([])
+  return { serialPortStoreStatus, userInfo, SerialPortClass, loadingGlobal, faceRequestUrl, paramsArr }
 })
 
 export * from './ac'

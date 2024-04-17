@@ -299,6 +299,8 @@ const inputFinger = async () => {
       }, 1000)
     }
   } else {
+    //指纹设备不在线
+    user.paramsArr = [...leftData.value, ...rightData.value]
     await router.push('/setting')
   }
 }
@@ -408,7 +410,6 @@ const imgToBuffer = () => {
 //图片上传
 const uploadFileFn = async (item: any) => {
   faceImgInfo.value = item
-  console.log(407, user.faceRequestUrl)
   if (user.faceRequestUrl.length > 0) {
     await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
   } else {
@@ -437,13 +438,20 @@ const faceRequestFn = async url => {
         if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
           uploadSuccess.value = true
           messageBoxShow('提示', '人员人脸录入成功', 'success')
+        } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+          messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
         }
       }
+    } else if (faceDeleteRes && faceDeleteRes.status === 200 && !faceDeleteRes.data.success) {
+      messageBoxShow('提示', `错误${faceDeleteRes.data.result}`, 'error')
     } else {
       //请求不到接口
       requestFaceIndex.value++
       if (requestFaceIndex.value < user.faceRequestUrl.length) {
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+      } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+        requestFaceIndex.value = 0
+        messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
       }
     }
   } else {
@@ -455,11 +463,16 @@ const faceRequestFn = async url => {
     if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
       uploadSuccess.value = true
       messageBoxShow('提示', '人员人脸录入成功', 'success')
+    } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+      messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
     } else {
       //请求不到接口
       requestFaceIndex.value++
       if (requestFaceIndex.value < user.faceRequestUrl.length) {
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+      } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+        requestFaceIndex.value = 0
+        messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
       }
     }
   }
@@ -533,6 +546,22 @@ onMounted(async () => {
       }
     })
   } else {
+    //获取增加的时候的编辑数据-状态获取中-当跳转到串口页面的时候，页面的数据保存
+    if (user.paramsArr && user.paramsArr.length > 0) {
+      user.paramsArr.forEach(item => {
+        leftData.value.forEach(item2 => {
+          if (item.title === item2.title) {
+            item2.value = item.value
+          }
+        })
+        rightData.value.forEach(item2 => {
+          if (item.title === item2.title) {
+            item2.value = item.value
+          }
+        })
+      })
+    }
+
     cascaderOptions.value = useOrganizationPermission()
     //注册类型 -虚拟设备号
     let deviceArr = await getDeviceList(2)

@@ -64,6 +64,7 @@ const loginClick = async () => {
         await router.push('/home')
       }
     } else {
+      loading.value.close()
       return
     }
   } else {

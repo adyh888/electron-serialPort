@@ -6,9 +6,7 @@
       <div style="margin: 20px 0px">
         <SearchComponent />
       </div>
-      <div style="height: 54vh">
-        <TableComponent />
-      </div>
+      <TableComponent />
       <div style="display: flex; flex-direction: row-reverse; margin-top: 25px">
         <PaginationComponent />
       </div>
@@ -138,7 +136,7 @@ const columns = ref([
 //分页器
 const pagination = reactive<any>({
   pageNum: 1,
-  pageSize: 10,
+  pageSize: 9,
   total: 0
 })
 //同步按钮的锁定
