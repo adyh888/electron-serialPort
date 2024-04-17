@@ -270,8 +270,11 @@ const inputFinger = async () => {
   //指纹状态
   let serialPortStatus = getSerialPortStatus()
   if (serialPortStatus) {
-    messageBoxShow('提示', '请放入手指', 'warning')
     let serialPort = user.SerialPortClass
+    //删除所有指纹
+    // let res2 = await serialPort.deleteAll()
+    // console.log(276, res2)
+    messageBoxShow('提示', '请放入手指', 'warning')
     let fno = await serialPort.getEmptyFno()
     console.log('空槽位', fno)
     dialogFingerVisible.value = true
@@ -284,19 +287,22 @@ const inputFinger = async () => {
       messageBoxShow('提示', `指纹采集失败,${showErrFinger[e]}`, 'error')
       dialogFingerVisible.value = false
     }
+    console.log(290, fingerRes)
     if (fingerRes && fingerRes.result === '录入成功') {
       percentage.value = 100
       messageBoxShow('提示', '指纹录入成功')
       rightData.value[2].value = fno
-      const fingerUser = await serialPort.uploadDspOne(fno)
-      console.log('录入用户的信息', fingerUser)
-      if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
-        rightData.value[2].fingerFeatureData = fingerUser.feature
-      }
-      setTimeout(() => {
-        dialogFingerVisible.value = false
-        percentage.value = 0
-      }, 1000)
+      setTimeout(async () => {
+        const fingerUser = await serialPort.uploadDspOne(fno)
+        console.log('录入用户的信息', fingerUser)
+        if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
+          rightData.value[2].fingerFeatureData = fingerUser.feature
+        }
+        setTimeout(() => {
+          dialogFingerVisible.value = false
+          percentage.value = 0
+        }, 1000)
+      }, 300)
     }
   } else {
     //指纹设备不在线
