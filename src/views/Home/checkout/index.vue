@@ -459,7 +459,7 @@ const showViewData = () => {
       localFingerData.value = localFingerData.value.sort((a, b) => a.no - b.no)
     }
     getList()
-    // tableData.value = localFingerData.value
+    tableData.value = localFingerData.value
   }
 }
 
@@ -621,10 +621,28 @@ const searchLocal = () => {
 const filterData = data => {
   for (const dataItem of data) {
     if (dataItem.model === 'username' && dataItem.value !== '' && dataItem.model === 'nickname' && dataItem.value !== '') {
+      localFingerData.value.forEach(item => {
+        if (item.username === undefined) {
+          item.username = ''
+        }
+        if (item.nickname === undefined) {
+          item.nickname = ''
+        }
+      })
       tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value) && item.nickname.includes(dataItem.value))
     } else if (dataItem.model === 'username' && dataItem.value !== '') {
+      localFingerData.value.forEach(item => {
+        if (item.username === undefined) {
+          item.username = ''
+        }
+      })
       tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value))
     } else if (dataItem.model === 'nickname' && dataItem.value !== '') {
+      localFingerData.value.forEach(item => {
+        if (item.nickname === undefined) {
+          item.nickname = ''
+        }
+      })
       tableData.value = localFingerData.value.filter(item => item.nickname.includes(dataItem.value))
     }
   }

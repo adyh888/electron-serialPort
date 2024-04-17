@@ -22,6 +22,31 @@
         <el-progress type="dashboard" :percentage="percentage" :color="colors" :width="200" />
       </div>
     </el-dialog>
+    <el-dialog v-model="dialogFaceVisible" title="批量上传人脸验证" width="600" align-center :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+      <div style="display: flex; justify-content: center; align-items: center; padding: 20px 0">
+        <span style="color: red">*</span>
+        <span style="width: 80px; font-size: 16px; margin-left: 5px">设备名称:</span>
+        <el-select v-model="selectValue" placeholder="请选择设备" style="width: 500px" @change="selectChangeDialog">
+          <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
+            <span style="float: left">{{ item.label }}</span>
+            <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">{{ item.value }}</span>
+          </el-option>
+        </el-select>
+      </div>
+      <el-upload class="upload-demo" drag :auto-upload="false" v-model:file-list="fileList" :limit="1">
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">将文件拖到此区域，或<em>点击上传</em></div>
+        <template #tip>
+          <div class="el-upload__tip" style="color: #ff0000">注意：只能上传压缩文件ZIP格式，图片格式为jpeg/jpg</div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancel">取消</el-button>
+          <el-button type="primary" @click="confirm()"> 确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -30,7 +55,7 @@
  * imports
  */
 import { inject } from 'vue'
-
+import { UploadFilled } from '@element-plus/icons-vue'
 /**
  * data
  */
@@ -43,7 +68,7 @@ const colors = [
 /**
  * injects
  */
-const { dialogFormVisible, selectChangeDialog, selectValue, cities, cancel, confirm, dialogFingerVisible, percentage } = inject('dataProvide')
+const { dialogFormVisible, selectChangeDialog, selectValue, cities, cancel, confirm, dialogFingerVisible, percentage, dialogFaceVisible, fileList } = inject('dataProvide')
 </script>
 
 <style scoped></style>

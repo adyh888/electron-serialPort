@@ -35,11 +35,11 @@
                 <div>:</div>
               </div>
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
-              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" show-password v-if="item.type === 'password'" />
+              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" :show-password="showPassword" clearable v-if="item.type === 'password'" />
               <div>
                 <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
                 <div style="margin-top: 5px">
-                  <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="http://172.16.10.190:8274/doRecognizeV2" />
+                  <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="" />
                 </div>
               </div>
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
@@ -74,7 +74,6 @@ import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger
 import { deviceType } from '../../../enum'
 import axios from 'axios'
 import { faceAddRequest, faceDeleteRequest, faceVerifyRequest } from '../../../utils/request'
-import to from 'await-to-js'
 /**
  * data
  */
@@ -202,6 +201,12 @@ const routerParams = ref<any>({})
 //上传成功提示
 const uploadSuccess = ref(false)
 const loading = ref<any>(null)
+//人脸图片信息
+const faceImgInfo = ref<any>({})
+//请求标记位
+const requestFaceIndex = ref(0)
+//密码回显
+const showPassword = ref(true)
 /**
  * methods
  */
@@ -402,17 +407,29 @@ const imgToBuffer = () => {
 
 //图片上传
 const uploadFileFn = async (item: any) => {
+  faceImgInfo.value = item
+  console.log(407, user.faceRequestUrl)
+  if (user.faceRequestUrl.length > 0) {
+    await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+  } else {
+    messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+  }
+}
+
+//循环请求-判断人脸接口是否在线
+const faceRequestFn = async url => {
   await loadingShow()
   let json = {
     uid: routerParams.value.id,
     name: routerParams.value.username,
-    file: item.file
+    file: faceImgInfo.value.file,
+    faceUuid: routerParams.value.faceUuid,
+    serverIp: url
   }
   //代表face数据库有face信息
   if (routerParams.value.faceUuid !== '') {
     //1：先删除人脸数据，调用陈龙的人脸删除接口
-    let faceDeleteRes = await Request(faceDeleteRequest, routerParams.value.faceUuid)
-    console.log(407, faceDeleteRes)
+    let faceDeleteRes = await Request(faceDeleteRequest, json)
     if (faceDeleteRes && faceDeleteRes.status === 200) {
       //2：人脸删除成功，上传新的人脸
       if (faceDeleteRes.data.success) {
@@ -421,6 +438,12 @@ const uploadFileFn = async (item: any) => {
           uploadSuccess.value = true
           messageBoxShow('提示', '人员人脸录入成功', 'success')
         }
+      }
+    } else {
+      //请求不到接口
+      requestFaceIndex.value++
+      if (requestFaceIndex.value < user.faceRequestUrl.length) {
+        await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       }
     }
   } else {
@@ -432,11 +455,29 @@ const uploadFileFn = async (item: any) => {
     if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
       uploadSuccess.value = true
       messageBoxShow('提示', '人员人脸录入成功', 'success')
+    } else {
+      //请求不到接口
+      requestFaceIndex.value++
+      if (requestFaceIndex.value < user.faceRequestUrl.length) {
+        await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+      }
     }
   }
   loading.value.close()
 }
 
+//请求人脸服务器的接口地址
+const faceRequestGetUrl = async () => {
+  //注册类型 -虚拟设备号
+  let deviceArr = await getDeviceList(1)
+  if (deviceArr.length > 0) {
+    let deviceIpArr = []
+    deviceArr.forEach(item => {
+      deviceIpArr.push(item.serviceId)
+    })
+    user.faceRequestUrl = deviceIpArr
+  }
+}
 /**
  * life
  */
@@ -444,8 +485,10 @@ onMounted(async () => {
   //路由传参的值
   let params = history.state
   if (params && params.type === 'edit') {
+    showPassword.value = false
     routerParams.value = params
     registerType.value = false
+    await faceRequestGetUrl()
     cascaderOptions.value = getUseOrganizationPermission(params)
     rightData.value.push({
       id: 4,
@@ -476,6 +519,9 @@ onMounted(async () => {
       }
     })
     rightData.value.forEach(item => {
+      if (item.id === 1) {
+        item.value = params.password
+      }
       if (item.id === 2) {
         item.value = params.cardStatus
       }

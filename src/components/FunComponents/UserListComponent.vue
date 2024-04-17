@@ -259,6 +259,7 @@ const userSelect = async () => {
         faceId: item.faceId,
         faceStatus: item.faceId ? '已录入' : '未录入',
         faceUuid: (item.faceId && item.face && item.face.uuid) ?? '',
+        password: item.password,
         phoneNo: item.phoneNo,
         status: item.status
       }

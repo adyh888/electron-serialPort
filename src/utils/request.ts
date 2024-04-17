@@ -39,14 +39,14 @@ async function ErrorLogInsert(data: any) {
 /**
  * 人脸删除接口
  */
-export function faceDeleteRequest(uuid: string) {
+export function faceDeleteRequest(item: any) {
   return new Promise((resolve, reject) => {
     let json = {
-      uuid
+      uuid: item.faceUuid
     }
     axios({
       method: 'post',
-      url: 'http://172.16.10.190:8274/unregisterFace',
+      url: `http://${item.serverIp}:8274/unregisterFace`,
       data: json,
       headers: {
         'Content-Type': 'application/json'
@@ -73,7 +73,7 @@ export function faceAddRequest(json: any) {
     formData.append('uid', json.uid)
     axios({
       method: 'post',
-      url: 'http://172.16.10.190:8274/registerJpegV2',
+      url: `http://${json.serverIp}:8274/registerJpegV2`,
       data: formData,
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -98,7 +98,7 @@ export function faceVerifyRequest(json: any) {
     formData.append('imageBytes', json.file)
     axios({
       method: 'post',
-      url: 'http://172.16.10.190:8274/doRecognizeV2',
+      url: `http://${json.serverIp}:8274/doRecognizeV2`,
       data: formData,
       headers: {
         'Content-Type': 'multipart/form-data'

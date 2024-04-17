@@ -46,6 +46,16 @@ const tabBar = ref([
     comment: '添加人员信息，录入指纹等信息',
     inputBg: { background: '#FF9B18', height: '40px', borderRadius: '5px', marginTop: '10px' }
   }
+  // {
+  //   id: 3,
+  //   img: './face.jpg',
+  //   description: '上传人脸',
+  //   showStatus: true,
+  //   path: '/faceUpload',
+  //   bg: { background: '#DBEEFF' },
+  //   comment: '批量上传人脸照片信息',
+  //   inputBg: { background: '#1890FF', height: '40px', borderRadius: '5px', marginTop: '10px' }
+  // }
 ])
 
 const labelClick = item => {

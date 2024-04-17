@@ -6,6 +6,7 @@ import Checkout from '../views/Home/Checkout/index.vue'
 import Add from '../views/Home/Add/index.vue'
 import Config from '../views/Setting/config/index.vue'
 import UserList from '../views/Home/add/userList.vue'
+import UploadFace from '../views/Home/face/uploadFace/index.vue'
 const routes = [
   {
     path: '/',
@@ -41,6 +42,11 @@ const routes = [
     path: '/config',
     name: 'Config',
     component: Config
+  },
+  {
+    path: '/faceUpload',
+    name: 'UploadFace',
+    component: UploadFace
   }
 ]
 
