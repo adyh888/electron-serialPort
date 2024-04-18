@@ -449,7 +449,7 @@ const showViewData = () => {
     }
     if (comparisonRes.length > 0 && loadingShowTypeStatus.value === 1) {
       messageBoxShow('异常', '指纹模块与本地服务器数据不正确', 'error')
-      Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${comparisonRes.length}条不匹配，可点击“同步下载”修改不匹配数据！`
+      Description.value = `提示：指纹表数据${fingerCount.value}条，指纹传感器数据${fingerTotal.value}条，当前有${comparisonRes.length}条不匹配，可点击“同步”修改不匹配数据！`
       syncDisabled.value = false
     } else {
       syncDisabled.value = true

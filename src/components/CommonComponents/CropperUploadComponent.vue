@@ -7,7 +7,7 @@
         <el-icon><Check /></el-icon>
       </div>
       <div class="button-div" v-if="item.file && isCropper">
-        <el-button type="success" @click="uploadFileFn(item, index)">上传</el-button>
+        <el-button v-if="uploadShow" type="success" @click="uploadFileFn(item, index)">上传</el-button>
         <el-button type="primary" @click="cropperFn(item, index)">裁剪</el-button>
       </div>
     </div>
@@ -156,7 +156,7 @@ watch(
         return null
       })
       .filter(n => n != null)
-    emits('update:modelValue', valueList)
+    emits('update:modelValue', value)
   },
   { deep: true }
 )
@@ -321,7 +321,7 @@ const onSubmit = () => {
 /**
  * injects
  */
-const { uploadFileFn, uploadSuccess } = inject('dataProvide')
+const { uploadFileFn, uploadSuccess, uploadShow } = inject('dataProvide')
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

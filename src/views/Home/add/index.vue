@@ -39,7 +39,7 @@
               <div>
                 <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
                 <div style="margin-top: 5px">
-                  <CropperUploadComponent v-if="item.type === 'image'" :otherData="{ a: 100 }" :headers="{}" v-model="urlList" :multiple="false" sendUrl="" />
+                  <CropperUploadComponent v-if="item.type === 'image'" v-model="urlList" :multiple="false" />
                 </div>
               </div>
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
@@ -69,7 +69,7 @@ import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
 import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
-import { ElLoadingShow, imageToBuffer, messageBoxShow } from '../../../utils'
+import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType } from '../../../enum'
 import axios from 'axios'
@@ -175,6 +175,17 @@ const rightData = ref([
     required: false,
     mandatory: false,
     type: 'input'
+  },
+  {
+    id: 4,
+    title: '人脸',
+    value: '',
+    placeholder: '请录入人脸',
+    setting: false,
+    disabled: false,
+    required: false,
+    mandatory: false,
+    type: 'image'
   }
 ])
 const cascaderOptions = ref([])
@@ -189,7 +200,7 @@ const options = [
   }
 ]
 // 裁剪的配置
-const urlList = reactive([])
+const urlList = ref([])
 //指纹进度条弹窗
 const dialogFingerVisible = ref(false)
 const percentage = ref(0)
@@ -200,6 +211,8 @@ const registerType = ref(true)
 const routerParams = ref<any>({})
 //上传成功提示
 const uploadSuccess = ref(false)
+//是否显示上传
+const uploadShow = ref(false)
 const loading = ref<any>(null)
 //人脸图片信息
 const faceImgInfo = ref<any>({})
@@ -207,6 +220,8 @@ const faceImgInfo = ref<any>({})
 const requestFaceIndex = ref(0)
 //密码回显
 const showPassword = ref(true)
+//注册用户的信息
+const registerUserInfo = ref<any>({})
 /**
  * methods
  */
@@ -290,19 +305,17 @@ const inputFinger = async () => {
     console.log(290, fingerRes)
     if (fingerRes && fingerRes.result === '录入成功') {
       percentage.value = 100
-      messageBoxShow('提示', '指纹录入成功')
       rightData.value[2].value = fno
-      setTimeout(async () => {
-        const fingerUser = await serialPort.uploadDspOne(fno)
-        console.log('录入用户的信息', fingerUser)
-        if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
-          rightData.value[2].fingerFeatureData = fingerUser.feature
-        }
-        setTimeout(() => {
-          dialogFingerVisible.value = false
-          percentage.value = 0
-        }, 1000)
-      }, 300)
+      const fingerUser = await serialPort.uploadDspOne(fno)
+      console.log('录入用户的信息', fingerUser)
+      if (fingerUser && fingerUser.result === 'ACK_SUCCESS') {
+        rightData.value[2].fingerFeatureData = fingerUser.feature
+      }
+      setTimeout(() => {
+        messageShow('指纹录入成功')
+        dialogFingerVisible.value = false
+        percentage.value = 0
+      }, 1000)
     }
   } else {
     //指纹设备不在线
@@ -314,9 +327,11 @@ const inputFinger = async () => {
 //录入指纹的事件监听
 const onFingerEvent = () => {
   emitter2.once('record1', () => {
+    messageShow('请抬开手指', 'warning')
     percentage.value = 30
   })
   emitter2.once('record2', () => {
+    messageShow('请抬开手指', 'warning')
     percentage.value = 60
   })
   emitter2.once('record3', () => {
@@ -326,6 +341,7 @@ const onFingerEvent = () => {
 
 //提交
 const confirmSubmit = async () => {
+  await loadingShow()
   let requestData = []
   let leftFilterArr = leftData.value.filter(item => item.required && item.value !== '')
   let rightFilterArr = rightData.value.filter(item => item.required && item.value !== '')
@@ -362,6 +378,13 @@ const confirmSubmit = async () => {
       //注册
       let registerRes = await Request(useUcStore().userRegister, { ...userInfoForm, roleIdArr: [2], roleId2Arr: [2] })
       if (registerRes) {
+        registerUserInfo.value = registerRes.data
+        //代表有人脸上传的图片-并且是注册人员状态
+        if (urlList.value.length > 0) {
+          for (const item of urlList.value) {
+            await uploadFileFn(item)
+          }
+        }
         messageBoxShow('提示', '人员录入成功', 'success', 2000)
         setTimeout(() => {
           cancel()
@@ -371,6 +394,12 @@ const confirmSubmit = async () => {
       //编辑
       let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
       if (updateUserRes) {
+        //代表有人脸上传的图片-并且是编辑人员状态
+        if (urlList.value.length > 0) {
+          for (const item of urlList.value) {
+            await uploadFileFn(item)
+          }
+        }
         messageBoxShow('提示', '人员编辑成功', 'success', 2000)
         setTimeout(() => {
           cancel()
@@ -380,6 +409,7 @@ const confirmSubmit = async () => {
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
   }
+  loading.value.close()
 }
 
 //图片转buffer示例
@@ -425,16 +455,28 @@ const uploadFileFn = async (item: any) => {
 
 //循环请求-判断人脸接口是否在线
 const faceRequestFn = async url => {
-  await loadingShow()
-  let json = {
-    uid: routerParams.value.id,
-    name: routerParams.value.username,
-    file: faceImgInfo.value.file,
-    faceUuid: routerParams.value.faceUuid,
-    serverIp: url
+  let json
+  if (registerType.value) {
+    //注册人员状态
+    json = {
+      uid: registerUserInfo.value.id,
+      name: registerUserInfo.value.username,
+      file: faceImgInfo.value.file,
+      faceUuid: '',
+      serverIp: url
+    }
+  } else {
+    //编辑人员状态
+    json = {
+      uid: routerParams.value.id,
+      name: routerParams.value.username,
+      file: faceImgInfo.value.file,
+      faceUuid: routerParams.value.faceUuid,
+      serverIp: url
+    }
   }
   //代表face数据库有face信息
-  if (routerParams.value.faceUuid !== '') {
+  if (Object.keys(routerParams.value).length > 0 && routerParams.value.faceUuid !== '') {
     //1：先删除人脸数据，调用陈龙的人脸删除接口
     let faceDeleteRes = await Request(faceDeleteRequest, json)
     if (faceDeleteRes && faceDeleteRes.status === 200) {
@@ -482,7 +524,6 @@ const faceRequestFn = async url => {
       }
     }
   }
-  loading.value.close()
 }
 
 //请求人脸服务器的接口地址
@@ -503,23 +544,12 @@ const faceRequestGetUrl = async () => {
 onMounted(async () => {
   //路由传参的值
   let params = history.state
+  await faceRequestGetUrl()
   if (params && params.type === 'edit') {
     showPassword.value = false
     routerParams.value = params
     registerType.value = false
-    await faceRequestGetUrl()
     cascaderOptions.value = getUseOrganizationPermission(params)
-    rightData.value.push({
-      id: 4,
-      title: '人脸',
-      value: '',
-      placeholder: '请录入人脸',
-      setting: false,
-      disabled: false,
-      required: false,
-      mandatory: false,
-      type: 'image'
-    })
     leftData.value.forEach(item => {
       if (item.id === 1) {
         item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
@@ -567,7 +597,6 @@ onMounted(async () => {
         })
       })
     }
-
     cascaderOptions.value = useOrganizationPermission()
     //注册类型 -虚拟设备号
     let deviceArr = await getDeviceList(2)
@@ -582,7 +611,7 @@ onMounted(async () => {
 /**
  * provides
  */
-provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage, uploadFileFn, uploadSuccess })
+provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage, uploadFileFn, uploadSuccess, uploadShow })
 </script>
 
 <style scoped>

@@ -112,9 +112,9 @@ const formDataList = ref([
 ])
 //按钮的数据
 const buttonData = ref([
+  { buttonEvent: 4, model: 'add' },
   { buttonEvent: 3, model: 'reset' },
-  { buttonEvent: 2, model: 'search' },
-  { buttonEvent: 4, model: 'add' }
+  { buttonEvent: 2, model: 'search' }
 ])
 //表格数据
 const tableData = ref([])
@@ -125,7 +125,7 @@ const columns = ref([
   { label: '所属部门', prop: 'departmentName' },
   { label: '所属班组', prop: 'teamName' },
   { label: '账号', prop: 'nickname' },
-  { label: '姓名', prop: 'username' },
+  { label: '用户名', prop: 'username' },
   { label: '工号', prop: 'employeeNo' },
   { label: '卡号', prop: 'cardStatus' },
   { label: '指纹', prop: 'fingerStatus' },

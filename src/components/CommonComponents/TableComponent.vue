@@ -2,19 +2,23 @@
   <div>
     <el-table v-loading="tableLoading" :data="tableData" border max-height="500" style="width: 100%" :empty-text="emptyText" :cell-style="cellStyle">
       <el-table-column type="index" label="序号" width="65" align="center" />
-      <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
-        <template #default="scope" v-if="column.prop === 'status'">
-          <el-switch v-model="scope.row.status" @change="switchChange(scope.row)" />
-        </template>
-        <template #default="scope" v-if="column.prop === 'setting'">
-          <el-button link type="primary" size="small" @click="edit(scope.row)"
-            ><el-icon><EditPen /></el-icon>编辑</el-button
-          >
-          <el-button link type="danger" size="small" @click="del(scope.row)"
-            ><el-icon><Delete /></el-icon>删除</el-button
-          >
-        </template>
-      </el-table-column>
+      <template v-for="column in columns" :key="column.prop">
+        <el-table-column v-if="column.prop === 'setting'" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center" fixed="right" width="130">
+          <template #default="scope">
+            <el-button link type="primary" size="small" @click="edit(scope.row)"
+              ><el-icon><EditPen /></el-icon>编辑</el-button
+            >
+            <el-button link type="danger" size="small" @click="del(scope.row)"
+              ><el-icon><Delete /></el-icon>删除</el-button
+            >
+          </template>
+        </el-table-column>
+        <el-table-column v-else :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
+          <template #default="scope" v-if="column.prop === 'status'">
+            <el-switch v-model="scope.row.status" @change="switchChange(scope.row)" />
+          </template>
+        </el-table-column>
+      </template>
     </el-table>
   </div>
 </template>
