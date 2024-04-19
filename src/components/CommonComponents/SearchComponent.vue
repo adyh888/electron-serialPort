@@ -5,6 +5,7 @@
         <el-col :span="6" v-for="item in formDataList" :key="item.model">
           <el-form-item :label="item.label">
             <el-cascader v-model="item.value" :options="item.options" :placeholder="item.placeholder" v-if="item.type === 'cascader'" />
+            <el-cascader v-model="item.value" :placeholder="item.placeholder" :options="item.options" :props="item.props" filterable show-all-levels v-if="item.type === 'multipleCascader'" />
             <el-input v-model="item.value" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
             <el-select v-model="item.value" :placeholder="item.placeholder" v-if="item.type === 'select'"> <el-option v-for="item in item.options" :key="item.value" :label="item.label" :value="item.value" /> </el-select> </el-form-item
         ></el-col>

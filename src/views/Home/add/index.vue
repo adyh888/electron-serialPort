@@ -21,6 +21,7 @@
                 <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
               <el-cascader v-model="item.value" style="width: 350px; margin-left: 5px" :options="cascaderOptions" :placeholder="item.placeholder" @change="handleChange" v-if="item.type === 'cascader'" />
+              <el-cascader v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" :options="cascaderOptions" :props="item.props" filterable show-all-levels v-if="item.type === 'multipleCascader'" />
             </div>
           </div>
           <div style="width: 50%">
@@ -67,7 +68,7 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useOrganizationPermission, userGradeJson } from '../../../hook/useHook'
+import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
@@ -89,11 +90,17 @@ const leftData = ref([
   {
     id: 1,
     title: '组织架构',
-    value: '',
-    placeholder: '请选择组织架构',
     mandatory: true,
     required: true,
-    type: 'cascader'
+    model: 'organizationalStructure',
+    value: '',
+    type: 'multipleCascader',
+    label: '组织架构',
+    placeholder: '请选择组织架构',
+    props: {
+      checkStrictly: true
+    },
+    options: []
   },
   {
     id: 2,
@@ -204,7 +211,7 @@ const urlList = ref([])
 //指纹进度条弹窗
 const dialogFingerVisible = ref(false)
 const percentage = ref(0)
-let userInfoForm = reactive<any>({ ...userGradeJson() }) //默认普通用户权限
+let userInfoForm = reactive<any>({})
 //类型判断是注册还是编辑
 const registerType = ref(true)
 //路由传参的对象
@@ -222,6 +229,7 @@ const requestFaceIndex = ref(0)
 const showPassword = ref(true)
 //注册用户的信息
 const registerUserInfo = ref<any>({})
+const indexStore = useIndexStore()
 /**
  * methods
  */
@@ -352,6 +360,9 @@ const confirmSubmit = async () => {
   }
   if (requestData.length === 4) {
     leftData.value.forEach(item => {
+      if (item.id === 1) {
+        userInfoForm = { ...userGradeJson(item.value) }
+      }
       if (item.id === 2) {
         userInfoForm.nickname = item.value
       }
@@ -597,7 +608,7 @@ onMounted(async () => {
         })
       })
     }
-    cascaderOptions.value = useOrganizationPermission()
+    cascaderOptions.value = indexStore.organizationalStructureArr
     //注册类型 -虚拟设备号
     let deviceArr = await getDeviceList(2)
     deviceArr.forEach(item => {

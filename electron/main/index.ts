@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import path from 'path'
@@ -64,6 +64,8 @@ async function createWindow() {
     win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
+    //取消上方的菜单的显示
+    Menu.setApplicationMenu(null)
   }
 
   // Test actively push message to the Electron-Renderer

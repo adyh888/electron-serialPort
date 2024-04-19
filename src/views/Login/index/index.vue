@@ -27,6 +27,7 @@ import { ElLoadingShow, messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
 import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
+import { useOrganizationPermission } from '../../../hook/useHook'
 /**
  * data
  */
@@ -57,9 +58,11 @@ const loginClick = async () => {
       //2。在登录
       let managerRes = await Request(useMcStore().managerSelect, json)
       if (managerRes && managerRes.total > 0) {
-        loading.value.close()
         user.userInfo = managerRes.data[0]
         storage.set('user', json)
+        //获取组织架构
+        await useOrganizationPermission()
+        loading.value.close()
         // 登录
         await router.push('/home')
       }

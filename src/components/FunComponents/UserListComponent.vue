@@ -22,9 +22,9 @@ import SearchComponent from '../CommonComponents/SearchComponent.vue'
 import TableComponent from '../CommonComponents/TableComponent.vue'
 import PaginationComponent from '../CommonComponents/PaginationComponent.vue'
 import { provide, ref, onMounted, reactive } from 'vue'
-import { deleteUser, getDeviceList, useOrganizationPermission, userGradeJson } from '../../hook/useHook'
+import { deleteUser, getDeviceList, userGradeJson } from '../../hook/useHook'
 import { Request } from '../../utils/request'
-import { useUcStore } from '../../store'
+import { useIndexStore, useUcStore } from '../../store'
 import { deviceType } from '../../enum'
 import { useRouter } from 'vue-router'
 import { messageBoxShow } from '../../utils'
@@ -58,9 +58,12 @@ const formDataList = ref([
   {
     model: 'organizationalStructure',
     value: '',
-    type: 'cascader',
+    type: 'multipleCascader',
     label: '组织架构',
     placeholder: '请选择组织架构',
+    props: {
+      checkStrictly: true
+    },
     options: []
   },
   {
@@ -76,6 +79,13 @@ const formDataList = ref([
     type: 'input',
     label: '账号',
     placeholder: '请输入账号'
+  },
+  {
+    model: 'employeeNo',
+    value: '',
+    type: 'input',
+    label: '工号',
+    placeholder: '请输入工号'
   },
   {
     model: 'cardNo',
@@ -143,7 +153,7 @@ const pagination = reactive<any>({
 const syncDisabled = ref(false)
 const emptyText = ref('暂无数据')
 const tableLoading = ref(false)
-
+const indexStore = useIndexStore()
 /**
  * methods
  */
@@ -203,6 +213,9 @@ const userSelect = async () => {
     if (item.model === 'nickname' && item.value !== '') {
       json.nickname = item.value
     }
+    if (item.model === 'employeeNo' && item.value !== '') {
+      json.employeeNo = item.value
+    }
     if (item.model === 'cardNo' && item.value !== '') {
       if (item.value) {
         json.cardId = '!=null'
@@ -231,22 +244,25 @@ const userSelect = async () => {
         json.status = false
       }
     }
+    if (item.model === 'organizationalStructure' && item.value !== '') {
+      json = { ...userGradeJson(item.value) }
+    }
   })
-  let userRes = await Request(useUcStore().userSelect, { ...userGradeJson(), ...json })
+  let userRes = await Request(useUcStore().userSelect, json)
   if (userRes && userRes.total > 0) {
     pagination.total = userRes.total
     tableLoading.value = false
     return userRes.data.map(item => {
       return {
         id: item.id,
-        companyName: (item.companyId && item.company.name) ?? '空',
+        companyName: (item.companyId && item.company?.name) ?? '空',
         companyId: item.companyId,
-        departmentName: (item.departmentId && item.department.name) ?? '空',
+        departmentName: (item.departmentId && item.department?.name) ?? '空',
         departmentId: item.departmentId,
-        teamName: (item.teamId && item.team.name) ?? '空',
+        teamName: (item.teamId && item.team?.name) ?? '空',
         teamId: item.teamId,
         groupId: item.groupId,
-        groupName: (item.groupId && item.group.name) ?? '空',
+        groupName: (item.groupId && item.group?.name) ?? '空',
         nickname: item.nickname,
         username: item.username,
         employeeNo: item.employeeNo,
@@ -309,7 +325,7 @@ const switchChange = async row => {
 onMounted(async () => {
   formDataList.value.forEach(item => {
     if (item.model === 'organizationalStructure') {
-      item.options = useOrganizationPermission()
+      item.options = indexStore.organizationalStructureArr
     }
   })
   //用户列表

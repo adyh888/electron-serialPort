@@ -1,7 +1,7 @@
 <template>
   <div style="height: 88vh; margin: 10px 30px; background: white; border-radius: 8px">
     <div style="padding: 20px 30px; background: white">
-      <div style="letter-spacing: 2px; font-weight: 500">用户列表</div>
+      <div style="letter-spacing: 5px; font-weight: 500; color: red">{{ headContent }}</div>
       <div style="border-bottom: 1px solid #d8d8d8; margin: 10px 0px"></div>
       <div style="margin: 20px 0px">
         <SearchComponent />
@@ -27,7 +27,7 @@ import PaginationComponent from '../CommonComponents/PaginationComponent.vue'
 import DialogComponent from './DialogComponent.vue'
 import { ref, provide, reactive, onMounted } from 'vue'
 import JSZip from 'jszip'
-import { faceVerifyRequest } from '../../utils/request'
+import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
 import { ElLoadingShow, messageBoxShow } from '../../utils'
 import { getDeviceList } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
@@ -45,30 +45,31 @@ const formDataList = ref([
     type: 'input',
     label: '用户名',
     placeholder: '请输入用户名'
-  },
-  {
-    model: 'nickname',
-    value: '',
-    type: 'input',
-    label: '账号',
-    placeholder: '请输入账号'
   }
 ])
 //按钮的数据
 const buttonData = ref([
   { buttonEvent: 3, model: 'reset' },
-  { buttonEvent: 2, model: 'search' },
-  { buttonEvent: 4, model: 'add' }
+  { buttonEvent: 2, model: 'search' }
 ])
 //表格数据
 const tableData = ref([])
+//表格原始数据
+const tableDataInit = ref([])
 //表格规则
 const columns = ref([
-  { label: 'ID', prop: 'id' },
-  { label: '账号', prop: 'nickname' },
+  { label: 'ID', prop: 'uid' },
+  // { label: '账号', prop: 'nickname' },
   { label: '姓名', prop: 'username' },
-  { label: '人脸', prop: 'faceStatus' },
-  { label: '状态', prop: 'status' }
+  { label: '人脸ID', prop: 'id' },
+  {
+    label: '状态',
+    prop: 'tagStatus',
+    filter: [
+      { text: '已注册', value: '已注册' },
+      { text: '新注册', value: '新注册' }
+    ]
+  }
 ])
 //表格无数据的提醒
 const emptyText = ref('暂无数据')
@@ -77,7 +78,7 @@ const tableLoading = ref(false)
 //分页器
 const pagination = reactive<any>({
   pageNum: 1,
-  pageSize: 10,
+  pageSize: 9,
   total: 0
 })
 // 弹窗内的数据
@@ -90,6 +91,11 @@ const selectDeviceObj = ref({})
 const fileList = ref([])
 const router = useRouter()
 const loading = ref<any>(null)
+//绑定过人脸数据的图片 -老数据
+const bindOldFaceList = ref([])
+//新的人脸数据
+const bindNewFaceList = ref([])
+const headContent = ref('')
 /**
  * methods
  */
@@ -100,23 +106,57 @@ const loadingShow = () => {
 //同步下载按钮
 const syncButton = type => {
   switch (type) {
-    case 4:
-      //add
-      break
     case 2:
       //search
+      searchLocal()
       break
     case 3:
       //reset
+      formDataList.value.forEach(item => {
+        item.value = ''
+      })
+      tableData.value = tableDataInit.value
       break
   }
 }
 
+//本地的搜索
+const searchLocal = () => {
+  filterData(formDataList.value)
+}
+//本地搜索数据的处理
+const filterData = data => {
+  for (const item of data) {
+    if (item.model === 'username' && item.value !== '') {
+      tableDataInit.value.forEach(item => {
+        if (item.username === undefined) {
+          item.username = ''
+        }
+      })
+      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value))
+    }
+  }
+}
+
 // 分页事件
-const handleSizeChange = (val: number) => {}
+const handleSizeChange = (val: number) => {
+  pagination.page = 1
+  pagination.limit = val
+  paging()
+}
 
 const handleCurrentChange = async (val: number) => {
   pagination.pageNum = val
+  paging()
+}
+
+// 本地分页-切割数据
+const paging = () => {
+  // 起始位置 = (当前页 - 1) x 每页的大小
+  const start = (pagination.pageNum - 1) * pagination.pageSize
+  // 结束位置 = 当前页 x 每页的大小
+  const end = pagination.pageNum * pagination.pageSize
+  tableData.value = tableDataInit.value.slice(start, end)
 }
 
 const unzipAndReadFiles = async zipFile => {
@@ -128,13 +168,24 @@ const unzipAndReadFiles = async zipFile => {
     const zipData = await zip.loadAsync(zipFile)
     // 获取压缩包内的文件列表
     const fileNames = Object.keys(zipData.files)
-    //统计文件数量
-    const fileCount = fileNames.length
-    let resCount = 0 //返回的数据次数
-    let resArr = [] //返回的总数据
     // 遍历文件列表并获取文件内容
     for (const fileName of fileNames) {
       const file = zipData.files[fileName]
+      // console.log(138, fileName)
+      let str = fileName
+      //分割字符串
+      let name: string //提取第一个部分，即"测试100"
+      let uid: string //提取加号后面的部分，并去掉'.jpg'后缀
+      // 使用加号(+)作为分隔符来分割字符串
+      const parts = str.split('+')
+      // 检查分割后的数组长度，确保至少有两个部分
+      if (parts.length >= 2) {
+        name = parts[0] // 提取第一个部分，即"测试100"
+        uid = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
+      } else {
+        messageBoxShow('提示', '数据格式不正确,无法处理,请填写名称+ID', 'error')
+        return
+      }
       //图片转base64
       // file
       //   .async('base64')
@@ -152,40 +203,66 @@ const unzipAndReadFiles = async zipFile => {
       const fileObj = new File([content], fileName, { type: 'image/jpeg' })
       // 现在你可以处理这个 file 对象了，例如显示在页面上或上传到服务器
       let json = {
+        name: name,
+        uid: Number(uid),
         file: fileObj,
         serverIp: selectDeviceObj.value.serviceId
       }
       let faceVerifyRes = await faceVerifyRequest(json)
-      if (faceVerifyRes && faceVerifyRes.status === 200) {
-        resCount++
-        resArr.push(faceVerifyRes.data)
-      }
-    }
-    if (resCount === fileCount) {
-      let similarArr = [] //识别的相似度低并且数据库绑定的数据的人
-      resArr.forEach(item => {
-        if (item.success) {
-          //接口返回正常的数据
-          if (item.result.doRecognizeResult.compareMap.getSimilar > 0.9 && item.result.selectFaceDataResult.length > 0) {
-            item.result.selectFaceDataResult.forEach(item2 => {
-              similarArr.push(item2)
-            })
+      // console.log(159, faceVerifyRes)
+      if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+        //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
+        if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
+          //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
+          for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
+            if (item.uid === null) {
+              //TODO 重新绑定
+              await rebind(json)
+            } else {
+              bindOldFaceList.value.push({ ...item, username: name, tagStatus: '已注册' })
+            }
           }
         } else {
-          //接口异常的数据
-          messageBoxShow('提示', `错误,${item.result}`, 'error')
+          //没有绑定过，需要重新注册
+          await rebind(json)
         }
-      })
-      if (similarArr.length === 0) {
-        messageBoxShow('提示', '人脸识别成功,未找到绑定人脸数据的信息', 'success')
-      } else {
-        console.log(182, similarArr)
       }
     }
   } catch (error) {
     messageBoxShow('提示', `错误,${error}`, 'error')
   }
+  await tableDataFilter()
   loading.value.close()
+}
+
+//重新绑定数据库人员
+const rebind = async json => {
+  // 人脸注册--上传新的人脸
+  let faceAddRes = await Request(faceAddRequest, json)
+  // console.log(230, faceAddRes)
+  if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+    //人脸绑定注册成功
+    bindNewFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '新注册' })
+  } else {
+    messageBoxShow('提示', `人脸注册失败,${faceAddRes.data.result}`, 'error')
+  }
+}
+
+//表格数据的处理
+const tableDataFilter = () => {
+  if (bindOldFaceList.value.length > 0 && bindNewFaceList.value.length > 0) {
+    tableDataInit.value = [...bindOldFaceList.value, ...bindNewFaceList.value]
+    tableData.value = [...bindOldFaceList.value, ...bindNewFaceList.value]
+  } else if (bindOldFaceList.value.length > 0) {
+    tableDataInit.value = bindOldFaceList.value
+    tableData.value = bindOldFaceList.value
+  } else if (bindNewFaceList.value.length > 0) {
+    tableDataInit.value = bindNewFaceList.value
+    tableData.value = bindNewFaceList.value
+  }
+  headContent.value = `上传的人脸图片已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个`
+  pagination.total = tableData.value.length
+  dialogFaceVisible.value = false
 }
 
 //选中事件
@@ -206,6 +283,11 @@ const confirm = () => {
   }
 }
 
+//表格的行的某一格的数据处理
+const filterTag = (value: string, row: any) => {
+  return row.tagStatus === value
+}
+
 /**
  * life
  */
@@ -217,7 +299,7 @@ onMounted(async () => {
 /**
  * provides
  */
-provide('dataProvide', { syncButton, syncDisabled, formDataList, buttonData, handleSizeChange, pagination, handleCurrentChange, emptyText, columns, tableLoading, tableData, dialogFaceVisible, selectValue, cities, selectChangeDialog, fileList, cancel, confirm })
+provide('dataProvide', { syncButton, syncDisabled, formDataList, buttonData, handleSizeChange, pagination, handleCurrentChange, emptyText, columns, tableLoading, tableData, dialogFaceVisible, selectValue, cities, selectChangeDialog, fileList, cancel, confirm, filterTag })
 </script>
 
 <style scoped></style>

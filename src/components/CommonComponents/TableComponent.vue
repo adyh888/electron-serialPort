@@ -13,6 +13,11 @@
             >
           </template>
         </el-table-column>
+        <el-table-column v-if="column.prop === 'tagStatus'" :prop="column.prop" :label="column.label" width="300" :filters="column.filter" :filter-method="filterTag" filter-placement="bottom-end" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.tagStatus === '已注册' ? 'danger' : 'success'" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column v-else :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
           <template #default="scope" v-if="column.prop === 'status'">
             <el-switch v-model="scope.row.status" @change="switchChange(scope.row)" />
@@ -29,6 +34,13 @@
  */
 import { inject } from 'vue'
 
+/**
+ * data
+ */
+
+/**
+ * methods
+ */
 // 根据data返回的每一行的数据判断,再修改这一行的样式
 const cellStyle = data => {
   if (data.row.errorStatus) {
@@ -39,13 +51,9 @@ const cellStyle = data => {
 }
 
 /**
- * data
- */
-
-/**
  * injects
  */
-const { tableData, columns, emptyText, tableLoading, edit, del, switchChange } = inject('dataProvide')
+const { tableData, columns, emptyText, tableLoading, edit, del, switchChange, filterTag } = inject('dataProvide')
 </script>
 
 <style scoped></style>

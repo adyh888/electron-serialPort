@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia'
 import { dc } from '../../api'
 import { Request } from '../../utils/request'
-import { DeviceSelectProperty } from '@mew/request/dist/ms/dc'
+import { CompanySelectProperty, DepartmentSelectProperty, DeviceSelectProperty, TeamSelectProperty } from '@mew/request/dist/ms/dc'
 
 //创建容器并导出容器
 const useDcStore = defineStore('dc', {
@@ -16,6 +16,21 @@ const useDcStore = defineStore('dc', {
     // device
     async deviceSelect(json: DeviceSelectProperty) {
       return await dc.device.select(json)
+    },
+    //company
+    async companySelect(json: CompanySelectProperty) {
+      return await dc.company.select(json)
+    },
+    //department
+    async departmentSelect(json: DepartmentSelectProperty) {
+      return await dc.department.select(json)
+    },
+    async departmentFind(json: DepartmentSelectProperty) {
+      return await dc.department.find(json)
+    },
+    //team
+    async teamSelect(json: TeamSelectProperty) {
+      return await dc.team.select(json)
     }
   }
 })
