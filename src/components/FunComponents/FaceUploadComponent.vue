@@ -28,7 +28,7 @@ import DialogComponent from './DialogComponent.vue'
 import { ref, provide, reactive, onMounted } from 'vue'
 import JSZip from 'jszip'
 import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
-import { ElLoadingShow, messageBoxShow } from '../../utils'
+import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
 import { getDeviceList } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 
@@ -67,7 +67,8 @@ const columns = ref([
     prop: 'tagStatus',
     filter: [
       { text: '已注册', value: '已注册' },
-      { text: '新注册', value: '新注册' }
+      { text: '新注册', value: '新注册' },
+      { text: '未注册', value: '未注册' }
     ]
   }
 ])
@@ -95,6 +96,8 @@ const loading = ref<any>(null)
 const bindOldFaceList = ref([])
 //新的人脸数据
 const bindNewFaceList = ref([])
+//注册失败的人脸数据
+const registerFailFaceList = ref([])
 const headContent = ref('')
 /**
  * methods
@@ -183,7 +186,8 @@ const unzipAndReadFiles = async zipFile => {
         name = parts[0] // 提取第一个部分，即"测试100"
         uid = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
       } else {
-        messageBoxShow('提示', '数据格式不正确,无法处理,请填写名称+ID', 'error')
+        loading.value.close()
+        messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求,请填写姓名+ID', 'error')
         return
       }
       //图片转base64
@@ -229,6 +233,7 @@ const unzipAndReadFiles = async zipFile => {
       }
     }
   } catch (error) {
+    loading.value.close()
     messageBoxShow('提示', `错误,${error}`, 'error')
   }
   await tableDataFilter()
@@ -239,19 +244,21 @@ const unzipAndReadFiles = async zipFile => {
 const rebind = async json => {
   // 人脸注册--上传新的人脸
   let faceAddRes = await Request(faceAddRequest, json)
-  // console.log(230, faceAddRes)
+  console.log(230, faceAddRes)
   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
     //人脸绑定注册成功
     bindNewFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '新注册' })
+  } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+    registerFailFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '未注册' })
   } else {
-    messageBoxShow('提示', `人脸注册失败,${faceAddRes.data.result}`, 'error')
+    messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }
 }
 
 //表格数据的处理
 const tableDataFilter = () => {
-  if (bindOldFaceList.value.length > 0 && bindNewFaceList.value.length > 0) {
-    tableDataInit.value = [...bindOldFaceList.value, ...bindNewFaceList.value]
+  if (bindOldFaceList.value.length > 0 && bindNewFaceList.value.length > 0 && registerFailFaceList.value.length > 0) {
+    tableDataInit.value = [...bindOldFaceList.value, ...bindNewFaceList.value, ...registerFailFaceList.value]
     tableData.value = [...bindOldFaceList.value, ...bindNewFaceList.value]
   } else if (bindOldFaceList.value.length > 0) {
     tableDataInit.value = bindOldFaceList.value
@@ -259,8 +266,11 @@ const tableDataFilter = () => {
   } else if (bindNewFaceList.value.length > 0) {
     tableDataInit.value = bindNewFaceList.value
     tableData.value = bindNewFaceList.value
+  } else if (registerFailFaceList.value.length > 0) {
+    tableDataInit.value = registerFailFaceList.value
+    tableDataInit.value = registerFailFaceList.value
   }
-  headContent.value = `上传的人脸图片已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个`
+  headContent.value = `上传的人脸图片已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
   pagination.total = tableData.value.length
   dialogFaceVisible.value = false
 }
@@ -277,7 +287,11 @@ const cancel = () => {
 const confirm = () => {
   //设备名称和文件列表不为空时，上传
   if (Object.keys(selectDeviceObj.value).length > 0 && fileList.value.length > 0) {
-    unzipAndReadFiles(fileList.value[0].raw)
+    if (selectDeviceObj.value.serviceId) {
+      unzipAndReadFiles(fileList.value[0].raw)
+    } else {
+      messageShow('选择到对应的device设备人脸的地址为空', 'error')
+    }
   } else {
     messageBoxShow('提示', '请选择设备和上传文件', 'error')
   }

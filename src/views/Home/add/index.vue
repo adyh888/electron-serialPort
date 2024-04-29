@@ -396,7 +396,11 @@ const confirmSubmit = async () => {
             await uploadFileFn(item)
           }
         }
-        messageBoxShow('提示', '人员录入成功', 'success', 2000)
+        if (uploadSuccess.value) {
+          messageBoxShow('提示', '人员录入成功', 'success', 2000)
+        } else {
+          messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
+        }
         setTimeout(() => {
           cancel()
         }, 1000)
@@ -411,7 +415,11 @@ const confirmSubmit = async () => {
             await uploadFileFn(item)
           }
         }
-        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+        if (uploadSuccess.value) {
+          messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+        } else {
+          messageBoxShow('提示', '人员编辑成功,但人脸上传失败', 'error', 2000)
+        }
         setTimeout(() => {
           cancel()
         }, 1000)
@@ -490,7 +498,7 @@ const faceRequestFn = async url => {
   if (Object.keys(routerParams.value).length > 0 && routerParams.value.faceUuid !== '') {
     //1：先删除人脸数据，调用陈龙的人脸删除接口
     let faceDeleteRes = await Request(faceDeleteRequest, json)
-    if (faceDeleteRes && faceDeleteRes.status === 200) {
+    if (faceDeleteRes && faceDeleteRes.status === 200 && faceDeleteRes.data.success) {
       //2：人脸删除成功，上传新的人脸
       if (faceDeleteRes.data.success) {
         let faceAddRes = await Request(faceAddRequest, json)
@@ -498,11 +506,15 @@ const faceRequestFn = async url => {
           uploadSuccess.value = true
           messageBoxShow('提示', '人员人脸录入成功', 'success')
         } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-          messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+          // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+          messageShow(`错误${faceAddRes.data.result}`, 'error')
+          uploadSuccess.value = false
         }
       }
     } else if (faceDeleteRes && faceDeleteRes.status === 200 && !faceDeleteRes.data.success) {
-      messageBoxShow('提示', `错误${faceDeleteRes.data.result}`, 'error')
+      // messageBoxShow('提示', `错误${faceDeleteRes.data.result}`, 'error')
+      messageShow(`错误${faceDeleteRes.data.result}`, 'error')
+      uploadSuccess.value = false
     } else {
       //请求不到接口
       requestFaceIndex.value++
@@ -510,7 +522,9 @@ const faceRequestFn = async url => {
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
         requestFaceIndex.value = 0
-        messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+        // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+        messageShow('无对应的设备serverIp地址或接口超时', 'error')
+        uploadSuccess.value = false
       }
     }
   } else {
@@ -523,7 +537,9 @@ const faceRequestFn = async url => {
       uploadSuccess.value = true
       messageBoxShow('提示', '人员人脸录入成功', 'success')
     } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-      messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+      // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+      messageShow(`错误${faceAddRes.data.result}`, 'error')
+      uploadSuccess.value = false
     } else {
       //请求不到接口
       requestFaceIndex.value++
@@ -531,7 +547,9 @@ const faceRequestFn = async url => {
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
         requestFaceIndex.value = 0
-        messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+        // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+        messageShow('无对应的设备serverIp地址或接口超时', 'error')
+        uploadSuccess.value = false
       }
     }
   }
@@ -544,7 +562,9 @@ const faceRequestGetUrl = async () => {
   if (deviceArr.length > 0) {
     let deviceIpArr = []
     deviceArr.forEach(item => {
-      deviceIpArr.push(item.serviceId)
+      if (item.serviceId !== null) {
+        deviceIpArr.push(item.serviceId)
+      }
     })
     user.faceRequestUrl = deviceIpArr
   }

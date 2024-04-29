@@ -230,8 +230,8 @@ const fingerSelect = async deviceId => {
         deviceId: item.deviceId,
         uid: item.uid,
         fingerprint: item.fingerprint,
-        nickname: item.user.nickname,
-        username: item.user.username,
+        nickname: item.user?.nickname,
+        username: item.user?.username,
         errorStatus: false
       }
     })

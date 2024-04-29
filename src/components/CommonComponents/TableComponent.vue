@@ -15,7 +15,9 @@
         </el-table-column>
         <el-table-column v-if="column.prop === 'tagStatus'" :prop="column.prop" :label="column.label" width="300" :filters="column.filter" :filter-method="filterTag" filter-placement="bottom-end" align="center">
           <template #default="scope">
-            <el-tag :type="scope.row.tagStatus === '已注册' ? 'danger' : 'success'" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
+            <el-tag v-if="scope.row.tagStatus === '已注册'" type="warning" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
+            <el-tag v-if="scope.row.tagStatus === '未注册'" type="danger" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
+            <el-tag v-if="scope.row.tagStatus === '新注册'" type="success" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column v-else :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
