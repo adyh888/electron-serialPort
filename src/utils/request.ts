@@ -51,7 +51,7 @@ export function faceDeleteRequest(item: any) {
       headers: {
         'Content-Type': 'application/json'
       },
-      timeout: 15000
+      timeout: 20000
     })
       .then(res => {
         resolve(res)
@@ -78,7 +78,7 @@ export function faceAddRequest(json: any) {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 15000
+      timeout: 20000
     })
       .then(res => {
         resolve(res)
@@ -103,7 +103,7 @@ export function faceVerifyRequest(json: any) {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 15000
+      timeout: 20000
     })
       .then(res => {
         resolve(res)

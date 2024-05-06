@@ -78,7 +78,7 @@ export class fingerClassSocket extends SocketUtils {
      * 缓冲区数据
      */
     this.myevents.on('onData', (message: string) => {
-      // console.log(40,'card serial port on message',message)
+      console.log(81, 'on message', message)
       // <Buffer 02 03 04 00 00 00 00 c9 33>
       var buf: Buffer = Buffer.from(message, 'hex')
 
@@ -144,6 +144,7 @@ export class fingerClassSocket extends SocketUtils {
             this.myevents.emit('downloadFeatureAndSaveToDsp', buf)
             break
           case 43: //2B 取已登录所有用户用户号及权限
+            console.log(147)
             this.myevents.emit('getRegAllUserInfo', buf)
             break
           case 44: //2C 使模块进入休眠状态
@@ -795,6 +796,7 @@ export class fingerClassSocket extends SocketUtils {
       //接收报文后的响应
       // <Buffer F5 05 00 00 00 00 05 F5>
       this.myevents.once('getRegAllUserInfo', (buf: Buffer) => {
+        console.log(799)
         const arr = buf.toString('hex').split('f5f5')
         console.log('arr:', arr)
         let head = Buffer.from(arr[0] + 'f5', 'hex')
