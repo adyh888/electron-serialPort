@@ -163,7 +163,7 @@ export async function getDeviceList(type) {
 /**
  * 组织架构的传参处理
  */
-export function userGradeJson(arr) {
+export function userGradeJson(arr=undefined) {
   const user = useIndexStore()
   const grade = user.userInfo.role?.grade
   //TODO grade:1集团管理员，2:公司管理员 0:超级管理员

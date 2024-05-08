@@ -31,7 +31,7 @@ import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
 import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
 import { getDeviceList } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
-
+import iconv from 'iconv-lite'
 /**
  * data
  */
@@ -167,14 +167,17 @@ const unzipAndReadFiles = async zipFile => {
   try {
     // 创建一个JSZip实例
     const zip = new JSZip()
-    // 使用JSZip加载压缩包
-    const zipData = await zip.loadAsync(zipFile)
+    // 使用JSZip加载压缩包 --解决中文乱码问题
+    const zipData = await zip.loadAsync(zipFile, {
+      decodeFileName: function (bytes) {
+        return iconv.decode(bytes, 'gbk') // 按中文编码
+      }
+    })
     // 获取压缩包内的文件列表
     const fileNames = Object.keys(zipData.files)
     // 遍历文件列表并获取文件内容
     for (const fileName of fileNames) {
       const file = zipData.files[fileName]
-      // console.log(138, fileName)
       let str = fileName
       //分割字符串
       let name: string //提取第一个部分，即"测试100"
