@@ -233,6 +233,10 @@ const unzipAndReadFiles = async zipFile => {
           //没有绑定过，需要重新注册
           await rebind(json)
         }
+      }else if(faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success){
+        //没有绑定过，需要重新注册
+        await rebind(json)
+        // messageShow(`${faceVerifyRes.data.result}`, 'error')
       }
     }
   } catch (error) {
@@ -252,7 +256,7 @@ const rebind = async json => {
     //人脸绑定注册成功
     bindNewFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '新注册' })
   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-    registerFailFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '未注册' })
+    registerFailFaceList.value.push({uid:json.uid,  username: json.name, tagStatus: '未注册' })
   } else {
     messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }
@@ -271,7 +275,7 @@ const tableDataFilter = () => {
     tableData.value = bindNewFaceList.value
   } else if (registerFailFaceList.value.length > 0) {
     tableDataInit.value = registerFailFaceList.value
-    tableDataInit.value = registerFailFaceList.value
+    tableData.value = registerFailFaceList.value
   }
   headContent.value = `上传的人脸图片已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
   pagination.total = tableData.value.length

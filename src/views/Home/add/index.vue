@@ -370,7 +370,7 @@ const confirmSubmit = async () => {
         userInfoForm.username = item.value
       }
       if (item.id === 5 && item.value !== '') {
-        userInfoForm.cardNo = item.value
+        userInfoForm.employeeNo = item.value
       }
       if (item.id === 6 && item.value !== '') {
         userInfoForm.phoneNo = item.value
