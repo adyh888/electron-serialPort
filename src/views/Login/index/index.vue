@@ -5,10 +5,10 @@
         {{ title }}<span style="font-size: 16px">@{{ version }}</span>
       </div>
       <div class="content">
-        <el-input class="inputClass" v-model="username" style="width: 350px; color: white" placeholder="请输入账号" :prefix-icon="UserFilled" />
+        <el-input class="inputClass" v-model="username" style="width: 420px; color: white" placeholder="请输入账号" :prefix-icon="UserFilled" />
       </div>
       <div class="content">
-        <el-input v-model="password" class="inputClass" style="width: 350px" show-password placeholder="请输入密码" :prefix-icon="Lock" />
+        <el-input v-model="password" class="inputClass" style="width: 420px" show-password placeholder="请输入密码" :prefix-icon="Lock" />
       </div>
       <div class="content">
         <el-button style="width: 100%" type="primary" @click="loginClick">登录</el-button>

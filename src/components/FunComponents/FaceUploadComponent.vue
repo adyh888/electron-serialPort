@@ -137,6 +137,8 @@ const filterData = data => {
         }
       })
       tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value))
+    }else{
+      tableData.value = tableDataInit.value
     }
   }
 }

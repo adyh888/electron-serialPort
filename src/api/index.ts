@@ -21,7 +21,8 @@ service.interceptors.request.use(
     const token = storage.get('accessToken')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
-      config.headers['source'] = 'electron-fingerprint' + new Date().getTime()
+        // @ts-ignore
+      config.headers['source'] = 'electron-fingerprint' +'_'+ __Admin_VERSION__ as string
     }
     return config
   },

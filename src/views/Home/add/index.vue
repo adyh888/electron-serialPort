@@ -387,7 +387,7 @@ const confirmSubmit = async () => {
     //注册
     if (registerType.value) {
       //注册
-      let registerRes = await Request(useUcStore().userRegister, { ...userInfoForm, roleIdArr: [2], roleId2Arr: [2] })
+      let registerRes = await Request(useUcStore().userRegister, userInfoForm)
       if (registerRes) {
         registerUserInfo.value = registerRes.data
         //代表有人脸上传的图片-并且是注册人员状态
