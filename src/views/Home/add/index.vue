@@ -388,47 +388,50 @@ const confirmSubmit = async () => {
     if (registerType.value) {
       //注册
       let registerRes = await Request(useUcStore().userRegister, userInfoForm)
-      if (registerRes) {
+      //注册用户成功并且有上传人脸图片
+      if (registerRes && urlList.value.length > 0) {
         registerUserInfo.value = registerRes.data
         //代表有人脸上传的图片-并且是注册人员状态
-        if (urlList.value.length > 0) {
           for (const item of urlList.value) {
             await uploadFileFn(item)
           }
-        }
         if (uploadSuccess.value) {
           messageBoxShow('提示', '人员录入成功', 'success', 2000)
         } else {
           messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
         }
-        setTimeout(() => {
-          cancel()
-        }, 1000)
+
+      }else if(registerRes && urlList.value.length === 0){
+        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+      }else{
+        messageBoxShow('提示', '人员编辑失败', 'error', 2000)
       }
     } else {
       //编辑
       let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
-      if (updateUserRes) {
+      if (updateUserRes && urlList.value.length > 0) {
         //代表有人脸上传的图片-并且是编辑人员状态
-        if (urlList.value.length > 0) {
           for (const item of urlList.value) {
             await uploadFileFn(item)
           }
-        }
         if (uploadSuccess.value) {
           messageBoxShow('提示', '人员编辑成功', 'success', 2000)
         } else {
           messageBoxShow('提示', '人员编辑成功,但人脸上传失败', 'error', 2000)
         }
-        setTimeout(() => {
-          cancel()
-        }, 1000)
+      }else if(updateUserRes && urlList.value.length === 0){
+        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+      }else{
+        messageBoxShow('提示', '人员编辑失败', 'error', 2000)
       }
     }
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
   }
   loading.value.close()
+  setTimeout(() => {
+    cancel()
+  }, 1000)
 }
 
 //图片转buffer示例
