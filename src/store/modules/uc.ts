@@ -23,6 +23,9 @@ const useUcStore = defineStore('uc', {
     async userUpdate(json: UserUpdateProperty) {
       return await uc.user.update(json)
     },
+    async userFind(json: UserSelectProperty) {
+      return await uc.user.find(json)
+    },
     //设备用户信息
     async deviceUserSelect(json: DeviceUserSelectProperty) {
       return await uc.device_user.select(json)

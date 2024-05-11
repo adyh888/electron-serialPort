@@ -304,8 +304,8 @@ const syncDownload = async () => {
           const downloadRes = await finger.downloadFeatureAndSaveToDsp(await finger.getEmptyFno(), item.fingerprint)
           console.log(427, downloadRes)
           //TODO 单个更新本地数据库
-          if(downloadRes.result === 'ACK_SUCCESS'){
-             await Request(useUcStore().fingerUpdate, { id: item.id, no: downloadRes.total, deviceId: selectDeviceObj.value.value })
+          if (downloadRes.result === 'ACK_SUCCESS') {
+            await Request(useUcStore().fingerUpdate, { id: item.id, no: downloadRes.total, deviceId: selectDeviceObj.value.value })
           }
           //TODO 一起更新到本地数据库（all）
           // if (downloadRes.result === 'ACK_SUCCESS') {
@@ -635,29 +635,19 @@ const searchLocal = () => {
 //过滤筛选数据
 const filterData = data => {
   for (const dataItem of data) {
+    localFingerData.value.forEach(item => {
+      if (item.username === undefined) {
+        item.username = ''
+      }
+      if (item.nickname === undefined) {
+        item.nickname = ''
+      }
+    })
     if (dataItem.model === 'username' && dataItem.value !== '' && dataItem.model === 'nickname' && dataItem.value !== '') {
-      localFingerData.value.forEach(item => {
-        if (item.username === undefined) {
-          item.username = ''
-        }
-        if (item.nickname === undefined) {
-          item.nickname = ''
-        }
-      })
       tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value) && item.nickname.includes(dataItem.value))
     } else if (dataItem.model === 'username' && dataItem.value !== '') {
-      localFingerData.value.forEach(item => {
-        if (item.username === undefined) {
-          item.username = ''
-        }
-      })
       tableData.value = localFingerData.value.filter(item => item.username.includes(dataItem.value))
     } else if (dataItem.model === 'nickname' && dataItem.value !== '') {
-      localFingerData.value.forEach(item => {
-        if (item.nickname === undefined) {
-          item.nickname = ''
-        }
-      })
       tableData.value = localFingerData.value.filter(item => item.nickname.includes(dataItem.value))
     }
   }

@@ -32,6 +32,7 @@ import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
 import { getDeviceList } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 import iconv from 'iconv-lite'
+import {useUcStore} from "../../store";
 /**
  * data
  */
@@ -39,6 +40,13 @@ import iconv from 'iconv-lite'
 const syncDisabled = ref(false)
 //search列表数据
 const formDataList = ref([
+  {
+    model: 'employeeNo',
+    value: '',
+    type: 'input',
+    label: '工号',
+    placeholder: '请输入工号'
+  },
   {
     model: 'username',
     value: '',
@@ -58,10 +66,10 @@ const tableData = ref([])
 const tableDataInit = ref([])
 //表格规则
 const columns = ref([
-  { label: 'ID', prop: 'uid' },
+  { label: '工号', prop: 'employeeNo' },
   // { label: '账号', prop: 'nickname' },
   { label: '姓名', prop: 'username' },
-  { label: '人脸ID', prop: 'id' },
+  { label: '人脸ID', prop: 'faceId' },
   {
     label: '状态',
     prop: 'tagStatus',
@@ -115,12 +123,16 @@ const syncButton = type => {
       break
     case 3:
       //reset
-      formDataList.value.forEach(item => {
-        item.value = ''
-      })
-      tableData.value = tableDataInit.value
+      reset()
       break
   }
+}
+
+const reset =()=>{
+  formDataList.value.forEach(item => {
+    item.value = ''
+  })
+  tableData.value = tableDataInit.value
 }
 
 //本地的搜索
@@ -129,16 +141,37 @@ const searchLocal = () => {
 }
 //本地搜索数据的处理
 const filterData = data => {
+  // 检查是否不为null、不是空字符串，并且不是只包含空格的字符串
+  const areAllValuesNotEmpty = data.every(item => item.value !== null && item.value.trim() !== '');
+  // 检查data中的每个对象的value属性是否都为空
+  const areAllValuesEmpty = data.every(item => item.value === null || item.value.trim() === '');
+  if(areAllValuesNotEmpty){
+    //代表工号和用户名都不为空
+    data.forEach(filterObj => {
+      tableData.value = tableDataInit.value.filter(item => {
+        return item.hasOwnProperty(filterObj.model) && item[filterObj.model] === filterObj.value;
+      });
+    });
+    return
+  }
+  if(areAllValuesEmpty){
+    //代表工号和用户名都为空
+    reset()
+    return
+  }
   for (const item of data) {
-    if (item.model === 'username' && item.value !== '') {
-      tableDataInit.value.forEach(item => {
-        if (item.username === undefined) {
-          item.username = ''
-        }
-      })
-      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value))
-    }else{
-      tableData.value = tableDataInit.value
+    tableDataInit.value.forEach(item => {
+      if (item.username === undefined) {
+        item.username = ''
+      }
+      if (item.employeeNo === undefined) {
+        item.employeeNo = ''
+      }
+    })
+    if(item.model === 'username' && item.value !== ''){
+      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value) )
+    }else if(item.model === 'employeeNo' && item.value !== ''){
+      tableData.value = tableDataInit.value.filter(item2 => item2.employeeNo.includes(item.value))
     }
   }
 }
@@ -183,13 +216,13 @@ const unzipAndReadFiles = async zipFile => {
       let str = fileName
       //分割字符串
       let name: string //提取第一个部分，即"测试100"
-      let uid: string //提取加号后面的部分，并去掉'.jpg'后缀
+      let employeeNo: string //提取加号后面的部分，并去掉'.jpg'后缀
       // 使用加号(+)作为分隔符来分割字符串
       const parts = str.split('+')
       // 检查分割后的数组长度，确保至少有两个部分
       if (parts.length >= 2) {
         name = parts[0] // 提取第一个部分，即"测试100"
-        uid = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
+        employeeNo = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
       } else {
         loading.value.close()
         messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求,请填写姓名+ID', 'error')
@@ -211,34 +244,48 @@ const unzipAndReadFiles = async zipFile => {
       // 创建一个新的 File 对象，包含解压后的图片数据
       const fileObj = new File([content], fileName, { type: 'image/jpeg' })
       // 现在你可以处理这个 file 对象了，例如显示在页面上或上传到服务器
-      let json = {
-        name: name,
-        uid: Number(uid),
-        file: fileObj,
-        serverIp: selectDeviceObj.value.serviceId
+      //TODO 拿工号employeeNo获取用户uid
+      let userJson = {
+        username: name,
+        employeeNo: employeeNo
       }
-      let faceVerifyRes = await faceVerifyRequest(json)
-      // console.log(159, faceVerifyRes)
-      if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
-        //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
-        if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
-          //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
-          for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
-            if (item.uid === null) {
-              //TODO 重新绑定
-              await rebind(json)
-            } else {
-              bindOldFaceList.value.push({ ...item, username: name, tagStatus: '已注册' })
+      let userFindRes = await Request(useUcStore().userFind, userJson)
+      // console.log(221,userFindRes)
+      if(userFindRes && userFindRes.code ===0 && userFindRes.total > 0){
+        //代表查找的用户存在，可以找到用户的uid
+        let json = {
+          name: userFindRes.data[0].username,
+          uid: userFindRes.data[0].id,
+          employeeNo: userFindRes.data[0].employeeNo,
+          file: fileObj,
+          serverIp: selectDeviceObj.value.serviceId
+        }
+        let faceVerifyRes = await faceVerifyRequest(json)
+        // console.log(159, faceVerifyRes)
+        if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+          //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
+          if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
+            //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
+            for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
+              if (item.uid === null) {
+                //TODO 重新绑定
+                await rebind(json)
+              } else {
+                bindOldFaceList.value.push({ employeeNo:employeeNo, username: name, tagStatus: '已注册' })
+              }
             }
+          } else {
+            //没有绑定过，需要重新注册
+            await rebind(json)
           }
-        } else {
+        }else if(faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success){
           //没有绑定过，需要重新注册
           await rebind(json)
+          // messageShow(`${faceVerifyRes.data.result}`, 'error')
         }
-      }else if(faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success){
-        //没有绑定过，需要重新注册
-        await rebind(json)
-        // messageShow(`${faceVerifyRes.data.result}`, 'error')
+      }else if(userFindRes && userFindRes.code ===0 && userFindRes.total ===0){
+        //代表根据姓名+工号找不到此用户的信息
+        registerFailFaceList.value.push({employeeNo:employeeNo,  username: name, tagStatus: '未注册' })
       }
     }
   } catch (error) {
@@ -253,12 +300,12 @@ const unzipAndReadFiles = async zipFile => {
 const rebind = async json => {
   // 人脸注册--上传新的人脸
   let faceAddRes = await Request(faceAddRequest, json)
-  console.log(230, faceAddRes)
+  // console.log(230, faceAddRes)
   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
     //人脸绑定注册成功
-    bindNewFaceList.value.push({ ...faceAddRes.data.result, username: json.name, tagStatus: '新注册' })
+    bindNewFaceList.value.push({ employeeNo:json.employeeNo,faceId:faceAddRes.data.result.id, username: json.name, tagStatus: '新注册' })
   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-    registerFailFaceList.value.push({uid:json.uid,  username: json.name, tagStatus: '未注册' })
+    registerFailFaceList.value.push({employeeNo:json.employeeNo,  username: json.name, tagStatus: '未注册' })
   } else {
     messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }
@@ -279,7 +326,7 @@ const tableDataFilter = () => {
     tableDataInit.value = registerFailFaceList.value
     tableData.value = registerFailFaceList.value
   }
-  headContent.value = `上传的人脸图片已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
+  headContent.value = `上传的人脸图片,已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
   pagination.total = tableData.value.length
   dialogFaceVisible.value = false
 }
