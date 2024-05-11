@@ -32,7 +32,7 @@ import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
 import { getDeviceList } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 import iconv from 'iconv-lite'
-import {useUcStore} from "../../store";
+import { useUcStore } from '../../store'
 /**
  * data
  */
@@ -128,7 +128,7 @@ const syncButton = type => {
   }
 }
 
-const reset =()=>{
+const reset = () => {
   formDataList.value.forEach(item => {
     item.value = ''
   })
@@ -142,19 +142,19 @@ const searchLocal = () => {
 //本地搜索数据的处理
 const filterData = data => {
   // 检查是否不为null、不是空字符串，并且不是只包含空格的字符串
-  const areAllValuesNotEmpty = data.every(item => item.value !== null && item.value.trim() !== '');
+  const areAllValuesNotEmpty = data.every(item => item.value !== null && item.value.trim() !== '')
   // 检查data中的每个对象的value属性是否都为空
-  const areAllValuesEmpty = data.every(item => item.value === null || item.value.trim() === '');
-  if(areAllValuesNotEmpty){
+  const areAllValuesEmpty = data.every(item => item.value === null || item.value.trim() === '')
+  if (areAllValuesNotEmpty) {
     //代表工号和用户名都不为空
     data.forEach(filterObj => {
       tableData.value = tableDataInit.value.filter(item => {
-        return item.hasOwnProperty(filterObj.model) && item[filterObj.model] === filterObj.value;
-      });
-    });
+        return item.hasOwnProperty(filterObj.model) && item[filterObj.model] === filterObj.value
+      })
+    })
     return
   }
-  if(areAllValuesEmpty){
+  if (areAllValuesEmpty) {
     //代表工号和用户名都为空
     reset()
     return
@@ -168,9 +168,9 @@ const filterData = data => {
         item.employeeNo = ''
       }
     })
-    if(item.model === 'username' && item.value !== ''){
-      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value) )
-    }else if(item.model === 'employeeNo' && item.value !== ''){
+    if (item.model === 'username' && item.value !== '') {
+      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value))
+    } else if (item.model === 'employeeNo' && item.value !== '') {
       tableData.value = tableDataInit.value.filter(item2 => item2.employeeNo.includes(item.value))
     }
   }
@@ -251,7 +251,7 @@ const unzipAndReadFiles = async zipFile => {
       }
       let userFindRes = await Request(useUcStore().userFind, userJson)
       // console.log(221,userFindRes)
-      if(userFindRes && userFindRes.code ===0 && userFindRes.total > 0){
+      if (userFindRes && userFindRes.code === 0 && userFindRes.total > 0) {
         //代表查找的用户存在，可以找到用户的uid
         let json = {
           name: userFindRes.data[0].username,
@@ -271,21 +271,21 @@ const unzipAndReadFiles = async zipFile => {
                 //TODO 重新绑定
                 await rebind(json)
               } else {
-                bindOldFaceList.value.push({ employeeNo:employeeNo, username: name, tagStatus: '已注册' })
+                bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, username: name, tagStatus: '已注册' })
               }
             }
           } else {
             //没有绑定过，需要重新注册
             await rebind(json)
           }
-        }else if(faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success){
+        } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
           //没有绑定过，需要重新注册
           await rebind(json)
           // messageShow(`${faceVerifyRes.data.result}`, 'error')
         }
-      }else if(userFindRes && userFindRes.code ===0 && userFindRes.total ===0){
+      } else if (userFindRes && userFindRes.code === 0 && userFindRes.total === 0) {
         //代表根据姓名+工号找不到此用户的信息
-        registerFailFaceList.value.push({employeeNo:employeeNo,  username: name, tagStatus: '未注册' })
+        registerFailFaceList.value.push({ employeeNo: employeeNo, username: name, tagStatus: '未注册' })
       }
     }
   } catch (error) {
@@ -303,9 +303,9 @@ const rebind = async json => {
   // console.log(230, faceAddRes)
   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
     //人脸绑定注册成功
-    bindNewFaceList.value.push({ employeeNo:json.employeeNo,faceId:faceAddRes.data.result.id, username: json.name, tagStatus: '新注册' })
+    bindNewFaceList.value.push({ employeeNo: json.employeeNo, faceId: faceAddRes.data.result.id, username: json.name, tagStatus: '新注册' })
   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-    registerFailFaceList.value.push({employeeNo:json.employeeNo,  username: json.name, tagStatus: '未注册' })
+    registerFailFaceList.value.push({ employeeNo: json.employeeNo, username: json.name, tagStatus: '未注册' })
   } else {
     messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }
