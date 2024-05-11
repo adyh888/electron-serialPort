@@ -67,14 +67,14 @@ const formDataList = ref([
     options: []
   },
   {
-    model: 'username',
+    model: 'nickname',
     value: '',
     type: 'input',
-    label: '用户名',
-    placeholder: '请输入用户名'
+    label: '姓名',
+    placeholder: '请输入姓名'
   },
   {
-    model: 'nickname',
+    model: 'username',
     value: '',
     type: 'input',
     label: '账号',
@@ -134,8 +134,8 @@ const columns = ref([
   { label: '所属公司', prop: 'companyName' },
   { label: '所属部门', prop: 'departmentName' },
   { label: '所属班组', prop: 'teamName' },
-  { label: '账号', prop: 'nickname' },
-  { label: '用户名', prop: 'username' },
+  { label: '账号', prop: 'username' },
+  { label: '姓名', prop: 'nickname' },
   { label: '工号', prop: 'employeeNo' },
   { label: '卡号', prop: 'cardStatus' },
   { label: '指纹', prop: 'fingerStatus' },
@@ -296,7 +296,7 @@ const edit = (row: any) => {
 const del = async (row: any) => {
   let deleteUserRes = await deleteUser(row.id)
   if (deleteUserRes && deleteUserRes.code === 0) {
-    messageBoxShow('提示', `用户${row.username}删除成功`)
+    messageBoxShow('提示', `姓名${row.nickname}删除成功`)
     setTimeout(() => {
       handleSearch()
     }, 500)
@@ -315,7 +315,7 @@ const switchChange = async row => {
   }
   let registerRes = await Request(useUcStore().userUpdate, json)
   if (registerRes && registerRes.code === 0) {
-    messageBoxShow('提示', `用户${row.username}状态修改成功`)
+    messageBoxShow('提示', `姓名${row.nickname}状态修改成功`)
   }
 }
 

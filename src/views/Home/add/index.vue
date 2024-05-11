@@ -364,10 +364,10 @@ const confirmSubmit = async () => {
         userInfoForm = { ...userGradeJson(item.value) }
       }
       if (item.id === 2) {
-        userInfoForm.nickname = item.value
+        userInfoForm.username = item.value
       }
       if (item.id === 3) {
-        userInfoForm.username = item.value
+        userInfoForm.nickname = item.value
       }
       if (item.id === 5 && item.value !== '') {
         userInfoForm.employeeNo = item.value
@@ -392,18 +392,17 @@ const confirmSubmit = async () => {
       if (registerRes && urlList.value.length > 0) {
         registerUserInfo.value = registerRes.data
         //代表有人脸上传的图片-并且是注册人员状态
-          for (const item of urlList.value) {
-            await uploadFileFn(item)
-          }
+        for (const item of urlList.value) {
+          await uploadFileFn(item)
+        }
         if (uploadSuccess.value) {
           messageBoxShow('提示', '人员录入成功', 'success', 2000)
         } else {
           messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
         }
-
-      }else if(registerRes && urlList.value.length === 0){
+      } else if (registerRes && urlList.value.length === 0) {
         messageBoxShow('提示', '人员编辑成功', 'success', 2000)
-      }else{
+      } else {
         messageBoxShow('提示', '人员编辑失败', 'error', 2000)
       }
     } else {
@@ -411,17 +410,17 @@ const confirmSubmit = async () => {
       let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
       if (updateUserRes && urlList.value.length > 0) {
         //代表有人脸上传的图片-并且是编辑人员状态
-          for (const item of urlList.value) {
-            await uploadFileFn(item)
-          }
+        for (const item of urlList.value) {
+          await uploadFileFn(item)
+        }
         if (uploadSuccess.value) {
           messageBoxShow('提示', '人员编辑成功', 'success', 2000)
         } else {
           messageBoxShow('提示', '人员编辑成功,但人脸上传失败', 'error', 2000)
         }
-      }else if(updateUserRes && urlList.value.length === 0){
+      } else if (updateUserRes && urlList.value.length === 0) {
         messageBoxShow('提示', '人员编辑成功', 'success', 2000)
-      }else{
+      } else {
         messageBoxShow('提示', '人员编辑失败', 'error', 2000)
       }
     }
@@ -482,7 +481,7 @@ const faceRequestFn = async url => {
     //注册人员状态
     json = {
       uid: registerUserInfo.value.id,
-      name: registerUserInfo.value.username,
+      name: registerUserInfo.value.nickname,
       file: faceImgInfo.value.file,
       faceUuid: '',
       serverIp: url
@@ -491,7 +490,7 @@ const faceRequestFn = async url => {
     //编辑人员状态
     json = {
       uid: routerParams.value.id,
-      name: routerParams.value.username,
+      name: routerParams.value.nickname,
       file: faceImgInfo.value.file,
       faceUuid: routerParams.value.faceUuid,
       serverIp: url
@@ -589,10 +588,10 @@ onMounted(async () => {
         item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
       }
       if (item.id === 2) {
-        item.value = params.nickname
+        item.value = params.username
       }
       if (item.id === 3) {
-        item.value = params.username
+        item.value = params.nickname
       }
       if (item.id === 5) {
         item.value = params.employeeNo

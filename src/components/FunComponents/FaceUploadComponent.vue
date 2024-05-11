@@ -48,11 +48,11 @@ const formDataList = ref([
     placeholder: '请输入工号'
   },
   {
-    model: 'username',
+    model: 'nickname',
     value: '',
     type: 'input',
-    label: '用户名',
-    placeholder: '请输入用户名'
+    label: '姓名',
+    placeholder: '请输入姓名'
   }
 ])
 //按钮的数据
@@ -68,7 +68,7 @@ const tableDataInit = ref([])
 const columns = ref([
   { label: '工号', prop: 'employeeNo' },
   // { label: '账号', prop: 'nickname' },
-  { label: '姓名', prop: 'username' },
+  { label: '姓名', prop: 'nickname' },
   { label: '人脸ID', prop: 'faceId' },
   {
     label: '状态',
@@ -161,15 +161,15 @@ const filterData = data => {
   }
   for (const item of data) {
     tableDataInit.value.forEach(item => {
-      if (item.username === undefined) {
-        item.username = ''
+      if (item.nickname === undefined) {
+        item.nickname = ''
       }
       if (item.employeeNo === undefined) {
         item.employeeNo = ''
       }
     })
-    if (item.model === 'username' && item.value !== '') {
-      tableData.value = tableDataInit.value.filter(item2 => item2.username.includes(item.value))
+    if (item.model === 'nickname' && item.value !== '') {
+      tableData.value = tableDataInit.value.filter(item2 => item2.nickname.includes(item.value))
     } else if (item.model === 'employeeNo' && item.value !== '') {
       tableData.value = tableDataInit.value.filter(item2 => item2.employeeNo.includes(item.value))
     }
@@ -246,7 +246,7 @@ const unzipAndReadFiles = async zipFile => {
       // 现在你可以处理这个 file 对象了，例如显示在页面上或上传到服务器
       //TODO 拿工号employeeNo获取用户uid
       let userJson = {
-        username: name,
+        nickname: name,
         employeeNo: employeeNo
       }
       let userFindRes = await Request(useUcStore().userFind, userJson)
@@ -254,7 +254,7 @@ const unzipAndReadFiles = async zipFile => {
       if (userFindRes && userFindRes.code === 0 && userFindRes.total > 0) {
         //代表查找的用户存在，可以找到用户的uid
         let json = {
-          name: userFindRes.data[0].username,
+          name: userFindRes.data[0].nickname,
           uid: userFindRes.data[0].id,
           employeeNo: userFindRes.data[0].employeeNo,
           file: fileObj,
@@ -271,7 +271,7 @@ const unzipAndReadFiles = async zipFile => {
                 //TODO 重新绑定
                 await rebind(json)
               } else {
-                bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, username: name, tagStatus: '已注册' })
+                bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, tagStatus: '已注册' })
               }
             }
           } else {
@@ -285,7 +285,7 @@ const unzipAndReadFiles = async zipFile => {
         }
       } else if (userFindRes && userFindRes.code === 0 && userFindRes.total === 0) {
         //代表根据姓名+工号找不到此用户的信息
-        registerFailFaceList.value.push({ employeeNo: employeeNo, username: name, tagStatus: '未注册' })
+        registerFailFaceList.value.push({ employeeNo: employeeNo, nickname: name, tagStatus: '未注册' })
       }
     }
   } catch (error) {
@@ -303,9 +303,9 @@ const rebind = async json => {
   // console.log(230, faceAddRes)
   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
     //人脸绑定注册成功
-    bindNewFaceList.value.push({ employeeNo: json.employeeNo, faceId: faceAddRes.data.result.id, username: json.name, tagStatus: '新注册' })
+    bindNewFaceList.value.push({ employeeNo: json.employeeNo, faceId: faceAddRes.data.result.id, nickname: json.name, tagStatus: '新注册' })
   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-    registerFailFaceList.value.push({ employeeNo: json.employeeNo, username: json.name, tagStatus: '未注册' })
+    registerFailFaceList.value.push({ employeeNo: json.employeeNo, nickname: json.name, tagStatus: '未注册' })
   } else {
     messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }
