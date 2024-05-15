@@ -218,14 +218,14 @@ const unzipAndReadFiles = async zipFile => {
       let name: string //提取第一个部分，即"测试100"
       let employeeNo: string //提取加号后面的部分，并去掉'.jpg'后缀
       // 使用加号(+)作为分隔符来分割字符串
-      const parts = str.split('+')
+      const parts = str.split('_')
       // 检查分割后的数组长度，确保至少有两个部分
       if (parts.length >= 2) {
         name = parts[0] // 提取第一个部分，即"测试100"
         employeeNo = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
       } else {
         loading.value.close()
-        messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求,请填写姓名+ID', 'error')
+        messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求(图片请放置根目录下,图片名称请填写姓名_工号)', 'error', 3000)
         return
       }
       //图片转base64
@@ -313,19 +313,20 @@ const rebind = async json => {
 
 //表格数据的处理
 const tableDataFilter = () => {
-  if (bindOldFaceList.value.length > 0 && bindNewFaceList.value.length > 0 && registerFailFaceList.value.length > 0) {
+  if (bindOldFaceList.value.length > 0 || bindNewFaceList.value.length > 0 || registerFailFaceList.value.length > 0) {
     tableDataInit.value = [...bindOldFaceList.value, ...bindNewFaceList.value, ...registerFailFaceList.value]
-    tableData.value = [...bindOldFaceList.value, ...bindNewFaceList.value]
-  } else if (bindOldFaceList.value.length > 0) {
-    tableDataInit.value = bindOldFaceList.value
-    tableData.value = bindOldFaceList.value
-  } else if (bindNewFaceList.value.length > 0) {
-    tableDataInit.value = bindNewFaceList.value
-    tableData.value = bindNewFaceList.value
-  } else if (registerFailFaceList.value.length > 0) {
-    tableDataInit.value = registerFailFaceList.value
-    tableData.value = registerFailFaceList.value
+    tableData.value = [...bindOldFaceList.value, ...bindNewFaceList.value, ...registerFailFaceList.value]
   }
+  // else if (bindOldFaceList.value.length > 0) {
+  //   tableDataInit.value = bindOldFaceList.value
+  //   tableData.value = bindOldFaceList.value
+  // } else if (bindNewFaceList.value.length > 0) {
+  //   tableDataInit.value = bindNewFaceList.value
+  //   tableData.value = bindNewFaceList.value
+  // } else if (registerFailFaceList.value.length > 0) {
+  //   tableDataInit.value = registerFailFaceList.value
+  //   tableData.value = registerFailFaceList.value
+  // }
   headContent.value = `上传的人脸图片,已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
   pagination.total = tableData.value.length
   dialogFaceVisible.value = false
