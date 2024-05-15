@@ -53,6 +53,18 @@ const formDataList = ref([
     type: 'input',
     label: '姓名',
     placeholder: '请输入姓名'
+  },
+  {
+    model: 'tagStatus',
+    value: '',
+    type: 'select',
+    label: '状态',
+    placeholder: '请选择状态',
+    options: [
+      { label: '已注册', value: '已注册' },
+      { label: '新注册', value: '新注册' },
+      { label: '未注册', value: '未注册' }
+    ]
   }
 ])
 //按钮的数据
@@ -141,37 +153,35 @@ const searchLocal = () => {
 }
 //本地搜索数据的处理
 const filterData = data => {
-  // 检查是否不为null、不是空字符串，并且不是只包含空格的字符串
-  const areAllValuesNotEmpty = data.every(item => item.value !== null && item.value.trim() !== '')
-  // 检查data中的每个对象的value属性是否都为空
-  const areAllValuesEmpty = data.every(item => item.value === null || item.value.trim() === '')
-  if (areAllValuesNotEmpty) {
-    //代表工号和用户名都不为空
-    data.forEach(filterObj => {
-      tableData.value = tableDataInit.value.filter(item => {
-        return item.hasOwnProperty(filterObj.model) && item[filterObj.model] === filterObj.value
-      })
-    })
-    return
-  }
-  if (areAllValuesEmpty) {
-    //代表工号和用户名都为空
+  // 用于存储筛选条件的对象
+  let filterObj = {}
+  // 遍历数组，如果value有值则添加到filterObj中
+  data.forEach(item => {
+    if (item.value !== '') {
+      filterObj[item.model] = item.value
+    }
+  })
+  // 判断filterObj是否为空，如果为空则重置数据
+  if (Object.keys(filterObj).length === 0) {
     reset()
     return
   }
-  for (const item of data) {
-    tableDataInit.value.forEach(item => {
-      if (item.nickname === undefined) {
-        item.nickname = ''
-      }
-      if (item.employeeNo === undefined) {
-        item.employeeNo = ''
-      }
-    })
-    if (item.model === 'nickname' && item.value !== '') {
-      tableData.value = tableDataInit.value.filter(item2 => item2.nickname.includes(item.value))
-    } else if (item.model === 'employeeNo' && item.value !== '') {
-      tableData.value = tableDataInit.value.filter(item2 => item2.employeeNo.includes(item.value))
+  //判断filterObj的key值是否为nickname和employeeNo，如果为这两个值则进行过滤
+  if (filterObj.hasOwnProperty('nickname') && filterObj.hasOwnProperty('employeeNo') && filterObj.hasOwnProperty('tagStatus')) {
+    // console.log(171, filterObj)
+    tableData.value = tableDataInit.value.filter(item => item.tagStatus.includes(filterObj.tagStatus) && item.nickname.includes(filterObj.nickname) && item.employeeNo.includes(filterObj.employeeNo))
+  } else if (filterObj.hasOwnProperty('nickname') && filterObj.hasOwnProperty('employeeNo')) {
+    // console.log(172, filterObj)
+    tableData.value = tableDataInit.value.filter(item => item.nickname.includes(filterObj.nickname) && item.employeeNo.includes(filterObj.employeeNo))
+  } else if (filterObj.hasOwnProperty('nickname') && filterObj.hasOwnProperty('tagStatus')) {
+    // console.log(173, filterObj)
+    tableData.value = tableDataInit.value.filter(item => item.tagStatus.includes(filterObj.tagStatus) && item.nickname.includes(filterObj.nickname))
+  } else if (filterObj.hasOwnProperty('employeeNo') && filterObj.hasOwnProperty('tagStatus')) {
+    // console.log(174, filterObj)
+    tableData.value = tableDataInit.value.filter(item => item.tagStatus.includes(filterObj.tagStatus) && item.employeeNo.includes(filterObj.employeeNo))
+  } else {
+    for (const key in filterObj) {
+      tableData.value = tableDataInit.value.filter(item => item[key].includes(filterObj[key]))
     }
   }
 }

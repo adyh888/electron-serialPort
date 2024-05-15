@@ -29,6 +29,7 @@ declare module 'vue' {
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     ElUploadComponent: typeof import('./src/components/FunComponents/ElUploadComponent.vue')['default']
     FaceUploadComponent: typeof import('./src/components/FunComponents/FaceUploadComponent.vue')['default']

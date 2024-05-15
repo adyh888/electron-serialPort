@@ -16,7 +16,12 @@
         <el-table-column v-if="column.prop === 'tagStatus'" :prop="column.prop" :label="column.label" width="300" :filters="column.filter" :filter-method="filterTag" filter-placement="bottom-end" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.tagStatus === '已注册'" type="warning" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
-            <el-tag v-if="scope.row.tagStatus === '未注册'" type="danger" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
+            <el-tag v-if="scope.row.tagStatus === '未注册'" type="danger" disable-transitions>
+              {{ scope.row.tagStatus }}
+              <el-tooltip placement="top">
+                <template #content>传入的姓名和工号查找不到对应的用户信息,请检查!</template>
+                <el-icon><WarningFilled /></el-icon> </el-tooltip
+            ></el-tag>
             <el-tag v-if="scope.row.tagStatus === '新注册'" type="success" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
           </template>
         </el-table-column>
