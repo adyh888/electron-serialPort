@@ -126,3 +126,8 @@ ipcMain.handle('open-win', (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg })
   }
 })
+
+ipcMain.on('window-reset', function () {
+  app.relaunch()
+  app.exit()
+})

@@ -27,6 +27,7 @@ import { messageBoxShow } from '../../../utils'
 import { StorageCache } from '../../../common/StorageClass'
 import { BaseURL } from '../../../config'
 import { useRouter } from 'vue-router'
+import { ipcRenderer } from 'electron'
 /**
  * data
  */
@@ -53,6 +54,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     if (valid) {
       console.log('submit!')
       storage.set('config', ruleForm)
+      ipcRenderer.send('window-reset')
       messageBoxShow('提示', '修改配置成功，请重启软件后生效')
       setTimeout(() => {
         router.back()

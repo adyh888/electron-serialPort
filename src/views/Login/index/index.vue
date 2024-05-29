@@ -31,7 +31,7 @@ import { useOrganizationPermission } from '../../../hook/useHook'
 /**
  * data
  */
-const title = ref('检验/录入指纹系统')
+const title = ref('人员信息录入系统')
 const username = ref('')
 const password = ref('')
 const router = useRouter()
