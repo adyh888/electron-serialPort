@@ -16,7 +16,7 @@
                 <div style="width: 90px; text-align: justify; text-align-last: justify; margin-left: 5px">{{ item.title }}</div>
                 <div>:</div>
               </div>
-              <el-input v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
+              <el-input v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
               <el-select v-model="item.value" :placeholder="item.placeholder" style="width: 350px; margin-left: 5px" v-if="item.type === 'select'">
                 <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
@@ -35,7 +35,7 @@
                 <div style="width: 60px; text-align: justify; text-align-last: justify; margin-left: 5px">{{ item.title }}</div>
                 <div>:</div>
               </div>
-              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" v-if="item.type === 'input'" />
+              <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" :show-password="showPassword" clearable v-if="item.type === 'password'" />
               <div>
                 <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
@@ -168,9 +168,9 @@ const rightData = ref([
     value: '',
     placeholder: '请录入卡号',
     mandatory: false,
-    disabled: true,
+    disabled: false,
     required: false,
-    setting: true,
+    setting: false,
     type: 'input'
   },
 
@@ -596,10 +596,11 @@ onMounted(async () => {
     showPassword.value = false
     routerParams.value = params
     registerType.value = false
-    cascaderOptions.value = getUseOrganizationPermission(params)
+    // cascaderOptions.value = getUseOrganizationPermission(params)
+    cascaderOptions.value = indexStore.organizationalStructureArr
     leftData.value.forEach(item => {
       if (item.id === 1) {
-        item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
+        // item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
       }
       if (item.id === 2) {
         item.value = params.username
@@ -619,7 +620,7 @@ onMounted(async () => {
         item.value = params.password
       }
       if (item.id === 2) {
-        item.value = params.cardStatus
+        item.placeholder = params.cardStatus
       }
       if (item.id === 3) {
         item.value = params.fingerStatus

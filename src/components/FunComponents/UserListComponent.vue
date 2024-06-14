@@ -22,7 +22,7 @@ import SearchComponent from '../CommonComponents/SearchComponent.vue'
 import TableComponent from '../CommonComponents/TableComponent.vue'
 import PaginationComponent from '../CommonComponents/PaginationComponent.vue'
 import { provide, ref, onMounted, reactive } from 'vue'
-import { deleteUser, getDeviceList, userGradeJson } from '../../hook/useHook'
+import { deleteUser, getDeviceList, useOrganizationParams, userGradeJson } from '../../hook/useHook'
 import { Request } from '../../utils/request'
 import { useIndexStore, useUcStore } from '../../store'
 import { deviceType } from '../../enum'
@@ -201,10 +201,17 @@ const deviceUserSelect = async () => {
 }
 //用户列表
 const userSelect = async () => {
+  let organizationRes = await useOrganizationParams()
   tableLoading.value = true
-  let json = {
+  let json: any = {
     pageSize: pagination.pageSize,
     curPageNo: pagination.pageNum
+  }
+  if (Object.keys(organizationRes).length > 0) {
+    json = {
+      ...json,
+      ...organizationRes
+    }
   }
   formDataList.value.forEach(item => {
     if (item.model === 'username' && item.value !== '') {

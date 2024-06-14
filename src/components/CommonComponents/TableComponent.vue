@@ -25,7 +25,7 @@
             <el-tag v-if="scope.row.tagStatus === '新注册'" type="success" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-else :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
+        <el-table-column v-else-if="column.prop !== 'setting'" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
           <template #default="scope" v-if="column.prop === 'status'">
             <el-switch v-model="scope.row.status" @change="switchChange(scope.row)" />
           </template>

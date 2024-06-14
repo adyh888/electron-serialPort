@@ -10,6 +10,7 @@ import { deviceType } from '../enum'
 export async function useOrganizationPermission() {
   const user = useIndexStore()
   const grade = user.userInfo.role?.grade
+  // console.log(13, grade)
   //TODO grade:1集团管理员，2:公司管理员 0:超级管理员
   switch (grade) {
     case 0:
@@ -20,6 +21,32 @@ export async function useOrganizationPermission() {
     case 2:
       return await companyAndDepartment()
   }
+}
+
+/**
+ * 组织架构的传参
+ */
+export async function useOrganizationParams() {
+  return new Promise((resolve, reject) => {
+    const user = useIndexStore()
+    let params: any = {}
+    const grade = user.userInfo.role?.grade
+    //TODO grade:1集团管理员，2:公司管理员 0:超级管理员
+    switch (grade) {
+      case 0:
+        break
+      case 1:
+      case -1:
+        params.groupId = user.userInfo.groupId
+        params.companyId = user.userInfo.companyId
+        break
+      case 2:
+        params.companyId = user.userInfo.companyId
+        params.departmentId = user.userInfo.departmentId
+        params.teamId = user.userInfo.teamId
+    }
+    resolve(params)
+  })
 }
 
 /**
