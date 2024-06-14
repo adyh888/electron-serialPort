@@ -7,6 +7,7 @@ import Add from '../views/Home/Add/index.vue'
 import Config from '../views/Setting/config/index.vue'
 import UserList from '../views/Home/add/userList.vue'
 import UploadFace from '../views/Home/face/uploadFace/index.vue'
+import Camera from '../views/Home/camera/index.vue'
 const routes = [
   {
     path: '/',
@@ -47,6 +48,11 @@ const routes = [
     path: '/faceUpload',
     name: 'UploadFace',
     component: UploadFace
+  },
+  {
+    path: '/Camera',
+    name: 'Camera',
+    component: Camera
   }
 ]
 

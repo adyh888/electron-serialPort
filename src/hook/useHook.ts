@@ -12,13 +12,53 @@ export async function useOrganizationPermission() {
   const grade = user.userInfo.role?.grade
   //TODO grade:1集团管理员，2:公司管理员 0:超级管理员
   switch (grade) {
-    case 1:
     case 0:
+      return await groupSelect()
+    case 1:
     case -1:
       return await groupAndCompanyAndDepartment()
     case 2:
       return await companyAndDepartment()
   }
+}
+
+/**
+ * 级联树
+ * 超级权限
+ * 集团
+ */
+export async function groupSelect() {
+  const user = useIndexStore()
+  let groupRes = await Request(useDcStore().groupSelect, {})
+  let groupResArr = []
+  if (groupRes && groupRes.data.length > 0) {
+    for (const item of groupRes.data) {
+      groupResArr.push({
+        value: item.id,
+        label: item.name,
+        children: item.companies.map(item2 => {
+          return {
+            value: item2.id,
+            label: item2.name,
+            children: item2.departments.map(item3 => {
+              return {
+                value: item3.id,
+                label: item3.name,
+                children: item3.teams.map(item4 => {
+                  return {
+                    value: item4.id,
+                    label: item4.name
+                  }
+                })
+              }
+            })
+          }
+        })
+      })
+    }
+  }
+  user.organizationalStructureArr = groupResArr
+  return groupResArr
 }
 
 /**
@@ -163,13 +203,23 @@ export async function getDeviceList(type) {
 /**
  * 组织架构的传参处理
  */
-export function userGradeJson(arr=undefined) {
+export function userGradeJson(arr = undefined) {
   const user = useIndexStore()
   const grade = user.userInfo.role?.grade
   //TODO grade:1集团管理员，2:公司管理员 0:超级管理员
   switch (grade) {
-    case 1:
     case 0:
+      switch (arr?.length) {
+        case 1:
+          return { groupId: arr[0] }
+        case 2:
+          return { groupId: arr[0], companyId: arr[1] }
+        case 3:
+          return { groupId: arr[0], companyId: arr[1], departmentId: arr[2] }
+        case 4:
+          return { groupId: arr[0], companyId: arr[1], departmentId: arr[2], teamId: arr[3] }
+      }
+    case 1:
     case -1:
       switch (arr?.length) {
         case 1:

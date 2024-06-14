@@ -40,6 +40,7 @@ const loading = ref<any>(null)
 const user = useIndexStore()
 const configCount = ref(0)
 const version = ref('')
+
 /**
  * methods
  */

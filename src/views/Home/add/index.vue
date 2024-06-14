@@ -47,6 +47,9 @@
                 <el-button type="primary" :icon="Edit" circle @click="editButton(item)" />
                 <el-button type="danger" style="margin-left: 25px" :icon="Delete" circle @click="deleteButton(item)" />
               </div>
+              <div style="display: flex; margin-left: 20px" v-if="item.camera">
+                <el-button type="primary" @click="cameraClick">拍照录入</el-button>
+              </div>
             </div>
           </div>
         </div>
@@ -192,6 +195,7 @@ const rightData = ref([
     disabled: false,
     required: false,
     mandatory: false,
+    camera: true,
     type: 'image'
   }
 ])
@@ -571,10 +575,20 @@ const faceRequestGetUrl = async () => {
     user.faceRequestUrl = deviceIpArr
   }
 }
+
+//摄像头事件
+const cameraClick = () => {
+  // console.log(581, urlList.value)
+  router.push('/Camera')
+}
+
 /**
  * life
  */
 onMounted(async () => {
+  if (Object.keys(user.imgFileObj).length > 0) {
+    urlList.value.push(user.imgFileObj)
+  }
   //路由传参的值
   let params = history.state
   await faceRequestGetUrl()
@@ -639,6 +653,9 @@ onMounted(async () => {
       }
     })
   }
+})
+onUnmounted(() => {
+  user.imgFileObj = {}
 })
 
 /**

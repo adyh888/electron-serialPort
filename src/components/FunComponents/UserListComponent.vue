@@ -285,7 +285,6 @@ const userSelect = async () => {
 
 //列表的编辑按钮
 const edit = (row: any) => {
-  console.log(261, row)
   router.push({
     name: 'Add',
     state: { ...row, type: 'edit' }

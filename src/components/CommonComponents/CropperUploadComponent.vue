@@ -134,12 +134,14 @@ watch(
       const indexThis = fileList.findIndex(n => n.src == item)
       if (indexThis == -1) {
         newFileList.push({
-          src: item,
+          src: item.src,
+          file: item.file,
           isSuccess: true
         })
       }
     })
     fileList.unshift(...newFileList)
+    // console.log(144, fileList)
   },
   { immediate: true, deep: true }
 )
@@ -148,6 +150,7 @@ watch(
 watch(
   fileList,
   value => {
+    // console.log(152, value)
     const valueList = value
       .map(n => {
         if (n.isSuccess) {

@@ -5,10 +5,11 @@ export const useIndexStore = defineStore('index', () => {
   const SerialPortClass = reactive({})
   const userInfo = ref({})
   const loadingGlobal = ref({})
+  const imgFileObj = ref({})
   const faceRequestUrl = ref([])
   const paramsArr = ref([])
   const organizationalStructureArr = ref([])
-  return { serialPortStoreStatus, userInfo, SerialPortClass, loadingGlobal, faceRequestUrl, paramsArr, organizationalStructureArr }
+  return { serialPortStoreStatus, userInfo, SerialPortClass, loadingGlobal, faceRequestUrl, paramsArr, organizationalStructureArr, imgFileObj }
 })
 
 export * from './ac'
