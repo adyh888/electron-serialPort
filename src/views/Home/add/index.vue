@@ -53,7 +53,7 @@
             </div>
           </div>
         </div>
-        <el-button type="primary" style="width: 300px; margin-top: 100px; height: 60px; font-size: 22px" @click="confirmSubmit">确认</el-button>
+        <el-button type="primary" style="width: 300px; margin-top: 50px; height: 60px; font-size: 22px" @click="confirmSubmit">确认</el-button>
       </div>
     </div>
     <DialogComponent />
@@ -598,9 +598,16 @@ onMounted(async () => {
     registerType.value = false
     // cascaderOptions.value = getUseOrganizationPermission(params)
     cascaderOptions.value = indexStore.organizationalStructureArr
+    const userGrade = indexStore.userInfo.role?.grade
+    // console.log(601, params)
     leftData.value.forEach(item => {
+      //组织架构回显回显问题
       if (item.id === 1) {
-        // item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
+        if (userGrade !== 0) {
+          item.value = [params.companyId, params.departmentId, params.teamId] as any
+        } else {
+          item.value = [params.groupId, params.companyId, params.departmentId, params.teamId] as any
+        }
       }
       if (item.id === 2) {
         item.value = params.username
@@ -669,7 +676,7 @@ provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cit
 .userStyle {
   display: flex;
   align-items: center;
-  margin-top: 50px;
+  margin-top: 30px;
   font-size: 16px;
 }
 </style>
