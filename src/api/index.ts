@@ -10,7 +10,7 @@ import router from '../router'
 import { useIndexStore } from '../store'
 const service = axios.create({
   baseURL: BaseURL(),
-  timeout: 5000
+  timeout: 15000
 })
 const storage = new StorageCache()
 /**
@@ -21,8 +21,8 @@ service.interceptors.request.use(
     const token = storage.get('accessToken')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
-        // @ts-ignore
-      config.headers['source'] = 'electron-fingerprint' +'_'+ __Admin_VERSION__ as string
+      // @ts-ignore
+      config.headers['source'] = ('electron-fingerprint' + '_' + __Admin_VERSION__) as string
     }
     return config
   },

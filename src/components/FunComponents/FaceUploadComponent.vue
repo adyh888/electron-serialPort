@@ -352,6 +352,14 @@ const cancel = () => {
 }
 //弹窗的确定按钮事件
 const confirm = () => {
+  if (fileList.value.length > 0) {
+    let strArr = fileList.value[0].name.split('.')
+    let str = strArr[strArr.length - 1]
+    if (str !== 'zip') {
+      messageShow('只能上传压缩包为zip文件格式的文件', 'error')
+      return
+    }
+  }
   //设备名称和文件列表不为空时，上传
   if (Object.keys(selectDeviceObj.value).length > 0 && fileList.value.length > 0) {
     if (selectDeviceObj.value.serviceId) {

@@ -579,6 +579,8 @@ const faceRequestGetUrl = async () => {
 //摄像头事件
 const cameraClick = () => {
   // console.log(581, urlList.value)
+  //页面记录保存
+  user.paramsArr = [...leftData.value, ...rightData.value]
   router.push('/Camera')
 }
 
