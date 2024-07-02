@@ -71,7 +71,7 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { getDeviceList, getSerialPortStatus, getUseOrganizationPermission, userGradeJson } from '../../../hook/useHook'
+import { base64ToBlob, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
@@ -191,6 +191,7 @@ const rightData = ref([
     title: '人脸',
     value: '',
     placeholder: '请录入人脸',
+    faceImage: '',
     setting: false,
     disabled: false,
     required: false,
@@ -588,9 +589,6 @@ const cameraClick = () => {
  * life
  */
 onMounted(async () => {
-  if (Object.keys(user.imgFileObj).length > 0) {
-    urlList.value.push(user.imgFileObj)
-  }
   //路由传参的值
   let params = history.state
   await faceRequestGetUrl()
@@ -636,6 +634,13 @@ onMounted(async () => {
       }
       if (item.id === 4) {
         item.faceStatus = params.faceStatus
+        item.faceImage = params.faceImage
+      }
+    })
+    //反现图片
+    rightData.value.forEach(item => {
+      if (item.id === 4 && item.faceImage !== '' && item.faceImage !== null) {
+        urlList.value[0] = base64ToBlob(item.faceImage)
       }
     })
   } else {
@@ -662,6 +667,10 @@ onMounted(async () => {
         userInfoForm = { ...userInfoForm, deviceIdArr: [item.value] }
       }
     })
+  }
+  //拍照替换自带的图片
+  if (Object.keys(user.imgFileObj).length > 0) {
+    urlList.value[0] = user.imgFileObj
   }
 })
 onUnmounted(() => {

@@ -3,7 +3,7 @@
  */
 import { Request, useDcStore, useIndexStore, useUcStore } from '../store'
 import { deviceType } from '../enum'
-
+import { messageBoxShow, messageShow } from '../utils'
 /**
  * 组织架构权限处理
  */
@@ -349,4 +349,186 @@ export function getUseOrganizationPermission(data) {
       }
     ]
   }
+}
+
+/**
+ * 正则判断ip是不是ipv4地址
+ *
+ */
+export function isIpv4(ip) {
+  // 这个正则表达式匹配形如"192.168.1.1"的IPv4地址
+  const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+  return ipPattern.test(ip)
+}
+
+/**
+ * 文件夹的验证
+ */
+export function useExtractFilename(str) {
+  // 检查字符串是否以.png、.jpeg或.jpg结尾
+  const fileExtensionRegex = /\.(?:png|jpeg|jpg)$/
+
+  // 如果字符串包含/，则提取/后面的部分
+  if (str.includes('/')) {
+    const parts = str.split('/') // 使用/分割字符串
+    const lastPart = parts[parts.length - 1] // 获取最后一个部分
+
+    // 检查最后一个部分是否以.png、.jpeg或.jpg结尾
+    if (fileExtensionRegex.test(lastPart)) {
+      return lastPart // 返回/后面的文件名
+    }
+  } else {
+    // 如果没有/，则直接检查整个字符串是否以.png、.jpeg或.jpg结尾
+    if (fileExtensionRegex.test(str)) {
+      return str // 返回整个字符串作为文件名
+    }
+  }
+
+  // 如果字符串不符合要求，则返回null或空字符串
+  return null
+}
+
+/**
+ * 检测文件夹下检测
+ */
+export function useTraverseFolderForImages(folder) {
+  // 遍历文件夹中的每一项（可能是文件或子文件夹）
+  for (const entryName in folder.files) {
+    if (folder.files.hasOwnProperty(entryName)) {
+      const file = folder.file(entryName)
+
+      // 检查文件扩展名是否是图片格式
+      const ext = file.name.split('.').pop().toLowerCase()
+      if (['png', 'jpg', 'jpeg'].includes(ext)) {
+        // 这是一个图片文件，你可以在这里进行处理，比如获取文件内容等
+        file.async('blob').then(function (blob) {
+          // blob 是文件的 Blob 对象，你可以根据需要进行处理
+          console.log('Found image:', file.name, blob)
+          // 例如，你可以创建一个 URL 来预览图片：
+          const url = URL.createObjectURL(blob)
+          console.log('Image URL:', url)
+          // 记得在不再需要 URL 时释放它
+          // URL.revokeObjectURL(url);
+        })
+      }
+    }
+  }
+
+  // 如果文件夹还有子文件夹，递归遍历它们
+  if (folder.folders) {
+    for (const subfolderName in folder.folders) {
+      if (folder.folders.hasOwnProperty(subfolderName)) {
+        const subfolder = folder.folder(subfolderName)
+        traverseFolderForImages(subfolder) // 递归调用
+      }
+    }
+  }
+}
+
+/**
+ * 提取文件名称的姓名和工号
+ */
+export function useExtractNamesAndNumbers(fileNames) {
+  return new Promise(resolve => {
+    const names = []
+    const employeeNos = []
+
+    for (let i = 0; i < fileNames.length; i++) {
+      const fileName = fileNames[i]
+      // 检查文件扩展名是否为.png、.jpg或.jpeg
+      if (/\.(?:png|jpg|jpeg)$/.test(fileName)) {
+        // 移除文件扩展名
+        const baseName = fileName.replace(/\..+$/, '')
+
+        // 使用_分割文件名
+        const parts = baseName.split('_')
+
+        // 检查_分割后的数组是否至少有两个部分
+        if (parts.length >= 2) {
+          // 提取名字（第一个_之前的部分）
+          const name = parts.shift() // shift移除并返回数组的第一个元素
+          names.push(name)
+
+          // 提取员工编号（剩余部分连接起来）
+          const employeeNo = parts.join('_')
+          employeeNos.push(employeeNo)
+        }
+      } else {
+        messageShow('检测压缩包里的文件有不支持的格式，支持图片格式(jpg,jpeg,png)', 'error')
+        break
+      }
+    }
+
+    // 检查names数组中是否有重复的元素
+    let checkArrRes = checkForDuplicates(names)
+    if (checkArrRes) {
+      resolve(false)
+      return
+    }
+    // 检查employeeNos数组中的每个元素是否只包含字母、数字或字母加数字
+    for (let i = 0; i < employeeNos.length; i++) {
+      const employeeNo = employeeNos[i]
+      if (!/^[a-zA-Z0-9]+$/.test(employeeNo)) {
+        // console.log('Invalid Employee Number:', employeeNo, 'at index', i);
+        messageBoxShow('提示', `工号只包含字母、数字或字母加数字，不支持的数据是:${employeeNo}`, 'error', 2000)
+        resolve(false)
+        break
+      }
+    }
+
+    resolve(true)
+  })
+}
+
+function checkForDuplicates(arr) {
+  const uniqueElements = new Set()
+
+  // 遍历数组
+  for (let i = 0; i < arr.length; i++) {
+    const element = arr[i]
+
+    // 如果元素已经存在于Set中，说明有重复
+    if (uniqueElements.has(element)) {
+      console.log('数组中有重复的元素', element)
+      messageBoxShow('提示', `姓名中有重复的数据,重复的姓名是:${element}`, 'error', 2000)
+      return true // 找到了重复，可以立即返回
+    }
+
+    // 如果元素不存在于Set中，则添加到Set中
+    uniqueElements.add(element)
+  }
+
+  // 如果没有找到重复的元素，则打印没有重复的消息
+  // console.log("数组中没有重复的元素");
+  return false
+}
+
+/**
+ * base64转blob-image
+ */
+export function base64ToBlob(base64) {
+  // 移除URL的头部（data:image/jpeg;base64,）
+  let base64Data = base64.replace(/^data:image\/(png|jpg|jpeg);base64,/, '')
+  // 使用atob和Uint8Array将base64字符串转换为二进制数组
+  let binaryData = window.atob(base64Data)
+  let arrayBuffer = new ArrayBuffer(binaryData.length)
+  let uint8Array = new Uint8Array(arrayBuffer)
+  for (let i = 0; i < binaryData.length; i++) {
+    uint8Array[i] = binaryData.charCodeAt(i)
+  }
+
+  // 创建一个Blob对象
+  let blob = new Blob([uint8Array], { type: 'image/jpeg' })
+
+  // 创建一个指向Blob的URL
+  let blobUrl = URL.createObjectURL(blob)
+
+  // 在控制台打印Blob URL，但请注意，这本身不会预览图像
+  const imgFile = {
+    file: blob,
+    src: blobUrl
+  }
+  return imgFile
+  // let res = saveAs(blob, 'image.jpg')
+  // console.log(518, res)
 }

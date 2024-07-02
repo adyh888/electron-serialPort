@@ -29,7 +29,7 @@ import { ref, provide, reactive, onMounted } from 'vue'
 import JSZip from 'jszip'
 import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
 import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
-import { getDeviceList } from '../../hook/useHook'
+import { base64ToBlob, getDeviceList, useExtractNamesAndNumbers, useTraverseFolderForImages } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 import iconv from 'iconv-lite'
 import { useUcStore } from '../../store'
@@ -82,6 +82,7 @@ const columns = ref([
   // { label: '账号', prop: 'nickname' },
   { label: '姓名', prop: 'nickname' },
   { label: '人脸ID', prop: 'faceId' },
+  { label: '人脸图片', prop: 'faceImage' },
   {
     label: '状态',
     prop: 'tagStatus',
@@ -119,6 +120,10 @@ const bindNewFaceList = ref([])
 //注册失败的人脸数据
 const registerFailFaceList = ref([])
 const headContent = ref('')
+//文件夹名称
+const folderName = ref('')
+//图片的正则验证
+const imgReg = /\.(jpg|jpeg|png)$/i
 /**
  * methods
  */
@@ -218,85 +223,98 @@ const unzipAndReadFiles = async zipFile => {
         return iconv.decode(bytes, 'gbk') // 按中文编码
       }
     })
-    // 获取压缩包内的文件列表
     const fileNames = Object.keys(zipData.files)
-    // 遍历文件列表并获取文件内容
-    for (const fileName of fileNames) {
-      const file = zipData.files[fileName]
-      let str = fileName
-      //分割字符串
-      let name: string //提取第一个部分，即"测试100"
-      let employeeNo: string //提取加号后面的部分，并去掉'.jpg'后缀
-      // 使用加号(+)作为分隔符来分割字符串
-      const parts = str.split('_')
-      // 检查分割后的数组长度，确保至少有两个部分
-      if (parts.length >= 2) {
-        name = parts[0] // 提取第一个部分，即"测试100"
-        employeeNo = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
-      } else {
-        loading.value.close()
-        messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求(图片请放置根目录下,图片名称请填写姓名_工号)', 'error', 3000)
-        return
-      }
-      //图片转base64
-      // file
-      //   .async('base64')
-      //   .then(res => {
-      //     // console.log(49, res)
-      //     let imgBase64 = `data:image/jpeg;base64,${res}`
-      //     // imageList.value.push(imgBase64)
-      //   })
-      //   .catch(error => {
-      //     console.log(52, error)
-      //   })
-      // 从 ZIP 文件中获取图片文件
-      const content = await file.async('blob')
-      // 创建一个新的 File 对象，包含解压后的图片数据
-      const fileObj = new File([content], fileName, { type: 'image/jpeg' })
-      // 现在你可以处理这个 file 对象了，例如显示在页面上或上传到服务器
-      //TODO 拿工号employeeNo获取用户uid
-      let userJson = {
-        nickname: name,
-        employeeNo: employeeNo
-      }
-      let userFindRes = await Request(useUcStore().userFind, userJson)
-      // console.log(221,userFindRes)
-      if (userFindRes && userFindRes.code === 0 && userFindRes.total > 0) {
-        //代表查找的用户存在，可以找到用户的uid
-        let json = {
-          name: userFindRes.data[0].nickname,
-          uid: userFindRes.data[0].id,
-          employeeNo: userFindRes.data[0].employeeNo,
-          file: fileObj,
-          serverIp: selectDeviceObj.value.serviceId
+    //TODO 检测是不是文件夹，如果是文件夹就报错 true代表有文件，false代表没有文件夹
+    let regRes = fileNames.some(item => !imgReg.test(item))
+    if (regRes) {
+      loading.value.close()
+      messageShow('检测压缩包里有文件夹,请检查！支持图片格式(jpg,jpeg,png)', 'error')
+      return
+    }
+    //TODO 检测name的名称不能相同,检测employeeNo的工号为字母+数字组合或者是字母或者是数字
+    const arrCheckRes = await useExtractNamesAndNumbers(fileNames)
+    if (arrCheckRes) {
+      // 遍历文件列表并获取文件内容
+      for (const fileName of fileNames) {
+        const file = zipData.files[fileName]
+        let str = fileName
+        //分割字符串
+        let name: string //提取第一个部分，即"测试100"
+        let employeeNo: string //提取加号后面的部分，并去掉'.jpg'后缀
+        // 使用加号(+)作为分隔符来分割字符串
+        const parts = str.split('_')
+        // 检查分割后的数组长度，确保至少有两个部分
+        if (parts.length >= 2) {
+          name = parts[0] // 提取第一个部分，即"测试100"
+          employeeNo = parts[1].split('.')[0] // 提取加号后面的部分，并去掉'.jpg'后缀
+        } else {
+          loading.value.close()
+          messageBoxShow('提示', '数据格式不正确,无法处理,请检查是否满足要求(图片名称请填写姓名_工号)', 'error', 3000)
+          return
         }
-        let faceVerifyRes = await faceVerifyRequest(json)
-        // console.log(159, faceVerifyRes)
-        if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
-          //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
-          if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
-            //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
-            for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
-              if (item.uid === null) {
-                //TODO 重新绑定
-                await rebind(json)
-              } else {
-                bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, tagStatus: '已注册' })
+        //图片转base64
+        let imgBase64
+        file
+          .async('base64')
+          .then(res => {
+            imgBase64 = res
+            // imageList.value.push(imgBase64)
+          })
+          .catch(error => {
+            console.log(264, error)
+          })
+        // 从 ZIP 文件中获取图片文件
+        const content = await file.async('blob')
+        // 创建一个新的 File 对象，包含解压后的图片数据
+        const fileObj = new File([content], fileName, { type: 'image/jpeg' })
+        // 现在你可以处理这个 file 对象了，例如显示在页面上或上传到服务器
+        //TODO 拿工号employeeNo获取用户uid
+        let userJson = {
+          nickname: name,
+          employeeNo: employeeNo
+        }
+        let userFindRes = await Request(useUcStore().userFind, userJson)
+        // console.log(221,userFindRes)
+        if (userFindRes && userFindRes.code === 0 && userFindRes.total > 0) {
+          //代表查找的用户存在，可以找到用户的uid
+          let json = {
+            name: userFindRes.data[0].nickname,
+            uid: userFindRes.data[0].id,
+            employeeNo: userFindRes.data[0].employeeNo,
+            file: fileObj,
+            serverIp: selectDeviceObj.value.serviceId
+          }
+          let faceVerifyRes = await faceVerifyRequest(json)
+          // console.log(159, faceVerifyRes)
+          if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+            //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
+            if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
+              //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
+              for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
+                if (item.uid === null) {
+                  //TODO 重新绑定
+                  await rebind(json)
+                } else {
+                  bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '已注册' })
+                }
               }
+            } else {
+              //没有绑定过，需要重新注册
+              await rebind(json)
             }
-          } else {
+          } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
             //没有绑定过，需要重新注册
             await rebind(json)
+            // messageShow(`${faceVerifyRes.data.result}`, 'error')
           }
-        } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
-          //没有绑定过，需要重新注册
-          await rebind(json)
-          // messageShow(`${faceVerifyRes.data.result}`, 'error')
+        } else if (userFindRes && userFindRes.code === 0 && userFindRes.total === 0) {
+          //代表根据姓名+工号找不到此用户的信息
+          registerFailFaceList.value.push({ employeeNo: employeeNo, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '未注册' })
         }
-      } else if (userFindRes && userFindRes.code === 0 && userFindRes.total === 0) {
-        //代表根据姓名+工号找不到此用户的信息
-        registerFailFaceList.value.push({ employeeNo: employeeNo, nickname: name, tagStatus: '未注册' })
       }
+    } else {
+      loading.value.close()
+      return
     }
   } catch (error) {
     loading.value.close()
@@ -354,6 +372,7 @@ const cancel = () => {
 const confirm = () => {
   if (fileList.value.length > 0) {
     let strArr = fileList.value[0].name.split('.')
+    folderName.value = strArr[0]
     let str = strArr[strArr.length - 1]
     if (str !== 'zip') {
       messageShow('只能上传压缩包为zip文件格式的文件', 'error')

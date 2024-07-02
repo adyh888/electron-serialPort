@@ -25,6 +25,17 @@
             <el-tag v-if="scope.row.tagStatus === '新注册'" type="success" disable-transitions>{{ scope.row.tagStatus }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column v-else-if="column.prop === 'faceImage'" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center" width="130">
+          <template #default="scope">
+            <el-image style="width: 50px; height: 50px" :src="`data:image/jpg;base64,${scope.row.faceImage}`" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2" :preview-src-list="scope.row.srcList" :z-index="99" :initial-index="1" fit="cover" preview-teleported>
+              <template #error>
+                <div style="font-size: 30px; display: flex; justify-content: center; align-items: center; height: 50px">
+                  <el-icon><icon-picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
+          </template>
+        </el-table-column>
         <el-table-column v-else-if="column.prop !== 'setting'" :label="column.label" :prop="column.prop" :show-overflow-tooltip="true" align="center">
           <template #default="scope" v-if="column.prop === 'status'">
             <el-switch v-model="scope.row.status" @change="switchChange(scope.row)" />
@@ -40,7 +51,7 @@
  * imports
  */
 import { inject } from 'vue'
-
+import { Picture as IconPicture } from '@element-plus/icons-vue'
 /**
  * data
  */

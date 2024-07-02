@@ -61,4 +61,11 @@ const router = createRouter({
   routes
 })
 
+// 添加全局前置守卫
+router.beforeEach((to, from, next) => {
+  // 在这里执行你的拦截逻辑
+  console.log('当前路由地址', to.path)
+  next()
+})
+
 export default router

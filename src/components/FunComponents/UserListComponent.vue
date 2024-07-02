@@ -22,7 +22,7 @@ import SearchComponent from '../CommonComponents/SearchComponent.vue'
 import TableComponent from '../CommonComponents/TableComponent.vue'
 import PaginationComponent from '../CommonComponents/PaginationComponent.vue'
 import { provide, ref, onMounted, reactive } from 'vue'
-import { deleteUser, getDeviceList, useOrganizationParams, userGradeJson } from '../../hook/useHook'
+import { base64ToBlob, deleteUser, getDeviceList, useOrganizationParams, userGradeJson } from '../../hook/useHook'
 import { Request } from '../../utils/request'
 import { useIndexStore, useUcStore } from '../../store'
 import { deviceType } from '../../enum'
@@ -140,6 +140,7 @@ const columns = ref([
   { label: '卡号', prop: 'cardStatus' },
   { label: '指纹', prop: 'fingerStatus' },
   { label: '人脸', prop: 'faceStatus' },
+  { label: '人脸图片', prop: 'faceImage' },
   { label: '状态', prop: 'status' },
   { label: '操作', prop: 'setting' }
 ])
@@ -154,6 +155,7 @@ const syncDisabled = ref(false)
 const emptyText = ref('暂无数据')
 const tableLoading = ref(false)
 const indexStore = useIndexStore()
+
 /**
  * methods
  */
@@ -279,6 +281,8 @@ const userSelect = async () => {
         fingerStatus: item.bindFinger ? '已录入' : '未录入',
         faceId: item.faceId,
         faceStatus: item.faceId ? '已录入' : '未录入',
+        faceImage: item.faceId && item.face?.imageData ? item.face?.imageData : '',
+        srcList: item.faceId && item.face?.imageData ? [base64ToBlob(item.face?.imageData).src] : [],
         faceUuid: (item.faceId && item.face && item.face.uuid) ?? '',
         password: item.password,
         phoneNo: item.phoneNo,
@@ -292,9 +296,11 @@ const userSelect = async () => {
 
 //列表的编辑按钮
 const edit = (row: any) => {
+  row.type = 'edit'
+  delete row.srcList
   router.push({
     name: 'Add',
-    state: { ...row, type: 'edit' }
+    state: row
   })
 }
 

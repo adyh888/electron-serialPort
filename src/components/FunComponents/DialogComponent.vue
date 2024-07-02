@@ -37,7 +37,7 @@
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         <div class="el-upload__text">将文件拖到此区域，或<em>点击上传</em></div>
         <template #tip>
-          <div class="el-upload__tip" style="color: #ff0000">注意：只能上传压缩文件ZIP格式，根文件为图片,图片格式为jpeg/jpg,示例图片文件名使用：姓名_工号</div>
+          <div class="el-upload__tip" style="color: #ff0000">注意：只能上传压缩文件ZIP格式，压缩包为图片文件,无需文件夹,图片格式为jpeg/jpg,示例图片文件名使用：姓名_工号</div>
         </template>
       </el-upload>
       <template #footer>

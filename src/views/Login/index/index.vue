@@ -2,7 +2,15 @@
   <div style="display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; text-align: center">
     <div>
       <div style="font-size: 28px; color: white; font-weight: 500; letter-spacing: 4px" @click="configClick">
-        {{ title }}<span style="font-size: 16px">@{{ version }}</span>
+        {{ title }}
+        <el-popover placement="top-start" :title="versionTitle" :width="300" trigger="hover">
+          <template #reference>
+            <span style="font-size: 16px"> @{{ version }}</span>
+          </template>
+          <template #default>
+            <div style="white-space: pre-wrap" v-html="content"></div>
+          </template>
+        </el-popover>
       </div>
       <div class="content">
         <el-input class="inputClass" v-model="username" style="width: 420px; color: white" placeholder="请输入账号" :prefix-icon="UserFilled" />
@@ -28,6 +36,7 @@ import { useRouter } from 'vue-router'
 import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
 import { useOrganizationPermission } from '../../../hook/useHook'
+import versionReadme from '../../../../versionReadme'
 /**
  * data
  */
@@ -40,7 +49,8 @@ const loading = ref<any>(null)
 const user = useIndexStore()
 const configCount = ref(0)
 const version = ref('')
-
+const content = ref('')
+const versionTitle = ref('版本介绍')
 /**
  * methods
  */
@@ -94,6 +104,8 @@ const configClick = () => {
  * life
  */
 onMounted(() => {
+  content.value = versionReadme.description
+  versionTitle.value = '版本介绍-' + versionReadme.version
   // @ts-ignore
   version.value = __Admin_VERSION__ as string
   let user = storage.get('user')

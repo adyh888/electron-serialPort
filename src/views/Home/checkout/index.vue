@@ -29,7 +29,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancel">取消</el-button>
-          <el-button type="primary" @click="confirm(1)"> 确定</el-button>
+          <el-button :disabled="confirmDisabled" type="primary" @click="confirm(1)"> 确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -67,7 +67,7 @@ import HeadComponent from '../../../components/CommonComponents/HeadComponent.vu
 import TableComponent from '../../../components/CommonComponents/TableComponent.vue'
 import SearchComponent from '../../../components/CommonComponents/SearchComponent.vue'
 import PaginationComponent from '../../../components/CommonComponents/PaginationComponent.vue'
-import { getDeviceList } from '../../../hook/useHook'
+import { getDeviceList, isIpv4 } from '../../../hook/useHook'
 import { TfsD400 } from '../../../common/SocketFinger/tfsd400/tfsd400'
 /**
  * data
@@ -156,7 +156,8 @@ const buttonData = ref([
   { buttonEvent: 1, model: 'sync' }
 ])
 const emptyText = ref('暂无异常的指纹数据')
-
+//选择设备的确定按钮状态
+const confirmDisabled = ref(false)
 let finger = null
 /**
  * methods
@@ -180,19 +181,25 @@ const confirm = type => {
     messageBoxShow('提示', '没有配置服务器地址', 'warning')
     return
   }
-  loadingShow()
-  loadingTimer.value = setTimeout(() => {
-    messageBoxShow('提示', '连接超时,请检查指纹设备', 'error')
-    loading.value?.close()
-  }, 12000)
   selectChange()
-  clearTimeout(loadingTimer.value)
+  // loadingShow()
+  // loadingTimer.value = setTimeout(() => {
+  //   messageBoxShow('提示', '连接超时,请检查指纹设备', 'error')
+  //   loading.value?.close()
+  // }, 12000)
+  // clearTimeout(loadingTimer.value)
 }
 
 //选中事件
 const selectChangeDialog = () => {
   selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
-  console.log(16, selectDeviceObj.value)
+  // console.log(195, selectDeviceObj.value)
+  if (selectDeviceObj.value.serviceId === null || selectDeviceObj.value.serviceId === '' || !isIpv4(selectDeviceObj.value.serviceId)) {
+    confirmDisabled.value = true
+    messageBoxShow('提示', `socket服务地址不正确[${selectDeviceObj.value.serviceId}]`, 'warning')
+  } else {
+    confirmDisabled.value = false
+  }
 }
 
 //选中事件
@@ -204,6 +211,7 @@ const selectChange = async () => {
       await fingerSelect(selectDeviceObj.value.value)
       //连接指纹模块
       await fingerConnect(selectDeviceObj.value.serviceId, selectDeviceObj.value.fingerPort)
+      emitterFinger.once('connect_timeout', timeoutEvent)
       emitterFinger.once('connect_success', async () => {
         console.log('连接成功')
         await selectFingerData(selectDeviceObj.value.value)
@@ -426,6 +434,7 @@ const tableList = () => {
   // }
   // tableData.value = fingerDataLocalStorage.value
   if (loadingShowTypeStatus.value === 1) {
+    emitterFinger.removeListener('connect_timeout', timeoutEvent)
     loading.value.close()
     dialogFormVisible.value = false
   }
@@ -677,6 +686,12 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   pagination.page = val
   getList()
+}
+
+const timeoutEvent = () => {
+  messageBoxShow('提示', '指纹效验失败，请查看控制台信息', 'error')
+  loading.value?.close()
+  emitterFinger.emit('close')
 }
 
 /**
