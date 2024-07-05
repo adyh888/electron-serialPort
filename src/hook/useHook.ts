@@ -3,7 +3,7 @@
  */
 import { Request, useDcStore, useIndexStore, useUcStore } from '../store'
 import { deviceType } from '../enum'
-import { messageBoxShow, messageShow } from '../utils'
+import { asyncForEach, messageBoxShow, messageShow } from '../utils'
 /**
  * 组织架构权限处理
  */
@@ -531,4 +531,82 @@ export function base64ToBlob(base64) {
   return imgFile
   // let res = saveAs(blob, 'image.jpg')
   // console.log(518, res)
+}
+
+/**
+ * 把本地相同槽位的数据赋值为null
+ */
+export async function useSetFingerNull(deviceId: string) {
+  let fingerRes = await Request(useUcStore().fingerSelect, { deviceId })
+  if (fingerRes.data.length > 0) {
+    let noArr = noRepetitionFun(fingerRes.data)
+    if (noArr.length > 0) {
+      await asyncForEach(noArr, async item => {
+        //相同的no 赋值为null
+        await Request(useUcStore().fingerUpdate, { id: item.id, no: null, deviceId: deviceId })
+      })
+    }
+  }
+}
+
+/**
+ * 筛选数组中-no为相同的值
+ */
+function noRepetitionFun(arr) {
+  // 将对象按照 no 值进行分组
+  let groupedByNo = arr.reduce((acc, obj) => {
+    let key = obj.no
+    // 排除 no 为 null 的对象
+    if (!acc[key] && key !== null) {
+      acc[key] = []
+    }
+    // 只对 no 不为 null 的对象进行分组
+    if (key !== null) {
+      acc[key].push(obj)
+    }
+    return acc
+  }, {})
+
+  // 筛选出包含相同 no 值的对象
+  return Object.values(groupedByNo)
+    .filter(group => group.length > 1)
+    .flat()
+}
+
+/**
+ * 指纹的同步下载逻辑重写
+ * @param arr 本地指纹数据库数据
+ * @param fingerObj 指纹类的对象
+ * @param fingerArr 指纹模块的数据
+ */
+export async function useSyncDownFinger(arr, fingerObj, fingerArr) {
+  //过滤本地数据库中的指纹数据
+  //1: 过滤槽位!==null的数据并且fingerprint!==null
+  let noArr = arr.filter(item => item.no !== null && item.fingerprint !== null)
+  //2: 过滤槽位===null的数据并且fingerprint!==null
+  let nullArr = arr.filter(item => item.no === null && item.fingerprint !== null)
+  // 删除指纹模块的指纹
+  if (fingerArr.length > 0) {
+    await fingerObj.fingerprintClear()
+  }
+  //把本地的指纹数据上传到模块中
+  await asyncForEach(noArr, async item => {
+    const addFingerRes = await fingerObj.downloadFeatureAndSaveToDsp(item.no, item.fingerprint)
+    console.log(592, addFingerRes)
+  })
+  //把null的数据更新到指纹模块里
+  await asyncForEach(nullArr, async item => {
+    console.log(596, item.fingerprint)
+    const res = await fingerObj.downloadFeatureAndCompareOneToMore(item.fingerprint)
+    console.log(598, res)
+    if (res.result === 'ACK_NOUSER' || res.result === 'ACK_SUCCESS') {
+      //如果不存在就下载 到最小的空槽位
+      const downloadRes = await fingerObj.downloadFeatureAndSaveToDsp(await fingerObj.getEmptyFno(), item.fingerprint)
+      console.log(602, downloadRes)
+      //TODO 单个更新本地数据库
+      if (downloadRes.result === 'ACK_SUCCESS') {
+        await Request(useUcStore().fingerUpdate, { id: item.id, no: downloadRes.total, deviceId: item.deviceId })
+      }
+    }
+  })
 }

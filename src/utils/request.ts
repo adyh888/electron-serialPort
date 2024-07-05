@@ -33,7 +33,7 @@ async function ErrorLogInsert(data: any) {
   // // @ts-ignore
   const [err, res] = await to(useLcStore().logErrorInsert(json))
   if (err) messageShow('错误日志记录失败', 'error')
-  if (res) messageShow('错误日志记录成功,请查看错误接口日志')
+  // if (res) messageShow('错误日志记录成功,请查看错误接口日志')
 }
 
 /**

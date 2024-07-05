@@ -124,6 +124,8 @@ const headContent = ref('')
 const folderName = ref('')
 //图片的正则验证
 const imgReg = /\.(jpg|jpeg|png)$/i
+//文件夹正则验证
+const regex = /\//
 /**
  * methods
  */
@@ -225,7 +227,7 @@ const unzipAndReadFiles = async zipFile => {
     })
     const fileNames = Object.keys(zipData.files)
     //TODO 检测是不是文件夹，如果是文件夹就报错 true代表有文件，false代表没有文件夹
-    let regRes = fileNames.some(item => !imgReg.test(item))
+    let regRes = fileNames.some(item => !imgReg.test(item) || regex.test(item))
     if (regRes) {
       loading.value.close()
       messageShow('检测压缩包里有文件夹,请检查！支持图片格式(jpg,jpeg,png)', 'error')
@@ -384,7 +386,7 @@ const confirm = () => {
     if (selectDeviceObj.value.serviceId) {
       unzipAndReadFiles(fileList.value[0].raw)
     } else {
-      messageShow('选择到对应的device设备人脸的地址为空', 'error')
+      messageShow('选择到对应的device设备人脸的地址为空,请进入后台-设备中心-设备列表-配置服务器ID', 'error')
     }
   } else {
     messageBoxShow('提示', '请选择设备和上传文件', 'error')

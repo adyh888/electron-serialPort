@@ -526,6 +526,7 @@ const faceRequestFn = async url => {
       //请求不到接口
       requestFaceIndex.value++
       if (requestFaceIndex.value < user.faceRequestUrl.length) {
+        messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
         requestFaceIndex.value = 0
@@ -551,6 +552,7 @@ const faceRequestFn = async url => {
       //请求不到接口
       requestFaceIndex.value++
       if (requestFaceIndex.value < user.faceRequestUrl.length) {
+        messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
         requestFaceIndex.value = 0

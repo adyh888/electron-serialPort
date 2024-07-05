@@ -96,6 +96,10 @@ export class SocketBasic {
       this.myevents.removeAllListeners()
       this.myevents = null
     })
+    //TODO 新增client 超时设置时间
+    this.myevents.on('clientSetTimeout', time => {
+      this.client.setTimeout(time)
+    })
   }
 
   private connect() {
