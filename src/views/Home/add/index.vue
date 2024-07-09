@@ -71,7 +71,7 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { base64ToBlob, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, userGradeJson } from '../../../hook/useHook'
+import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
@@ -503,65 +503,228 @@ const faceRequestFn = async url => {
   }
   //代表face数据库有face信息
   if (Object.keys(routerParams.value).length > 0 && routerParams.value.faceUuid !== '') {
-    //1：先删除人脸数据，调用陈龙的人脸删除接口
-    let faceDeleteRes = await Request(faceDeleteRequest, json)
-    if (faceDeleteRes && faceDeleteRes.status === 200 && faceDeleteRes.data.success) {
-      //2：人脸删除成功，上传新的人脸
-      if (faceDeleteRes.data.success) {
-        let faceAddRes = await Request(faceAddRequest, json)
-        if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
-          uploadSuccess.value = true
-          messageBoxShow('提示', '人员人脸录入成功', 'success')
-        } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-          // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
-          messageShow(`错误${faceAddRes.data.result}`, 'error')
-          uploadSuccess.value = false
-        }
+    let faceRes = await faceFn(json)
+    console.log(507, faceRes)
+    if (faceRes && faceRes.status) {
+      let faceUpdateJson = {
+        file: json.file,
+        id: faceRes.data.result.id,
+        uid: faceRes.data.result.id,
+        uuid: faceRes.data.result.uuid,
+        faceId: faceRes.data.result.id
       }
-    } else if (faceDeleteRes && faceDeleteRes.status === 200 && !faceDeleteRes.data.success) {
-      // messageBoxShow('提示', `错误${faceDeleteRes.data.result}`, 'error')
-      messageShow(`错误${faceDeleteRes.data.result}`, 'error')
+      const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
+      if (faceUpdateRes) uploadSuccess.value = true
+      // uploadSuccess.value = true
+      // messageBoxShow('提示', '人员人脸录入成功', 'success')
+      // faceRes.file = json.file
+      // let faceInsertRes = await faceInsert(faceRes)
+      // console.log(515, faceInsertRes)
+      // if (faceInsertRes) {
+      //   uploadSuccess.value = true
+      // }
+      //更新人脸照片
+    } else if (faceRes && !faceRes.status) {
+      messageShow(`错误${faceRes.data}`, 'error')
       uploadSuccess.value = false
-    } else {
-      //请求不到接口
+    }
+    // //1：先删除人脸数据，调用陈龙的人脸删除接口
+    // let faceDeleteRes = await Request(faceDeleteRequest, json)
+    // if (faceDeleteRes && faceDeleteRes.status === 200 && faceDeleteRes.data.success) {
+    //   //2：人脸删除成功，上传新的人脸
+    //   // if (faceDeleteRes.data.success) {
+    //   //   let faceAddRes = await Request(faceAddRequest, json)
+    //   //   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+    //   //     uploadSuccess.value = true
+    //   //     messageBoxShow('提示', '人员人脸录入成功', 'success')
+    //   //   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+    //   //     // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+    //   //     messageShow(`错误${faceAddRes.data.result}`, 'error')
+    //   //     uploadSuccess.value = false
+    //   //   }
+    //   // }
+    // } else if (faceDeleteRes && faceDeleteRes.status === 200 && !faceDeleteRes.data.success) {
+    //   // messageBoxShow('提示', `错误${faceDeleteRes.data.result}`, 'error')
+    //   messageShow(`错误${faceDeleteRes.data.result}`, 'error')
+    //   uploadSuccess.value = false
+    // } else {
+    //   //请求不到接口
+    //   requestFaceIndex.value++
+    //   if (requestFaceIndex.value < user.faceRequestUrl.length) {
+    //     messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
+    //     await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+    //   } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+    //     requestFaceIndex.value = 0
+    //     // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+    //     messageShow('无对应的设备serverIp地址或接口超时', 'error')
+    //     uploadSuccess.value = false
+    //   }
+    // }
+  } else {
+    //人员编辑
+    // 人脸对比
+    let faceVerifyRes = await Request(faceVerifyRequest, json)
+    // console.log(415, faceVerifyRes)
+    if (!faceVerifyRes) {
+      //请求不到接口-重新请求
       requestFaceIndex.value++
       if (requestFaceIndex.value < user.faceRequestUrl.length) {
-        messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
+        messageShow(`人脸设备连接失败,设置地址:${json.serverIp},请检查设备,将进行下一个设备的连接`, 'error')
         await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
       } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
         requestFaceIndex.value = 0
-        // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
         messageShow('无对应的设备serverIp地址或接口超时', 'error')
         uploadSuccess.value = false
+      }
+    } else if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+      //代表人脸设备中找到对应的人脸图片信息，需要删除
+      json.faceUuid = faceVerifyRes.data.result.selectFaceDataResult[0].uuid
+      let faceRes = await faceFn(json)
+      // console.log(566, faceRes)
+      if (faceRes && faceRes.status) {
+        let faceUpdateJson = {
+          file: json.file,
+          id: faceRes.data.result.id,
+          uid: faceRes.data.result.id,
+          uuid: faceRes.data.result.uuid,
+          faceId: faceRes.data.result.id
+        }
+        const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
+        if (faceUpdateRes) uploadSuccess.value = true
+        // faceRes.file = json.file
+        // let faceInsertRes = await faceInsert(faceRes)
+        // console.log(583, faceInsertRes)
+        // if (faceInsertRes) uploadSuccess.value = true
+      }
+    } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
+      //代表人脸设备找不到对应的人脸图片信息，需要新增
+      let faceAddRes = await faceRegister(json)
+      // console.log(570, faceAddRes)
+      if (faceAddRes.status) {
+        let faceUpdateJson = {
+          file: json.file,
+          id: faceAddRes.data.result.id,
+          uid: faceAddRes.data.result.id,
+          uuid: faceAddRes.data.result.uuid,
+          faceId: faceAddRes.data.result.id
+        }
+        const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
+        if (faceUpdateRes) uploadSuccess.value = true
+        // faceAddRes.file = json.file
+        // let faceInsertRes = await faceInsert(faceAddRes)
+        // // console.log(593, faceInsertRes)
+        // if (faceInsertRes) uploadSuccess.value = true
       }
     }
-  } else {
-    // 人脸对比
-    // let faceVerifyRes = await faceVerifyRequest(json)
+
+    // // 人脸对比
+    // let faceVerifyRes = await Request(faceVerifyRequest, json)
     // console.log(415, faceVerifyRes)
+    // //无返回值-接口不通
+    // if (!faceVerifyRes) {
+    //   //请求不到接口
+    //   requestFaceIndex.value++
+    //   if (requestFaceIndex.value < user.faceRequestUrl.length) {
+    //     messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
+    //     await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+    //   } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+    //     requestFaceIndex.value = 0
+    //     // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+    //     messageShow('无对应的设备serverIp地址或接口超时', 'error')
+    //     uploadSuccess.value = false
+    //   }
+    // } else if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+    //   //代表找到对应的人脸照片信息-删除对应的人脸
+    // }
+
     // 人脸注册--上传新的人脸
-    let faceAddRes = await Request(faceAddRequest, json)
-    if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
-      uploadSuccess.value = true
-      messageBoxShow('提示', '人员人脸录入成功', 'success')
-    } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-      // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
-      messageShow(`错误${faceAddRes.data.result}`, 'error')
+    // let faceAddRes = await Request(faceAddRequest, json)
+    // if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+    //   uploadSuccess.value = true
+    //   messageBoxShow('提示', '人员人脸录入成功', 'success')
+    // } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+    //   // messageBoxShow('提示', `错误${faceAddRes.data.result}`, 'error')
+    //   messageShow(`错误${faceAddRes.data.result}`, 'error')
+    //   uploadSuccess.value = false
+    // } else {
+    //   //请求不到接口
+    //   requestFaceIndex.value++
+    //   if (requestFaceIndex.value < user.faceRequestUrl.length) {
+    //     messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
+    //     await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+    //   } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+    //     requestFaceIndex.value = 0
+    //     // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
+    //     messageShow('无对应的设备serverIp地址或接口超时', 'error')
+    //     uploadSuccess.value = false
+    //   }
+    // }
+  }
+}
+
+//人脸接口删除-并新增逻辑
+const faceFn = async (json: any) => {
+  //1：先删除人脸数据，调用陈龙的人脸删除接口
+  let faceDeleteRes = await Request(faceDeleteRequest, json)
+  if (!faceDeleteRes) {
+    //请求不到接口-重新请求
+    requestFaceIndex.value++
+    if (requestFaceIndex.value < user.faceRequestUrl.length) {
+      messageShow(`人脸设备连接失败,设置地址:${json.serverIp},请检查设备,将进行下一个设备的连接`, 'error')
+      await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
+      return null
+    } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
+      requestFaceIndex.value = 0
+      messageShow('无对应的设备serverIp地址或接口超时', 'error')
       uploadSuccess.value = false
-    } else {
-      //请求不到接口
-      requestFaceIndex.value++
-      if (requestFaceIndex.value < user.faceRequestUrl.length) {
-        messageShow(`人脸设备连接失败,设置地址:${url},请检查设备,将进行下一个设备的连接`, 'error')
-        await faceRequestFn(user.faceRequestUrl[requestFaceIndex.value])
-      } else if (requestFaceIndex.value === user.faceRequestUrl.length) {
-        requestFaceIndex.value = 0
-        // messageBoxShow('提示', '无对应的设备serverIp地址', 'error')
-        messageShow('无对应的设备serverIp地址或接口超时', 'error')
-        uploadSuccess.value = false
-      }
+      return
     }
   }
+  if (faceDeleteRes && faceDeleteRes.status === 200 && faceDeleteRes.data.success) {
+    // console.log(634, faceDeleteRes)
+    //2：人脸删除成功，上传新的人脸
+    return await faceRegister(json)
+  } else if (faceDeleteRes && faceDeleteRes.status === 200 && !faceDeleteRes.data.success) {
+    // console.log(638, faceDeleteRes)
+    //人脸删除失败
+    messageShow(`人脸接口返回错误,错误信息${faceDeleteRes.data.result}`, 'error')
+    // 人脸删除失败，上传新的人脸
+    return await faceRegister(json)
+  }
+}
+
+//人脸注册-上传新的人脸-apk
+const faceRegister = async (json: any) => {
+  let faceAddRes = await Request(faceAddRequest, json)
+  if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
+    return {
+      status: true,
+      data: faceAddRes.data
+    }
+  } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
+    return {
+      status: false,
+      data: faceAddRes.data.result
+    }
+  }
+}
+
+//往服务器插入人脸数据
+const faceInsert = async (json: any) => {
+  //先自检face表有没有数据
+  let faceSelectRes = await Request(useUcStore().userFaceSelect, { id: json.data.result.id })
+  if (faceSelectRes && faceSelectRes.data && faceSelectRes.data.length === 0) {
+    //人脸设备插入成功-往本地数据库插入
+    let faceJson = {
+      id: json.data.result.id,
+      uuid: json.data.result.uuid,
+      imageData: await fileToBase64(json.file)
+    }
+    //本地数据库新增数据
+    await Request(useUcStore().userFaceInsert, faceJson)
+  }
+  //更新本地数据库信息
+  return await Request(useUcStore().userUpdate, { id: routerParams.value.id, faceId: json.data.result.id })
 }
 
 //请求人脸服务器的接口地址
@@ -569,7 +732,7 @@ const faceRequestGetUrl = async () => {
   //注册类型 -虚拟设备号
   let deviceArr = await getDeviceList(1)
   if (deviceArr.length > 0) {
-    let deviceIpArr = []
+    let deviceIpArr: any = []
     deviceArr.forEach(item => {
       if (item.serviceId !== null) {
         deviceIpArr.push(item.serviceId)
@@ -597,6 +760,7 @@ onMounted(async () => {
   if (params && params.type === 'edit') {
     showPassword.value = false
     routerParams.value = params
+    console.log(677, routerParams.value)
     registerType.value = false
     // cascaderOptions.value = getUseOrganizationPermission(params)
     cascaderOptions.value = indexStore.organizationalStructureArr

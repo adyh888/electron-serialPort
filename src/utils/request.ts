@@ -5,6 +5,7 @@ import to from 'await-to-js'
 import { useLcStore } from '../store'
 import { messageShow } from './index'
 import axios from 'axios'
+import { fileToBase64 } from '../hook/useHook'
 
 /**
  * 请求的封装
@@ -66,11 +67,12 @@ export function faceDeleteRequest(item: any) {
  * 人脸注册接口
  */
 export function faceAddRequest(json: any) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const formData = new FormData()
     formData.append('jpeg', json.file)
     formData.append('name', json.name)
     formData.append('uid', json.uid)
+    formData.append('imageData', await fileToBase64(json.file))
     axios({
       method: 'post',
       url: `http://${json.serverIp}:8274/registerJpegV2`,

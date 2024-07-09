@@ -29,7 +29,7 @@ import { ref, provide, reactive, onMounted } from 'vue'
 import JSZip from 'jszip'
 import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
 import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
-import { base64ToBlob, getDeviceList, useExtractNamesAndNumbers, useTraverseFolderForImages } from '../../hook/useHook'
+import { base64ToBlob, getDeviceList, useExtractNamesAndNumbers, useLocalFaceUpdateFun, useTraverseFolderForImages } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 import iconv from 'iconv-lite'
 import { useUcStore } from '../../store'
@@ -276,7 +276,6 @@ const unzipAndReadFiles = async zipFile => {
           employeeNo: employeeNo
         }
         let userFindRes = await Request(useUcStore().userFind, userJson)
-        // console.log(221,userFindRes)
         if (userFindRes && userFindRes.code === 0 && userFindRes.total > 0) {
           //代表查找的用户存在，可以找到用户的uid
           let json = {
@@ -284,7 +283,9 @@ const unzipAndReadFiles = async zipFile => {
             uid: userFindRes.data[0].id,
             employeeNo: userFindRes.data[0].employeeNo,
             file: fileObj,
-            serverIp: selectDeviceObj.value.serviceId
+            uuid: userFindRes.data[0].uuid,
+            serverIp: selectDeviceObj.value.serviceId,
+            faceImage: imgBase64
           }
           let faceVerifyRes = await faceVerifyRequest(json)
           // console.log(159, faceVerifyRes)
@@ -298,6 +299,12 @@ const unzipAndReadFiles = async zipFile => {
                   await rebind(json)
                 } else {
                   bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '已注册' })
+                  await useLocalFaceUpdateFun({
+                    faceId: item.id,
+                    uuid: json.uuid,
+                    file: fileObj,
+                    uid: json.uid
+                  })
                 }
               }
             } else {
@@ -320,7 +327,7 @@ const unzipAndReadFiles = async zipFile => {
     }
   } catch (error) {
     loading.value.close()
-    messageBoxShow('提示', `错误,${error}`, 'error')
+    messageBoxShow('提示', `错误,连接超时,请查看控制台,${error}`, 'error')
   }
   await tableDataFilter()
   loading.value.close()
@@ -333,9 +340,12 @@ const rebind = async json => {
   // console.log(230, faceAddRes)
   if (faceAddRes && faceAddRes.status === 200 && faceAddRes.data.success) {
     //人脸绑定注册成功
-    bindNewFaceList.value.push({ employeeNo: json.employeeNo, faceId: faceAddRes.data.result.id, nickname: json.name, tagStatus: '新注册' })
+    bindNewFaceList.value.push({ employeeNo: json.employeeNo, faceId: faceAddRes.data.result.id, nickname: json.name, tagStatus: '新注册', faceImage: json.faceImage, srcList: [base64ToBlob(json.faceImage).src] })
+    //更新本地服务器人脸接口并新增face表的信息
+    json.faceId = faceAddRes.data.result.id
+    await useLocalFaceUpdateFun(json)
   } else if (faceAddRes && faceAddRes.status === 200 && !faceAddRes.data.success) {
-    registerFailFaceList.value.push({ employeeNo: json.employeeNo, nickname: json.name, tagStatus: '未注册' })
+    registerFailFaceList.value.push({ employeeNo: json.employeeNo, nickname: json.name, tagStatus: '未注册', faceImage: json.faceImage, srcList: [base64ToBlob(json.faceImage).src] })
   } else {
     messageBoxShow('提示', '人脸注册接口请求错误', 'error')
   }

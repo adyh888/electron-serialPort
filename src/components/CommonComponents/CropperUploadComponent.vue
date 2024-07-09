@@ -106,7 +106,7 @@ const cropperRefs = ref()
 const cropperCb = ref(null)
 const showCropper = ref(false)
 let fileList = reactive([])
-const acceptArray = reactive(['png', 'jpg', 'jpeg']) //选择类型
+const acceptArray = reactive(['png', 'jpg', 'jpeg', 'JPG']) //选择类型
 const acceptType = reactive({
   doc: 'application/msword',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

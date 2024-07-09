@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * imports
  */
@@ -534,6 +535,32 @@ export function base64ToBlob(base64) {
 }
 
 /**
+ * 图片file-Blob转base64
+ */
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      // resolve(reader.result as string) // result 是 data URL，它包含前缀（如 "data:image/jpeg;base64,"）和 Base64 编码的字符串
+      // 读取结果是一个data URL，我们需要移除前缀以获取纯Base64字符串
+      const base64Data = reader.result as string
+      const base64Index = base64Data.indexOf('base64,')
+      if (base64Index >= 0) {
+        // 提取base64编码部分
+        const base64 = base64Data.substring(base64Index + 7)
+        resolve(base64)
+      } else {
+        reject(new Error('The returned data could not be parsed as Base64.'))
+      }
+    }
+    reader.onerror = error => {
+      reject(error)
+    }
+  })
+}
+
+/**
  * 把本地相同槽位的数据赋值为null
  */
 export async function useSetFingerNull(deviceId: string) {
@@ -609,4 +636,25 @@ export async function useSyncDownFinger(arr, fingerObj, fingerArr) {
       }
     }
   })
+}
+
+/**
+ * 更新本地服务器人脸接口并新增face表的信息
+ */
+export const useLocalFaceUpdateFun = async (json: any) => {
+  //先自检face表有没有数据
+  let faceSelectRes = await Request(useUcStore().userFaceSelect, { id: json.faceId })
+  // console.log(647, faceSelectRes)
+  if (faceSelectRes && faceSelectRes.data && faceSelectRes.data.length === 0) {
+    //人脸设备插入成功-往本地数据库插入
+    let faceJson = {
+      id: json.faceId,
+      uuid: json.uuid,
+      imageData: await fileToBase64(json.file)
+    }
+    //本地数据库新增数据
+    await Request(useUcStore().userFaceInsert, faceJson)
+  }
+  //更新本地数据库信息
+  return await Request(useUcStore().userUpdate, { id: json.uid, faceId: json.faceId })
 }
