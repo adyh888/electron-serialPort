@@ -2,7 +2,7 @@
  * imports
  * 工具
  */
-import { ElLoading, ElMessage, ElNotification } from 'element-plus'
+import { ElLoading, ElMessage, ElNotification, ElMessageBox } from 'element-plus'
 import { useIndexStore } from '../store'
 import * as fs from 'fs'
 /**
@@ -39,6 +39,22 @@ export function messageShow(message: string, messageType: any = 'success', show:
     showClose: show,
     message: message
   })
+}
+
+/**
+ * 消息弹出框确认
+ */
+export async function messageBox(title: string, type: any = 'warning') {
+  try {
+    await ElMessageBox.confirm(title, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type
+    })
+    return true
+  } catch (error) {
+    return false
+  }
 }
 
 /**

@@ -3,8 +3,11 @@
  * imports
  */
 import { Request, useDcStore, useIndexStore, useUcStore } from '../store'
-import { deviceType } from '../enum'
+import { deviceType, grpcResult } from '../enum'
 import { asyncForEach, messageBoxShow, messageShow } from '../utils'
+import { funEnum, typeEnum } from '../common/gRPC/enum'
+import { BaseURL } from '../config'
+import { ipcRenderer } from 'electron'
 /**
  * 组织架构权限处理
  */
@@ -216,7 +219,9 @@ export async function getDeviceList(type) {
         value: item.id,
         type: item.deviceType?.kind,
         serviceId: item.serviceId,
-        fingerPort: item.fingerPort
+        fingerPort: item.fingerPort,
+        grpcPort: item.grpcPort,
+        status: false
       }
     })
     switch (type) {
@@ -226,6 +231,20 @@ export async function getDeviceList(type) {
         return mapRes
     }
   }
+}
+
+/**
+ * 获取服务器设备列表的设备状态
+ */
+export async function getDeviceStatus() {
+  let grpcJson = {
+    type: typeEnum.finger,
+    fun: funEnum.getFingerStatus,
+    json: {
+      url: BaseURL()
+    }
+  }
+  return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
 }
 
 /**
@@ -657,4 +676,40 @@ export const useLocalFaceUpdateFun = async (json: any) => {
   }
   //更新本地数据库信息
   return await Request(useUcStore().userUpdate, { id: json.uid, faceId: json.faceId })
+}
+
+/**
+ * 请求错误提示
+ */
+export const useRequestErrorFun = (res: any) => {
+  if (res.result === grpcResult.ACK_SUCCESS || res.result !== '') {
+    return res
+  } else if (res.result === grpcResult.ACK_FAIL) {
+    messageShow(`GRPC请求错误,${res.error}`, 'error')
+    return null
+  }
+}
+
+/**
+ * 获取查看对应环境的指纹槽位是否有重复的
+ */
+export const useGetRepeatedFno = async (json: any) => {
+  let grpcJson = {
+    type: typeEnum.finger,
+    fun: funEnum.getRepeatedFno,
+    json
+  }
+  return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
+}
+
+/**
+ * 用指纹表数据覆盖指纹传感器数据
+ */
+export const useSetFingerData = async (json: any) => {
+  let grpcJson = {
+    type: typeEnum.finger,
+    fun: funEnum.setFingerData,
+    json
+  }
+  return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
 }

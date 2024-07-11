@@ -439,35 +439,35 @@ const confirmSubmit = async () => {
 }
 
 //图片转buffer示例
-const imgToBuffer = () => {
-  // 使用示例
-  imageToBuffer('./public/userAdd.jpg')
-    .then(buffer => {
-      // 这里你可以处理转换后的Buffer
-      console.log(357, buffer) // 打印Buffer
-      console.log('Buffer 长度:', buffer.length)
-      let data = JSON.parse(JSON.stringify(buffer))
-      let json = {
-        uid: 362,
-        name: '刘卫伟',
-        jpeg: data.data
-      }
-      axios({
-        method: 'post',
-        data: json,
-        url: 'http://172.16.10.40:8274/registerJpeg'
-      })
-        .then(res => {
-          console.log(370, res)
-        })
-        .catch(error => {
-          console.log(372, error)
-        })
-    })
-    .catch(error => {
-      console.error('处理图片时发生错误:', error)
-    })
-}
+// const imgToBuffer = () => {
+//   // 使用示例
+//   imageToBuffer('./public/userAdd.jpg')
+//     .then(buffer => {
+//       // 这里你可以处理转换后的Buffer
+//       console.log(357, buffer) // 打印Buffer
+//       console.log('Buffer 长度:', buffer.length)
+//       let data = JSON.parse(JSON.stringify(buffer))
+//       let json = {
+//         uid: 362,
+//         name: '刘卫伟',
+//         jpeg: data.data
+//       }
+//       axios({
+//         method: 'post',
+//         data: json,
+//         url: 'http://172.16.10.40:8274/registerJpeg'
+//       })
+//         .then(res => {
+//           console.log(370, res)
+//         })
+//         .catch(error => {
+//           console.log(372, error)
+//         })
+//     })
+//     .catch(error => {
+//       console.error('处理图片时发生错误:', error)
+//     })
+// }
 
 //图片上传
 const uploadFileFn = async (item: any) => {
@@ -509,7 +509,7 @@ const faceRequestFn = async url => {
       let faceUpdateJson = {
         file: json.file,
         id: faceRes.data.result.id,
-        uid: faceRes.data.result.id,
+        uid: faceRes.data.result.uid,
         uuid: faceRes.data.result.uuid,
         faceId: faceRes.data.result.id
       }
@@ -578,23 +578,41 @@ const faceRequestFn = async url => {
       }
     } else if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
       //代表人脸设备中找到对应的人脸图片信息，需要删除
-      json.faceUuid = faceVerifyRes.data.result.selectFaceDataResult[0].uuid
-      let faceRes = await faceFn(json)
-      // console.log(566, faceRes)
-      if (faceRes && faceRes.status) {
-        let faceUpdateJson = {
-          file: json.file,
-          id: faceRes.data.result.id,
-          uid: faceRes.data.result.id,
-          uuid: faceRes.data.result.uuid,
-          faceId: faceRes.data.result.id
+      let faceUpdateJson
+      if (faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
+        json.faceUuid = faceVerifyRes.data.result.selectFaceDataResult[0].uuid
+        let faceRes = await faceFn(json)
+        // console.log(566, faceRes)
+        if (faceRes && faceRes.status) {
+          faceUpdateJson = {
+            file: json.file,
+            id: faceRes.data.result.id,
+            uid: faceRes.data.result.uid,
+            uuid: faceRes.data.result.uuid,
+            faceId: faceRes.data.result.id
+          }
+          const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
+          if (faceUpdateRes) uploadSuccess.value = true
         }
-        const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
-        if (faceUpdateRes) uploadSuccess.value = true
         // faceRes.file = json.file
         // let faceInsertRes = await faceInsert(faceRes)
         // console.log(583, faceInsertRes)
         // if (faceInsertRes) uploadSuccess.value = true
+      } else {
+        //代表人脸设备找不到对应的人脸图片信息，需要新增
+        let faceAddRes = await faceRegister(json)
+        // console.log(570, faceAddRes)
+        if (faceAddRes.status) {
+          faceUpdateJson = {
+            file: json.file,
+            id: faceAddRes.data.result.id,
+            uid: faceAddRes.data.result.uid,
+            uuid: faceAddRes.data.result.uuid,
+            faceId: faceAddRes.data.result.id
+          }
+          const faceUpdateRes = await useLocalFaceUpdateFun(faceUpdateJson)
+          if (faceUpdateRes) uploadSuccess.value = true
+        }
       }
     } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
       //代表人脸设备找不到对应的人脸图片信息，需要新增
@@ -604,7 +622,7 @@ const faceRequestFn = async url => {
         let faceUpdateJson = {
           file: json.file,
           id: faceAddRes.data.result.id,
-          uid: faceAddRes.data.result.id,
+          uid: faceAddRes.data.result.uid,
           uuid: faceAddRes.data.result.uuid,
           faceId: faceAddRes.data.result.id
         }

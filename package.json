@@ -1,6 +1,6 @@
 {
   "name": "tool-verify-electron",
-  "version": "1.1.6-pre-15",
+  "version": "1.1.6-pre-16",
   "main": "dist-electron/main/index.js",
   "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket",
   "author": "LWW",
@@ -24,6 +24,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.10.10",
+    "@grpc/proto-loader": "^0.7.13",
     "@mew/request": "^5.2.673",
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",

@@ -99,7 +99,7 @@ const confirm = (type: number) => {
 
 //摄像头的关闭
 const closeCamera = () => {
-  streamObj.value.getTracks().forEach(track => track.stop())
+  streamObj.value?.getTracks().forEach(track => track.stop())
 }
 /**
  * 导出

@@ -37,6 +37,8 @@ import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
 import { useOrganizationPermission } from '../../../hook/useHook'
 import versionReadme from '../../../../versionReadme'
+import { ipcRenderer } from 'electron'
+import { funEnum, typeEnum } from '../../../common/gRPC/enum'
 /**
  * data
  */
@@ -98,6 +100,19 @@ const configClick = () => {
     router.push('/config')
     configCount.value = 0
   }
+}
+
+const demo = async () => {
+  let json = {
+    type: typeEnum.finger,
+    fun: funEnum.getRepeatedFno,
+    json: {
+      url: 'http://172.16.10.249:50300',
+      deviceId: '042311009'
+    }
+  }
+  let result = ipcRenderer.sendSync('grpc', json)
+  console.log(106, result)
 }
 
 /**

@@ -19,6 +19,11 @@ export async function Request(actionFun: Function, json: Object) {
   if (res) return res
 }
 
+// export async function grpcRequest(grpcFun: any, json: any) {
+//   let res = grpcFun(json)
+//   console.log(28, res)
+// }
+
 /**
  * 插入错误日志
  * @param data

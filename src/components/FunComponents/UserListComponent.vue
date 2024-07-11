@@ -27,7 +27,7 @@ import { Request } from '../../utils/request'
 import { useIndexStore, useUcStore } from '../../store'
 import { deviceType } from '../../enum'
 import { useRouter } from 'vue-router'
-import { messageBoxShow } from '../../utils'
+import { messageBox, messageBoxShow } from '../../utils'
 
 /**
  * data
@@ -306,12 +306,15 @@ const edit = (row: any) => {
 
 //列表的删除按钮
 const del = async (row: any) => {
-  let deleteUserRes = await deleteUser(row.id)
-  if (deleteUserRes && deleteUserRes.code === 0) {
-    messageBoxShow('提示', `姓名${row.nickname}删除成功`)
-    setTimeout(() => {
-      handleSearch()
-    }, 500)
+  const messageRes = await messageBox(`确定删除姓名${row.nickname}吗？`)
+  if (messageRes) {
+    let deleteUserRes = await deleteUser(row.id)
+    if (deleteUserRes && deleteUserRes.code === 0) {
+      messageBoxShow('提示', `姓名${row.nickname}删除成功`)
+      setTimeout(() => {
+        handleSearch()
+      }, 500)
+    }
   }
 }
 

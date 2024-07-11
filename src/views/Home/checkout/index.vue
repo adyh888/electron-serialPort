@@ -1,27 +1,29 @@
 <template>
   <div style="background: #ececec; width: 100vw; height: 100vh">
     <HeadComponent />
-    <div style="height: 88vh; margin: 10px 30px; background: white; border-radius: 8px">
-      <div style="padding: 20px 30px; background: white">
-        <div style="color: red; letter-spacing: 2px; font-weight: 500">{{ Description }}</div>
-        <div style="border-bottom: 1px solid #d8d8d8; margin: 10px 0px"></div>
-        <div style="margin: 20px 0px">
-          <SearchComponent />
-        </div>
-        <div style="height: 62vh">
-          <TableComponent />
-        </div>
-        <div style="margin-top: 20px; display: flex; flex-direction: row-reverse">
-          <PaginationComponent />
-        </div>
-      </div>
-    </div>
+    <!--    <div style="height: 88vh; margin: 10px 30px; background: white; border-radius: 8px">-->
+    <!--      <div style="padding: 20px 30px; background: white">-->
+    <!--        <div style="color: red; letter-spacing: 2px; font-weight: 500">{{ Description }}</div>-->
+    <!--        <div style="border-bottom: 1px solid #d8d8d8; margin: 10px 0px"></div>-->
+    <!--        <div style="margin: 20px 0px">-->
+    <!--          <SearchComponent />-->
+    <!--        </div>-->
+    <!--        <div style="height: 62vh">-->
+    <!--          <TableComponent />-->
+    <!--        </div>-->
+    <!--        <div style="margin-top: 20px; display: flex; flex-direction: row-reverse">-->
+    <!--          <PaginationComponent />-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
     <el-dialog v-model="dialogFormVisible" title="选择检验设备(必填)" width="700" align-center :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
       <div style="display: flex; justify-content: center; align-items: center; padding: 20px 0">
         <span style="width: 80px; font-size: 16px">设备名称:</span>
         <el-select v-model="selectValue" placeholder="请选择设备" style="width: 500px" @change="selectChangeDialog">
           <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
             <span style="float: left">{{ item.label }}</span>
+            <el-icon style="margin-left: 5px; color: green; font-size: 10px" v-if="item.status"><SuccessFilled /></el-icon>
+            <el-icon style="margin-left: 5px; color: red; font-size: 10px" v-else><WarningFilled /></el-icon>
             <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">{{ item.value }}</span>
           </el-option>
         </el-select>
@@ -62,13 +64,16 @@ import { FingerSupplier } from '../../../common/SocketFinger/index/interface/fin
 import { fingerClassSocket } from '../../../common/SocketFinger/FingerClassSocket'
 import { useDcStore, Request, useUcStore, useIndexStore } from '../../../store'
 import { emitterFinger } from '../../../utils/EventsBus'
-import { asyncForEach, debounce, ElLoadingShow, messageBoxShow } from '../../../utils'
+import { asyncForEach, debounce, ElLoadingShow, messageBox, messageBoxShow, messageShow } from '../../../utils'
 import HeadComponent from '../../../components/CommonComponents/HeadComponent.vue'
 import TableComponent from '../../../components/CommonComponents/TableComponent.vue'
 import SearchComponent from '../../../components/CommonComponents/SearchComponent.vue'
 import PaginationComponent from '../../../components/CommonComponents/PaginationComponent.vue'
-import { getDeviceList, isIpv4, useSetFingerNull, useSyncDownFinger } from '../../../hook/useHook'
+import { getDeviceList, getDeviceStatus, isIpv4, useGetRepeatedFno, useSetFingerData, useSetFingerNull, useSyncDownFinger } from '../../../hook/useHook'
 import { TfsD400 } from '../../../common/SocketFinger/tfsd400/tfsd400'
+import { funEnum, typeEnum } from '../../../common/gRPC/enum'
+import { ipcRenderer } from 'electron'
+import { deviceStatusEnum, grpcResult } from '../../../enum'
 /**
  * data
  */
@@ -177,25 +182,56 @@ const confirm = type => {
     messageBoxShow('提示', '请选择设备', 'warning')
     return
   }
-  if (!selectDeviceObj.value.serviceId) {
-    messageBoxShow('提示', '没有配置服务器地址,请进入后台-设备中心-设备列表-配置服务器ID', 'warning')
-    return
-  }
-  selectChange()
+  // if (!selectDeviceObj.value.serviceId) {
+  //   messageBoxShow('提示', '没有配置服务器地址,请进入后台-设备中心-设备列表-配置服务器ID', 'warning')
+  //   return
+  // }
+  confirmEvent()
 }
 
 //选中事件
 const selectChangeDialog = () => {
   selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
-  // console.log(195, selectDeviceObj.value)
-  if (selectDeviceObj.value.serviceId === null || selectDeviceObj.value.serviceId === '' || !isIpv4(selectDeviceObj.value.serviceId)) {
+  if (!selectDeviceObj.value.status) {
     confirmDisabled.value = true
-    messageBoxShow('提示', `socket服务地址不正确[${selectDeviceObj.value.serviceId}],请进入后台-设备中心-设备列表-配置服务器ID`, 'warning')
+    messageBoxShow('提示', `设备${selectDeviceObj.value.label}--未连接`, 'warning')
   } else {
     confirmDisabled.value = false
   }
+  // if (selectDeviceObj.value.serviceId === null || selectDeviceObj.value.serviceId === '' || !isIpv4(selectDeviceObj.value.serviceId)) {
+  //   confirmDisabled.value = true
+  //   messageBoxShow('提示', `socket服务地址不正确[${selectDeviceObj.value.serviceId}],请进入后台-设备中心-设备列表-配置服务器ID`, 'warning')
+  // } else {
+  //   confirmDisabled.value = false
+  // }
 }
 
+//确定事件
+const confirmEvent = async () => {
+  let json = {
+    url: `http://${selectDeviceObj.value.serviceId}:${selectDeviceObj.value.grpcPort}`,
+    deviceId: selectDeviceObj.value.value
+  }
+  let { fnoList } = await useGetRepeatedFno(json)
+  if (fnoList.length > 0) {
+    await messageBox(`数据库内重复的no-${fnoList[0]}指纹号，请删除后在重新尝试`, 'warning')
+  } else {
+    let messageRes = await messageBox('确认是否同步指纹表数据到指纹传感器', 'warning')
+    if (messageRes) {
+      loadingShow()
+      //同步指纹槽位数据
+      let setFingerRes = await useSetFingerData(json)
+      console.log(230, setFingerRes)
+      if (setFingerRes.result === grpcResult.ACK_SUCCESS) {
+        loading.value?.close()
+        messageShow('设备同步成功即将返回主界面')
+        setTimeout(() => {
+          router.back()
+        }, 1500)
+      }
+    }
+  }
+}
 //选中事件
 const selectChange = async () => {
   if (selectValue.value) {
@@ -718,8 +754,23 @@ const timeoutEvent = () => {
  * life
  */
 onMounted(async () => {
+  //获取设备状态
+  let { data } = await getDeviceStatus()
   //获取设备列表
-  cities.value = await getDeviceList(1)
+  let deviceArr = await getDeviceList(1)
+  if (data.length > 0) {
+    // 遍历deviceStatusArr
+    data.forEach(deviceStatus => {
+      // 查找deviceArr中匹配的deviceId
+      let device = deviceArr.find(device => device.value === deviceStatus.deviceId)
+      // 如果找到了匹配的设备，并且deviceStatus的status是'online'
+      if (device && deviceStatus.status === deviceStatusEnum.online) {
+        // 更新deviceArr中对应设备的status为true
+        device.status = true
+      }
+    })
+  }
+  cities.value = deviceArr
 })
 onUnmounted(() => {
   emitterFinger.emit('close')

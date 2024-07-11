@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package face;
+
+service Face {
+//  rpc getVersion(GetEmptyRequest) returns (ResVersion) {}
+  // 遍历所在环境的所有设备，查看是否提供人脸API
+  rpc GetFaceApiStatus(GetUrlRequest) returns (ResData);
+
+  rpc UploadImage(ImageMessage) returns (ImageReply);
+
+  // 对比人脸特征值
+  rpc CompareFaceFeature(GetUrlDeviceIdRequest) returns (Res);
+}
+
+message GetEmptyRequest {}
+
+message ImageMessage {
+  string url =1;
+  uint32 uid =2;
+  string employeeNo =3;
+  string imageData =4;
+}
+
+message ImageReply {
+  bool result=1;
+  string message = 2;
+}
+
+message GetUrlRequest {
+  string url =1;
+}
+
+message GetUrlDeviceIdRequest {
+  string url =1;
+  string deviceId=2;
+}
+
+message GetFnoRequest {
+  uint32 fno =1;
+}
+
+message GetFeatureRequest {
+  string feature =1;
+}
+
+message GetFnoFeatureRequest {
+  uint32 fno =1;
+  string feature =2;
+}
+
+message GetRecordUserRequest {
+  string url =1;
+  string deviceId=2;
+  uint32 uid =3;
+}
+
+message Res {
+  string result = 1;
+  string error =2;
+}
+
+message ResData {
+  string result = 1;
+  string error =2;
+  repeated ServiceInfo data=3;
+}
+
+message ServiceInfo {
+  string deviceId=1;
+  string serviceId=2;
+  string status=3;
+}
+
+message ResMsg {
+  string result = 1;
+  string error =2;
+  string msg =3;
+}
+
+message ResRecordMsg {
+  string result = 1;
+  uint32 fno = 2;
+  uint32 right = 3;
+  string feature =4;
+  string msg =5;
+  uint32 length = 6;
+  string error=7;
+}
+
+message ResVersion {
+  string result = 1;
+  string version = 2;
+}
+
+
+message ResTotal {
+  string result = 1;
+  uint32 total = 2;
+}
+
+message ResFno {
+  string result = 1;
+  uint32 fno = 2;
+  uint32 right =3;
+  string error =4;
+}
+
+message ResUserRight {
+  string result = 1;
+  uint32 fno = 2;
+  uint32 right =3;
+}
+
+message ResUserInfo {
+  string result = 1;
+  uint32 total = 2;
+  repeated UserInfo data =3;
+}
+
+message UserInfo {
+  uint32 fno = 1;
+  uint32 right = 2;
+}
+
+message ResFeature {
+  string result = 1;
+  uint32 fno = 2;
+  uint32 right = 3;
+  string feature =4;
+}
+
+message ResFnoList {
+  string result = 1;
+  repeated uint32 fnoList = 2;
+  string error =3;
+}
+
