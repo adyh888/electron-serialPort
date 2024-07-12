@@ -1,15 +1,28 @@
+import { grpcInitAddress } from '../../../enum'
+
 /**
  * require
  */
 const grpc = require('@grpc/grpc-js')
 const protoLoader = require('@grpc/proto-loader')
+const storage = require('electron-localstorage')
 
+/**
+ * data
+ */
+const localStorage = storage.getItem('config')
+let grpcUrl
+if (localStorage && localStorage.grpcIp !== '') {
+  grpcUrl = localStorage.grpcIp.replace(/^http:\/\//, '')
+} else {
+  grpcUrl = grpcInitAddress.grpcUrl
+}
 /**
  * 加载proto文件
  */
 const packageDefinition = protoLoader.loadSync('./src/common/gRPC/finger/finger.proto', { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true })
 const fingerprint_proto = grpc.loadPackageDefinition(packageDefinition).fingerprint
-const client = new fingerprint_proto.Fingerprint('172.16.10.249:50051', grpc.credentials.createInsecure())
+const client = new fingerprint_proto.Fingerprint(grpcUrl, grpc.credentials.createInsecure())
 
 // 查看对应环境的指纹槽位是否有重复的
 export const getRepeatedFno = json => {

@@ -14,3 +14,10 @@ export enum grpcResult {
   ACK_SUCCESS = 'ACK_SUCCESS', //成功
   ACK_FAIL = 'ACK_FAIL' //失败
 }
+
+/**
+ * grpc的初始地址
+ */
+export enum grpcInitAddress {
+  grpcUrl = '172.16.10.249:50051'
+}

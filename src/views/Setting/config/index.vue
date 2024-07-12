@@ -6,6 +6,9 @@
         <el-form-item label="服务器地址" prop="serverIp">
           <el-input v-model="ruleForm.serverIp" />
         </el-form-item>
+        <el-form-item label="GRPC地址" prop="grpcIp" style="margin-top: 40px">
+          <el-input v-model="ruleForm.grpcIp" />
+        </el-form-item>
         <el-form-item>
           <div style="display: flex; justify-content: center; width: 100%">
             <el-button style="margin-top: 30px; width: 300px" type="primary" @click="submitForm(ruleFormRef)">确定</el-button>
@@ -25,9 +28,10 @@ import { provide, ref, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { messageBoxShow } from '../../../utils'
 import { StorageCache } from '../../../common/StorageClass'
-import { BaseURL } from '../../../config'
+import { BaseURL, grpcURL } from '../../../config'
 import { useRouter } from 'vue-router'
 import { ipcRenderer } from 'electron'
+const storage2 = require('electron-localstorage')
 /**
  * data
  */
@@ -36,16 +40,19 @@ const BackShow = ref(true)
 const router = useRouter()
 interface RuleForm {
   serverIp: string
+  grpcIp: string
 }
 const storage = new StorageCache()
 const formSize = ref('default')
 const ruleFormRef = ref<FormInstance>()
 const ruleForm = reactive<RuleForm>({
-  serverIp: BaseURL()
+  serverIp: BaseURL(),
+  grpcIp: grpcURL()
 })
 
 const rules = reactive<FormRules<RuleForm>>({
-  serverIp: [{ required: true, message: '服务器地址必填', trigger: 'blur' }]
+  serverIp: [{ required: true, message: '服务器地址必填', trigger: 'blur' }],
+  grpcIp: [{ required: true, message: 'grpc服务器地址必填', trigger: 'blur' }]
 })
 
 const submitForm = async (formEl: FormInstance | undefined) => {
@@ -54,6 +61,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     if (valid) {
       console.log('submit!')
       storage.set('config', ruleForm)
+      storage2.setItem('config', ruleForm)
       ipcRenderer.send('window-reset')
       messageBoxShow('提示', '修改配置成功，请重启软件后生效')
       setTimeout(() => {

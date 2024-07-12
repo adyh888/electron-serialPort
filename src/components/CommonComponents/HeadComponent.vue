@@ -6,9 +6,13 @@
         <span style="margin-left: 5px">返回</span>
       </div>
       <div v-else></div>
-      <div style="padding: 10px 15px; background: #1b84fa; color: white; border-radius: 5px; text-align: center">
-        <span>{{ HeadTitle }}</span>
-      </div>
+      <el-popover placement="top-start" title="所属环境:" :width="200" trigger="hover" :content="envContent">
+        <template #reference>
+          <div style="padding: 10px 15px; background: #1b84fa; color: white; border-radius: 5px; text-align: center">
+            <span>{{ HeadTitle }}</span>
+          </div>
+        </template>
+      </el-popover>
     </div>
   </div>
 </template>
@@ -19,11 +23,13 @@
  */
 import { inject } from 'vue'
 import { useRouter } from 'vue-router'
+import { BaseURL } from '../../config'
 
 /**
  * data
  */
 const router = useRouter()
+const envContent = BaseURL()
 /**
  * methods
  */
