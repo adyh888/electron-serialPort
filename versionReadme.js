@@ -1,5 +1,5 @@
 const versionReadme = {
-  version: '1.1.6-pre-17',
-  description: '* 1.增加grpc的服务地址配置\n' + '* 2.增加环境显示窗口'
+  version: '1.1.6-pre-18',
+  description: '* 1.增加grpc对应的人脸指纹地址配置入口\n' + '* 2.增加grpc人脸proto调用'
 }
 export default versionReadme

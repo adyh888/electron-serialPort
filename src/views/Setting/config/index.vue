@@ -6,8 +6,11 @@
         <el-form-item label="服务器地址" prop="serverIp">
           <el-input v-model="ruleForm.serverIp" />
         </el-form-item>
-        <el-form-item label="GRPC地址" prop="grpcIp" style="margin-top: 40px">
-          <el-input v-model="ruleForm.grpcIp" />
+        <el-form-item label="gRPC指纹地址" prop="grpcFingerIp" style="margin-top: 40px">
+          <el-input v-model="ruleForm.grpcFingerIp" />
+        </el-form-item>
+        <el-form-item label="gRPC人脸地址" prop="grpcFaceIp" style="margin-top: 40px">
+          <el-input v-model="ruleForm.grpcFaceIp" />
         </el-form-item>
         <el-form-item>
           <div style="display: flex; justify-content: center; width: 100%">
@@ -28,7 +31,7 @@ import { provide, ref, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { messageBoxShow } from '../../../utils'
 import { StorageCache } from '../../../common/StorageClass'
-import { BaseURL, grpcURL } from '../../../config'
+import { BaseURL, grpcFaceURL, grpcFingerURL } from '../../../config'
 import { useRouter } from 'vue-router'
 import { ipcRenderer } from 'electron'
 const storage2 = require('electron-localstorage')
@@ -40,19 +43,23 @@ const BackShow = ref(true)
 const router = useRouter()
 interface RuleForm {
   serverIp: string
-  grpcIp: string
+  grpcFingerIp: string
+
+  grpcFaceIp: string
 }
 const storage = new StorageCache()
 const formSize = ref('default')
 const ruleFormRef = ref<FormInstance>()
 const ruleForm = reactive<RuleForm>({
   serverIp: BaseURL(),
-  grpcIp: grpcURL()
+  grpcFingerIp: grpcFingerURL(),
+  grpcFaceIp: grpcFaceURL()
 })
 
 const rules = reactive<FormRules<RuleForm>>({
   serverIp: [{ required: true, message: '服务器地址必填', trigger: 'blur' }],
-  grpcIp: [{ required: true, message: 'grpc服务器地址必填', trigger: 'blur' }]
+  grpcFingerIp: [{ required: true, message: 'grpc指纹服务器地址必填', trigger: 'blur' }],
+  grpcFaceIp: [{ required: true, message: 'grpc人脸服务器地址必填', trigger: 'blur' }]
 })
 
 const submitForm = async (formEl: FormInstance | undefined) => {

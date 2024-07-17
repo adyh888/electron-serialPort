@@ -5,7 +5,9 @@
  */
 export async function grpcRequest(grpcFun: Function, json: object) {
   try {
-    return await grpcFun(json)
+    let res = await grpcFun(json)
+    // console.log(9, res)
+    return res
   } catch (e) {
     throw new Error(e)
   }

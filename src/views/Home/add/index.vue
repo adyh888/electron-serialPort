@@ -71,13 +71,14 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
+import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useGrpcFun, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType } from '../../../enum'
 import axios from 'axios'
 import { faceAddRequest, faceDeleteRequest, faceVerifyRequest } from '../../../utils/request'
+import { funEnum, typeEnum } from '../../../common/gRPC/enum'
 /**
  * data
  */
@@ -396,7 +397,14 @@ const confirmSubmit = async () => {
       //注册用户成功并且有上传人脸图片
       if (registerRes && urlList.value.length > 0) {
         registerUserInfo.value = registerRes.data
-        //代表有人脸上传的图片-并且是注册人员状态
+        //grpc 注册人脸
+        // let json = {
+        //   uid: registerUserInfo.value.id,
+        //   name: registerUserInfo.value.nickname,
+        //   file: urlList.value[0].file
+        // }
+        // await grpcRegisterFaceFn(json)
+        //代表有人脸上传的图片 - 并且是注册人员状态
         for (const item of urlList.value) {
           await uploadFileFn(item)
         }
@@ -436,6 +444,25 @@ const confirmSubmit = async () => {
   setTimeout(() => {
     cancel()
   }, 1000)
+}
+
+//使用grpc方式注册人脸
+const grpcRegisterFaceFn = async (json: any) => {
+  let grpcJson = {
+    type: typeEnum.face,
+    fun: funEnum.faceRegister,
+    json: {
+      name: json.name,
+      uid: json.uid,
+      imageData: await fileToBase64(json.file)
+    }
+  }
+  let gRPCRes = await useGrpcFun(grpcJson)
+  console.log(469, gRPCRes)
+  if (gRPCRes.result !== '') {
+    let res = JSON.parse(gRPCRes.result)
+    console.log(464, res)
+  }
 }
 
 //图片转buffer示例

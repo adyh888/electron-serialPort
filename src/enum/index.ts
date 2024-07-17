@@ -19,5 +19,7 @@ export enum grpcResult {
  * grpc的初始地址
  */
 export enum grpcInitAddress {
-  grpcUrl = '172.16.10.249:50051'
+  grpcFingerUrl = '172.16.10.249:50051',
+
+  grpcFaceUrl = '172.16.10.249:50052'
 }

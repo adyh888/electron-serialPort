@@ -12,10 +12,18 @@ export const BaseURL = () => {
   }
 }
 
-export const grpcURL = () => {
-  if (storageRes && storageRes.grpcIp) {
-    return storageRes.grpcIp
+export const grpcFingerURL = () => {
+  if (storageRes && storageRes.grpcFingerIp) {
+    return storageRes.grpcFingerIp
   } else {
-    return grpcInitAddress.grpcUrl
+    return grpcInitAddress.grpcFingerUrl
+  }
+}
+
+export const grpcFaceURL = () => {
+  if (storageRes && storageRes.grpcFaceIp) {
+    return storageRes.grpcFaceIp
+  } else {
+    return grpcInitAddress.grpcFaceUrl
   }
 }

@@ -1,10 +1,11 @@
-### electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket + ElementPlus
+### electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket + ElementPlus + gRPC
 * 前提条件
 * node必须16.16.0以上版本。
 * 不需要安装python，node-gyp等对应的编码解析工具
 * 安装electron对应的版本
 * 用的node-serialPort方式导入
 * mac打包的时候 sudo npm run build 解决可能会出现打包空间不足的报错问题
+* 目前采用node-gRPC方式引用
 #### 1.0.1
 * 1.项目架构初始化
 * 2.导入环境包
@@ -141,3 +142,6 @@
 #### 1.1.6-pre-17
 * 1.增加grpc的服务地址配置
 * 2.增加环境显示窗口
+#### 1.1.6-pre-18
+* 1.增加grpc对应的人脸指纹地址配置入口
+* 2.增加grpc人脸proto调用模块

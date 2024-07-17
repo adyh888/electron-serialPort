@@ -4,6 +4,7 @@
 import { funEnum, typeEnum } from './enum'
 import { getFingerStatus, getRepeatedFno, setFingerData } from './function/fingerFun'
 import { grpcRequest } from './utils/request'
+import { faceRegister } from './function/faceFun'
 
 //data ts接口
 interface dataType {
@@ -20,6 +21,7 @@ export async function main(data: dataType) {
       if (data.fun === funEnum.getFingerStatus) return await grpcRequest(getFingerStatus, data.json)
       break
     case typeEnum.face:
-      return await getRepeatedFno(data.json)
+      if (data.fun === funEnum.faceRegister) return await grpcRequest(faceRegister, data.json)
+      break
   }
 }

@@ -8,6 +8,7 @@ import { asyncForEach, messageBoxShow, messageShow } from '../utils'
 import { funEnum, typeEnum } from '../common/gRPC/enum'
 import { BaseURL } from '../config'
 import { ipcRenderer } from 'electron'
+import { gRPCJson } from '../interface'
 /**
  * 组织架构权限处理
  */
@@ -682,11 +683,12 @@ export const useLocalFaceUpdateFun = async (json: any) => {
  * 请求错误提示
  */
 export const useRequestErrorFun = (res: any) => {
+  if (res.result === grpcResult.ACK_FAIL) {
+    messageShow(`GRPC请求错误,${res.error}`, 'error')
+    return
+  }
   if (res.result === grpcResult.ACK_SUCCESS || res.result !== '') {
     return res
-  } else if (res.result === grpcResult.ACK_FAIL) {
-    messageShow(`GRPC请求错误,${res.error}`, 'error')
-    return null
   }
 }
 
@@ -711,5 +713,22 @@ export const useSetFingerData = async (json: any) => {
     fun: funEnum.setFingerData,
     json
   }
+  return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
+}
+
+/**
+ * 封装的GRPC调用-main
+ * @param grpcJson
+ * 格式：
+ * 1. type: 请求的事件类型
+ * 2. fun: 请求的事件
+ * 3. json: 请求的参数
+ * grpcJson = {
+ *     type: typeEnum.finger,
+ *     fun: funEnum.getFingerStatus,
+ *     json
+ *   }
+ */
+export const useGrpcFun = async (grpcJson: gRPCJson) => {
   return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
 }
