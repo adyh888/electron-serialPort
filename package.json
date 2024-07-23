@@ -1,6 +1,6 @@
 {
   "name": "tool-verify-electron",
-  "version": "1.1.6-pre-18",
+  "version": "1.1.6-pre-19",
   "main": "dist-electron/main/index.js",
   "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket",
   "author": "LWW",

@@ -58,6 +58,22 @@ export async function messageBox(title: string, type: any = 'warning') {
 }
 
 /**
+ * 消息弹窗-- html
+ */
+export async function messageBoxHtml(title: string, html: any, buttonText: string = '确定') {
+  console.log(74, ElMessageBox)
+  setTimeout(() => {
+    ElMessageBox.close()
+  }, 7500)
+  //确定时间倒计时
+  return await ElMessageBox.alert(html, title, {
+    dangerouslyUseHTMLString: true,
+    showClose: false,
+    showConfirmButton: false
+  })
+}
+
+/**
  * 消息弹出框
  */
 export function messageBoxShow(title: string, message: string, type: any = 'success', duration: number = 1500) {

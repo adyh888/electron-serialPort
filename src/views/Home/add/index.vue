@@ -56,7 +56,7 @@
         <el-button type="primary" style="width: 300px; margin-top: 50px; height: 60px; font-size: 22px" @click="confirmSubmit">确认</el-button>
       </div>
     </div>
-    <DialogComponent />
+    <DialogComponent ref="dialogRef" />
   </div>
 </template>
 
@@ -71,11 +71,11 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useGrpcFun, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
+import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useFaceClear, useFaceRegister, useGrpcFun, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
-import { ElLoadingShow, imageToBuffer, messageBoxShow, messageShow } from '../../../utils'
+import { ElLoadingShow, imageToBuffer, messageBoxHtml, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
-import { deviceType } from '../../../enum'
+import { deviceType, grpcResult } from '../../../enum'
 import axios from 'axios'
 import { faceAddRequest, faceDeleteRequest, faceVerifyRequest } from '../../../utils/request'
 import { funEnum, typeEnum } from '../../../common/gRPC/enum'
@@ -236,6 +236,15 @@ const showPassword = ref(true)
 //注册用户的信息
 const registerUserInfo = ref<any>({})
 const indexStore = useIndexStore()
+//弹窗的ref
+const dialogRef = ref<any>(null)
+
+//弹窗的成功设备列表
+const deviceListSuccess = ref<any>([])
+//弹窗的失败设备列表
+const deviceListFail = ref<any>([])
+//数据库的图片大小-对比有没有变更
+const faceImgIntSize = ref<number>(0)
 /**
  * methods
  */
@@ -398,44 +407,89 @@ const confirmSubmit = async () => {
       if (registerRes && urlList.value.length > 0) {
         registerUserInfo.value = registerRes.data
         //grpc 注册人脸
-        // let json = {
-        //   uid: registerUserInfo.value.id,
-        //   name: registerUserInfo.value.nickname,
-        //   file: urlList.value[0].file
+        let json = {
+          uid: registerUserInfo.value.id,
+          name: registerUserInfo.value.nickname,
+          file: urlList.value[0].file
+        }
+        await faceRegisterEvent(json)
+        if (deviceListFail.value.length > 0) {
+          loading.value.close()
+          dialogRef.value.autoConfirm()
+          return
+        }
+        // let objArr = await useFaceRegister(json)
+        // deviceListFail.value = objArr.deviceListFail
+        // deviceListSuccess.value = objArr.deviceListSuccess
+        // messageShow('人员用户--注册成功')
+        // if (deviceListFail.value.length > 0) {
+        //   loading.value.close()
+        //   dialogRef.value.autoConfirm()
+        //   return
         // }
-        // await grpcRegisterFaceFn(json)
         //代表有人脸上传的图片 - 并且是注册人员状态
-        for (const item of urlList.value) {
-          await uploadFileFn(item)
-        }
-        if (uploadSuccess.value) {
-          messageBoxShow('提示', '人员录入成功', 'success', 2000)
-        } else {
-          messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
-        }
-      } else if (registerRes && urlList.value.length === 0) {
-        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+        // for (const item of urlList.value) {
+        //   await uploadFileFn(item)
+        // }
+        // if (uploadSuccess.value) {
+        //   messageBoxShow('提示', '人员录入成功', 'success', 2000)
+        // } else {
+        //   messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
+        // }
       } else {
-        messageBoxShow('提示', '人员编辑失败', 'error', 2000)
+        messageBoxShow('提示', '人员用户--注册失败', 'error', 2000)
       }
     } else {
       //编辑
+      //TODO 1:先判断是否有照片-更换
       let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
-      if (updateUserRes && urlList.value.length > 0) {
-        //代表有人脸上传的图片-并且是编辑人员状态
-        for (const item of urlList.value) {
-          await uploadFileFn(item)
-        }
-        if (uploadSuccess.value) {
-          messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+      // console.log(477, updateUserRes)
+      if (updateUserRes && updateUserRes.data.length > 0) {
+        if (urlList.value.length > 0 && urlList.value[0].file.size !== faceImgIntSize.value) {
+          //代表有更换图片
+          //更换人脸图片-先删除原图片
+          if (routerParams.value.faceUuid !== '') {
+            let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
+            if (faceClearRes.result !== grpcResult.ACK_SUCCESS) {
+              messageShow('人员用户--删除成功')
+              return
+            }
+          }
+          //grpc 注册人脸
+          let json = {
+            uid: routerParams.value.id,
+            name: routerParams.value.nickname,
+            file: urlList.value[0].file
+          }
+          await faceRegisterEvent(json, 2)
+          if (deviceListFail.value.length > 0) {
+            loading.value.close()
+            dialogRef.value.autoConfirm()
+            return
+          }
         } else {
-          messageBoxShow('提示', '人员编辑成功,但人脸上传失败', 'error', 2000)
+          messageShow('人员用户--编辑成功')
         }
-      } else if (updateUserRes && urlList.value.length === 0) {
-        messageBoxShow('提示', '人员编辑成功', 'success', 2000)
       } else {
-        messageBoxShow('提示', '人员编辑失败', 'error', 2000)
+        messageBoxShow('提示', '人员用户--编辑失败', 'error', 2000)
       }
+      // return
+      // if (updateUserRes && urlList.value.length > 0) {
+      //   //   //代表有人脸上传的图片-并且是编辑人员状态
+      //   //   for (const item of urlList.value) {
+      //   //     await uploadFileFn(item)
+      //   //   }
+      //   //   if (uploadSuccess.value) {
+      //   //     messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+      //   //   } else {
+      //   //     messageBoxShow('提示', '人员编辑成功,但人脸上传失败', 'error', 2000)
+      //   //   }
+      //   // } else if (updateUserRes && urlList.value.length === 0) {
+      //   //   messageBoxShow('提示', '人员编辑成功', 'success', 2000)
+      //   // }
+      // } else {
+      //   messageBoxShow('提示', '人员编辑失败', 'error', 2000)
+      // }
     }
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
@@ -446,23 +500,13 @@ const confirmSubmit = async () => {
   }, 1000)
 }
 
-//使用grpc方式注册人脸
-const grpcRegisterFaceFn = async (json: any) => {
-  let grpcJson = {
-    type: typeEnum.face,
-    fun: funEnum.faceRegister,
-    json: {
-      name: json.name,
-      uid: json.uid,
-      imageData: await fileToBase64(json.file)
-    }
-  }
-  let gRPCRes = await useGrpcFun(grpcJson)
-  console.log(469, gRPCRes)
-  if (gRPCRes.result !== '') {
-    let res = JSON.parse(gRPCRes.result)
-    console.log(464, res)
-  }
+//封装注册好的事件
+const faceRegisterEvent = async (json: any, type: number = 1) => {
+  let objArr = await useFaceRegister(json)
+  // console.log(504, objArr)
+  deviceListFail.value = objArr.deviceListFail
+  deviceListSuccess.value = objArr.deviceListSuccess
+  messageShow(`人员用户--${type === 1 ? '注册' : '编辑'}成功`)
 }
 
 //图片转buffer示例
@@ -805,7 +849,7 @@ onMounted(async () => {
   if (params && params.type === 'edit') {
     showPassword.value = false
     routerParams.value = params
-    console.log(677, routerParams.value)
+    // console.log(677, routerParams.value)
     registerType.value = false
     // cascaderOptions.value = getUseOrganizationPermission(params)
     cascaderOptions.value = indexStore.organizationalStructureArr
@@ -883,6 +927,11 @@ onMounted(async () => {
   if (Object.keys(user.imgFileObj).length > 0) {
     urlList.value[0] = user.imgFileObj
   }
+  // console.log(933, urlList.value)
+  //获取图片的大小
+  if (urlList.value.length > 0) {
+    faceImgIntSize.value = urlList.value[0].file.size
+  }
 })
 onUnmounted(() => {
   user.imgFileObj = {}
@@ -891,7 +940,7 @@ onUnmounted(() => {
 /**
  * provides
  */
-provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage, uploadFileFn, uploadSuccess, uploadShow })
+provide('dataProvide', { dialogFormVisible, selectChangeDialog, selectValue, cities, BackShow, cancel, confirm, HeadTitle, dialogFingerVisible, percentage, uploadFileFn, uploadSuccess, uploadShow, deviceListFail, deviceListSuccess })
 </script>
 
 <style scoped>

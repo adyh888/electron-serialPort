@@ -24,5 +24,7 @@ export enum funEnum {
    * 人脸相关
    */
   //根据图片注册人脸
-  faceRegister = 'faceRegister'
+  faceRegister = 'faceRegister',
+  // 清除人脸注册(face.uuid)
+  faceClear = 'faceClear'
 }

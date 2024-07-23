@@ -732,3 +732,69 @@ export const useSetFingerData = async (json: any) => {
 export const useGrpcFun = async (grpcJson: gRPCJson) => {
   return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
 }
+
+/**
+ * 删除人脸-grpc调用
+ *@param uuid-face-uuid
+ */
+export const useFaceClear = async uuid => {
+  let grpcJson = {
+    type: typeEnum.face,
+    fun: funEnum.faceClear,
+    json: {
+      uuid
+    }
+  }
+  return await useGrpcFun(grpcJson)
+}
+
+/**
+ * 注册人脸-grpc调用
+ */
+export const useFaceRegister = async (json: any) => {
+  //正则匹配ID和IP
+  const regexId = /ID:([0-9]+)/
+  const regexIp = /IP:([\d.]+)/
+  const regex = /:([^:]*)$/
+  let grpcJson = {
+    type: typeEnum.face,
+    fun: funEnum.faceRegister,
+    json: {
+      name: json.name,
+      uid: json.uid,
+      imageData: await fileToBase64(json.file)
+    }
+  }
+  let resArrObj = {
+    deviceListFail: [],
+    deviceListSuccess: []
+  }
+  let gRPCRes = await useGrpcFun(grpcJson)
+  // console.log(469, gRPCRes)
+  if (gRPCRes.result !== '') {
+    let res = JSON.parse(gRPCRes.result)
+    // console.log(464, res)
+    if (res.length > 0) {
+      res.forEach(item => {
+        const resMatch = item.result.match(regex) ?? []
+        if (resMatch && resMatch.length > 0 && resMatch[1] === grpcResult.ACK_FAIL && item.error !== '') {
+          let deviceId = item.result.match(regexId)
+          let deviceIp = item.result.match(regexIp)
+          if (deviceId && deviceId[1] && deviceIp && deviceIp[1]) {
+            let obj = { deviceId: deviceId[1], deviceIp: deviceIp[1], error: item.error }
+            resArrObj.deviceListFail.push(obj)
+          }
+        }
+        if (resMatch && resMatch.length > 0 && resMatch[1] === grpcResult.ACK_SUCCESS) {
+          let deviceId = item.result.match(regexId)
+          let deviceIp = item.result.match(regexIp)
+          if (deviceId && deviceId[1] && deviceIp && deviceIp[1]) {
+            let obj = { deviceId: deviceId[1], deviceIp: deviceIp[1], success: item.error }
+            resArrObj.deviceListSuccess.push(obj)
+          }
+        }
+      })
+    }
+  }
+  return resArrObj
+}

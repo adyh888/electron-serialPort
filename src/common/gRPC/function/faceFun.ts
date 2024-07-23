@@ -40,3 +40,16 @@ export const faceRegister = (json: any) => {
     })
   })
 }
+
+// 清除人脸注册(face.uuid)
+export const faceClear = (json: any) => {
+  return new Promise((resolve, reject) => {
+    client.UnRegisterFace(json, (err, response) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(response)
+      }
+    })
+  })
+}
