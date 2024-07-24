@@ -364,7 +364,6 @@ const onFingerEvent = () => {
 
 //提交
 const confirmSubmit = async () => {
-  await loadingShow()
   let requestData = []
   let leftFilterArr = leftData.value.filter(item => item.required && item.value !== '')
   let rightFilterArr = rightData.value.filter(item => item.required && item.value !== '')
@@ -374,6 +373,7 @@ const confirmSubmit = async () => {
     requestData = leftFilterArr
   }
   if (requestData.length === 4) {
+    await loadingShow()
     leftData.value.forEach(item => {
       if (item.id === 1) {
         userInfoForm = { ...userGradeJson(item.value) }
@@ -451,7 +451,7 @@ const confirmSubmit = async () => {
           if (routerParams.value.faceUuid !== '') {
             let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
             if (faceClearRes.result !== grpcResult.ACK_SUCCESS) {
-              messageShow('人员用户--删除成功')
+              messageShow('人员照片--删除失败')
               return
             }
           }
@@ -467,13 +467,21 @@ const confirmSubmit = async () => {
             dialogRef.value.autoConfirm()
             return
           }
-        } else {
+        } else if (urlList.value.length === 0) {
+          //代表没有人脸照片，就删除人脸
+          //删除原图片
+          if (routerParams.value.faceUuid !== '') {
+            let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
+            if (faceClearRes.result !== grpcResult.ACK_SUCCESS) {
+              messageShow('人员照片--删除失败')
+              return
+            }
+          }
           messageShow('人员用户--编辑成功')
         }
       } else {
         messageBoxShow('提示', '人员用户--编辑失败', 'error', 2000)
       }
-      // return
       // if (updateUserRes && urlList.value.length > 0) {
       //   //   //代表有人脸上传的图片-并且是编辑人员状态
       //   //   for (const item of urlList.value) {
@@ -493,6 +501,7 @@ const confirmSubmit = async () => {
     }
   } else {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
+    return
   }
   loading.value.close()
   setTimeout(() => {
@@ -926,12 +935,13 @@ onMounted(async () => {
   //拍照替换自带的图片
   if (Object.keys(user.imgFileObj).length > 0) {
     urlList.value[0] = user.imgFileObj
+  } else {
+    //获取图片的大小
+    if (urlList.value.length > 0) {
+      faceImgIntSize.value = urlList.value[0].file.size
+    }
   }
   // console.log(933, urlList.value)
-  //获取图片的大小
-  if (urlList.value.length > 0) {
-    faceImgIntSize.value = urlList.value[0].file.size
-  }
 })
 onUnmounted(() => {
   user.imgFileObj = {}

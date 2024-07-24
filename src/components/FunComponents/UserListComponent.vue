@@ -45,11 +45,11 @@ const selectOptions = ref([
 ])
 const selectOptions2 = ref([
   {
-    label: '异常',
+    label: '禁用',
     value: false
   },
   {
-    label: '正常',
+    label: '启用',
     value: true
   }
 ])
@@ -330,7 +330,7 @@ const switchChange = async row => {
   }
   let registerRes = await Request(useUcStore().userUpdate, json)
   if (registerRes && registerRes.code === 0) {
-    messageBoxShow('提示', `姓名${row.nickname}状态修改成功`)
+    messageBoxShow('提示', `姓名(${row.nickname ?? '无'})状态${json.status ? '启用' : '禁用'}成功`)
   }
 }
 
