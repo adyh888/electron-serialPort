@@ -213,7 +213,7 @@ const paging = () => {
   const end = pagination.pageNum * pagination.pageSize
   tableData.value = tableDataInit.value.slice(start, end)
 }
-
+//解压文件
 const unzipAndReadFiles = async zipFile => {
   loadingShow()
   try {
@@ -390,16 +390,19 @@ const confirm = () => {
       messageShow('只能上传压缩包为zip文件格式的文件', 'error')
       return
     }
+    //上传压缩包
+    unzipAndReadFiles(fileList.value[0].raw)
   }
   //设备名称和文件列表不为空时，上传
-  if (Object.keys(selectDeviceObj.value).length > 0 && fileList.value.length > 0) {
-    if (selectDeviceObj.value.serviceId) {
-      unzipAndReadFiles(fileList.value[0].raw)
-    } else {
-      messageShow('选择到对应的device设备人脸的地址为空,请进入后台-设备中心-设备列表-配置服务器ID', 'error')
-    }
-  } else {
-    messageBoxShow('提示', '请选择设备和上传文件', 'error')
+  // if (Object.keys(selectDeviceObj.value).length > 0 && fileList.value.length > 0) {
+  //   if (selectDeviceObj.value.serviceId) {
+  //     unzipAndReadFiles(fileList.value[0].raw)
+  //   } else {
+  //     messageShow('选择到对应的device设备人脸的地址为空,请进入后台-设备中心-设备列表-配置服务器ID', 'error')
+  //   }
+  // }
+  else {
+    messageBoxShow('提示', '请选择上传文件', 'error')
   }
 }
 
