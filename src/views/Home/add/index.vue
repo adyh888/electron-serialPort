@@ -40,7 +40,7 @@
               <div>
                 <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
                 <div style="margin-top: 5px">
-                  <CropperUploadComponent v-if="item.type === 'image'" v-model="urlList" :multiple="false" />
+                  <CropperUploadComponent v-if="item.type === 'image'" v-model="urlList" :multiple="false" :size="1024 * 1024" />
                 </div>
               </div>
               <div style="display: flex; margin-left: 20px" v-if="item.setting">
