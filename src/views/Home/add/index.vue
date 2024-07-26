@@ -16,7 +16,7 @@
                 <div style="width: 90px; text-align: justify; text-align-last: justify; margin-left: 5px">{{ item.title }}</div>
                 <div>:</div>
               </div>
-              <el-input v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
+              <el-input v-model="item.value" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" :disabled="item.disabled" clearable v-if="item.type === 'input'" />
               <el-select v-model="item.value" :placeholder="item.placeholder" style="width: 350px; margin-left: 5px" v-if="item.type === 'select'">
                 <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
@@ -113,7 +113,8 @@ const leftData = ref([
     placeholder: '请输入账号',
     mandatory: true,
     required: true,
-    type: 'input'
+    type: 'input',
+    disabled: false
   },
   {
     id: 3,
@@ -122,7 +123,8 @@ const leftData = ref([
     placeholder: '请输入昵称',
     mandatory: true,
     required: true,
-    type: 'input'
+    type: 'input',
+    disabled: false
   },
   // {
   //   id: 4,
@@ -139,7 +141,8 @@ const leftData = ref([
     placeholder: '请输入工号',
     mandatory: false,
     required: false,
-    type: 'input'
+    type: 'input',
+    disabled: false
   },
   {
     id: 6,
@@ -148,7 +151,8 @@ const leftData = ref([
     placeholder: '请输入手机号',
     mandatory: false,
     required: false,
-    type: 'input'
+    type: 'input',
+    disabled: false
   }
 ])
 const rightData = ref([
@@ -406,6 +410,7 @@ const confirmSubmit = async () => {
     if (registerType.value) {
       //注册
       let registerRes = await Request(useUcStore().userRegister, userInfoForm)
+      // console.log(409, registerRes)
       //注册用户成功并且有上传人脸图片
       if (registerRes && urlList.value.length > 0) {
         registerUserInfo.value = registerRes.data
@@ -439,6 +444,8 @@ const confirmSubmit = async () => {
         // } else {
         //   messageBoxShow('提示', '人员录入成功,但人脸上传失败', 'error', 2000)
         // }
+      } else if (registerRes && urlList.value.length === 0) {
+        messageBoxShow('提示', '人员用户--注册成功', 'success', 2000)
       } else {
         messageBoxShow('提示', '人员用户--注册失败', 'error', 2000)
       }
@@ -879,6 +886,7 @@ onMounted(async () => {
       }
       if (item.id === 2) {
         item.value = params.username
+        item.disabled = !params.status
       }
       if (item.id === 3) {
         item.value = params.nickname

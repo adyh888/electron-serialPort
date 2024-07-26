@@ -329,7 +329,7 @@ const switchChange = async row => {
     id: row.id,
     status: row.status
   }
-  let registerRes = await Request(useUcStore().userUpdate, json)
+  let registerRes = await Request(useUcStore().userModify, json)
   if (registerRes && registerRes.code === 0) {
     messageBoxShow('提示', `姓名(${row.nickname ?? '无'})状态${json.status ? '启用' : '禁用'}成功`)
   }
