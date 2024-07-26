@@ -395,6 +395,9 @@ const confirmSubmit = async () => {
       if (item.id === 1) {
         userInfoForm.password = item.value
       }
+      if (item.id === 2 && item.value !== '') {
+        userInfoForm.cardNo = item.value
+      }
       if (item.id === 3 && item.value !== '' && item.fingerFeatureData !== '') {
         userInfoForm.fingerFeatureData = item.fingerFeatureData
       }
@@ -942,7 +945,7 @@ onMounted(async () => {
       faceImgIntSize.value = urlList.value[0].file.size
     }
   }
-  // console.log(933, urlList.value)
+  // console.log(933, rightData.value)
 })
 onUnmounted(() => {
   user.imgFileObj = {}
