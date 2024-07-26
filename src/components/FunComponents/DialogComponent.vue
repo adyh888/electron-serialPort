@@ -116,7 +116,7 @@ const colors = [
 //自动确定弹窗
 const dialogAutoVisible = ref(false)
 const confirmAutoText = ref('确定')
-const confirmAutoCount = ref(5)
+const confirmAutoCount = ref(60)
 const confirmInterval = ref<any>(null)
 /**
  * methods

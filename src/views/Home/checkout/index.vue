@@ -19,7 +19,7 @@
     <el-dialog v-model="dialogFormVisible" title="选择检验设备(必填)" width="700" align-center :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
       <div style="display: flex; justify-content: center; align-items: center; padding: 20px 0">
         <span style="width: 80px; font-size: 16px">设备名称:</span>
-        <el-select v-model="selectValue" placeholder="请选择设备" style="width: 500px" @change="selectChangeDialog">
+        <el-select v-model="selectValue" :placeholder="selectLoading ? '数据加载中请稍等..' : '请选择设备'" style="width: 500px" :loading="selectLoading" @change="selectChangeDialog">
           <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
             <span style="float: left">{{ item.label }}</span>
             <el-icon style="margin-left: 5px; color: green; font-size: 10px" v-if="item.status"><SuccessFilled /></el-icon>
@@ -163,6 +163,8 @@ const buttonData = ref([
 const emptyText = ref('暂无异常的指纹数据')
 //选择设备的确定按钮状态
 const confirmDisabled = ref(false)
+//select的加载
+const selectLoading = ref(true)
 let finger = null
 /**
  * methods
@@ -749,11 +751,8 @@ const timeoutEvent = () => {
   loading.value?.close()
   emitterFinger.emit('close')
 }
-
-/**
- * life
- */
-onMounted(async () => {
+//请求设备状态
+const getDeviceStatusFun = async () => {
   //获取设备状态
   let { data } = await getDeviceStatus()
   //获取设备列表
@@ -770,7 +769,17 @@ onMounted(async () => {
       }
     })
   }
+  selectLoading.value = false
   cities.value = deviceArr
+}
+
+/**
+ * life
+ */
+onMounted(() => {
+  setTimeout(() => {
+    getDeviceStatusFun()
+  }, 100)
 })
 onUnmounted(() => {
   emitterFinger.emit('close')

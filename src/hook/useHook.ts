@@ -773,7 +773,7 @@ export const useFaceRegister = async (json: any) => {
   // console.log(469, gRPCRes)
   if (gRPCRes.result !== '') {
     let res = JSON.parse(gRPCRes.result)
-    // console.log(464, res)
+    console.log(464, res)
     if (res.length > 0) {
       res.forEach(item => {
         const resMatch = item.result.match(regex) ?? []

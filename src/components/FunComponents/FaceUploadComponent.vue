@@ -29,7 +29,7 @@ import { ref, provide, reactive, onMounted } from 'vue'
 import JSZip from 'jszip'
 import { faceAddRequest, faceVerifyRequest, Request } from '../../utils/request'
 import { ElLoadingShow, messageBoxShow, messageShow } from '../../utils'
-import { base64ToBlob, getDeviceList, useExtractNamesAndNumbers, useLocalFaceUpdateFun, useTraverseFolderForImages } from '../../hook/useHook'
+import { base64ToBlob, getDeviceList, useExtractNamesAndNumbers, useFaceRegister, useLocalFaceUpdateFun, useTraverseFolderForImages } from '../../hook/useHook'
 import { useRouter } from 'vue-router'
 import iconv from 'iconv-lite'
 import { useUcStore } from '../../store'
@@ -61,9 +61,8 @@ const formDataList = ref([
     label: '状态',
     placeholder: '请选择状态',
     options: [
-      { label: '已注册', value: '已注册' },
-      { label: '新注册', value: '新注册' },
-      { label: '未注册', value: '未注册' }
+      { label: '注册失败', value: '注册失败' },
+      { label: '注册成功', value: '注册成功' }
     ]
   }
 ])
@@ -78,8 +77,9 @@ const tableData = ref([])
 const tableDataInit = ref([])
 //表格规则
 const columns = ref([
+  { label: '设备ID', prop: 'deviceId' },
+  { label: '设备IP', prop: 'deviceIp' },
   { label: '工号', prop: 'employeeNo' },
-  // { label: '账号', prop: 'nickname' },
   { label: '姓名', prop: 'nickname' },
   { label: '人脸ID', prop: 'faceId' },
   { label: '人脸图片', prop: 'faceImage' },
@@ -87,9 +87,8 @@ const columns = ref([
     label: '状态',
     prop: 'tagStatus',
     filter: [
-      { text: '已注册', value: '已注册' },
-      { text: '新注册', value: '新注册' },
-      { text: '未注册', value: '未注册' }
+      { label: '注册失败', value: '注册失败' },
+      { label: '注册成功', value: '注册成功' }
     ]
   }
 ])
@@ -115,7 +114,7 @@ const router = useRouter()
 const loading = ref<any>(null)
 //绑定过人脸数据的图片 -老数据
 const bindOldFaceList = ref([])
-//新的人脸数据
+//新的人脸数据-无问题的
 const bindNewFaceList = ref([])
 //注册失败的人脸数据
 const registerFailFaceList = ref([])
@@ -126,6 +125,10 @@ const folderName = ref('')
 const imgReg = /\.(jpg|jpeg|png)$/i
 //文件夹正则验证
 const regex = /\//
+//弹窗的成功设备列表
+const deviceListSuccess = ref<any>([])
+//弹窗的失败设备列表
+const deviceListFail = ref<any>([])
 /**
  * methods
  */
@@ -287,38 +290,53 @@ const unzipAndReadFiles = async zipFile => {
             serverIp: selectDeviceObj.value.serviceId,
             faceImage: imgBase64
           }
-          let faceVerifyRes = await faceVerifyRequest(json)
-          // console.log(159, faceVerifyRes)
-          if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
-            //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
-            if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
-              //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
-              for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
-                if (item.uid === null) {
-                  //TODO 重新绑定
-                  await rebind(json)
-                } else {
-                  bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '已注册' })
-                  await useLocalFaceUpdateFun({
-                    faceId: item.id,
-                    uuid: json.uuid,
-                    file: fileObj,
-                    uid: json.uid
-                  })
-                }
-              }
-            } else {
-              //没有绑定过，需要重新注册
-              await rebind(json)
-            }
-          } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
-            //没有绑定过，需要重新注册
-            await rebind(json)
-            // messageShow(`${faceVerifyRes.data.result}`, 'error')
+          await faceRegisterEvent(json)
+          // console.log(295, deviceListFail.value)
+          // console.log(296, deviceListSuccess.value)
+          //注册失败的设备-用户信息
+          if (deviceListFail.value.length > 0) {
+            deviceListFail.value.forEach(item => {
+              registerFailFaceList.value.push({ deviceId: item.deviceId, deviceIp: item.deviceIp, employeeNo: employeeNo, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '注册失败', error: item.error })
+            })
           }
+          //注册成功的设备-用户信息
+          if (deviceListSuccess.value.length > 0) {
+            deviceListSuccess.value.forEach(item => {
+              bindNewFaceList.value.push({ deviceId: item.deviceId, deviceIp: item.deviceIp, employeeNo: employeeNo, nickname: name, faceId: item.success.id, tagStatus: '注册成功', faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src] })
+            })
+          }
+          // let faceVerifyRes = await faceVerifyRequest(json)
+          // // console.log(159, faceVerifyRes)
+          // if (faceVerifyRes && faceVerifyRes.status === 200 && faceVerifyRes.data.success) {
+          //   //TODO 判断此用户有没有在数据库中注册过有绑定过用户，并且识别的相似度大于0.9
+          //   if (faceVerifyRes.data.result.doRecognizeResult.compareMap.getSimilar > 0.9 && faceVerifyRes.data.result.selectFaceDataResult.length > 0) {
+          //     //有绑定过，但是数据库user的uid没有绑定成功，需要重新绑定
+          //     for (const item of faceVerifyRes.data.result.selectFaceDataResult) {
+          //       if (item.uid === null) {
+          //         //TODO 重新绑定
+          //         await rebind(json)
+          //       } else {
+          //         bindOldFaceList.value.push({ employeeNo: employeeNo, faceId: item.id, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '已注册' })
+          //         await useLocalFaceUpdateFun({
+          //           faceId: item.id,
+          //           uuid: json.uuid,
+          //           file: fileObj,
+          //           uid: json.uid
+          //         })
+          //       }
+          //     }
+          //   } else {
+          //     //没有绑定过，需要重新注册
+          //     await rebind(json)
+          //   }
+          // } else if (faceVerifyRes && faceVerifyRes.status === 200 && !faceVerifyRes.data.success) {
+          //   //没有绑定过，需要重新注册
+          //   await rebind(json)
+          //   // messageShow(`${faceVerifyRes.data.result}`, 'error')
+          // }
         } else if (userFindRes && userFindRes.code === 0 && userFindRes.total === 0) {
           //代表根据姓名+工号找不到此用户的信息
-          registerFailFaceList.value.push({ employeeNo: employeeNo, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '未注册' })
+          registerFailFaceList.value.push({ employeeNo: employeeNo, nickname: name, faceImage: imgBase64, srcList: [base64ToBlob(imgBase64).src], tagStatus: '注册失败', error: '根据姓名+工号找不到此用户的信息' })
         }
       }
     } else {
@@ -367,7 +385,7 @@ const tableDataFilter = () => {
   //   tableDataInit.value = registerFailFaceList.value
   //   tableData.value = registerFailFaceList.value
   // }
-  headContent.value = `上传的人脸图片,已经注册数量是${bindOldFaceList.value.length}个,新注册的数量是${bindNewFaceList.value.length}个,未注册的数量是${registerFailFaceList.value.length}个`
+  headContent.value = `上传的人脸图片,注册失败数量是${registerFailFaceList.value.length}个,注册成功的数量是${bindNewFaceList.value.length}个`
   pagination.total = tableData.value.length
   dialogFaceVisible.value = false
 }
@@ -409,6 +427,13 @@ const confirm = () => {
 //表格的行的某一格的数据处理
 const filterTag = (value: string, row: any) => {
   return row.tagStatus === value
+}
+
+//封装注册好的事件
+const faceRegisterEvent = async (json: any) => {
+  let objArr = await useFaceRegister(json)
+  deviceListFail.value = objArr.deviceListFail
+  deviceListSuccess.value = objArr.deviceListSuccess
 }
 
 /**

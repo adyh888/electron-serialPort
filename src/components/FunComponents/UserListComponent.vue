@@ -320,6 +320,7 @@ const del = async (row: any) => {
 
 //search数据处理
 const handleSearch = async () => {
+  pagination.pageNum = 1
   tableData.value = await userSelect()
 }
 

@@ -442,7 +442,7 @@ const confirmSubmit = async () => {
     } else {
       //编辑
       //TODO 1:先判断是否有照片-更换
-      let updateUserRes = await Request(useUcStore().userUpdate, { ...userInfoForm, id: routerParams.value.id })
+      let updateUserRes = await Request(useUcStore().userModify, { ...userInfoForm, id: routerParams.value.id })
       // console.log(477, updateUserRes)
       if (updateUserRes && updateUserRes.data.length > 0) {
         if (urlList.value.length > 0 && urlList.value[0].file.size !== faceImgIntSize.value) {
@@ -472,7 +472,8 @@ const confirmSubmit = async () => {
           //删除原图片
           if (routerParams.value.faceUuid !== '') {
             let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
-            if (faceClearRes.result !== grpcResult.ACK_SUCCESS) {
+            console.log(475, faceClearRes)
+            if (faceClearRes && faceClearRes.result !== grpcResult.ACK_SUCCESS) {
               messageShow('人员照片--删除失败')
               return
             }

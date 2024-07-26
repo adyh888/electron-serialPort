@@ -26,6 +26,7 @@ if (localStorage && localStorage.grpcFingerIp && localStorage.grpcFingerIp !== '
 const packageDefinition = protoLoader.loadSync('./src/common/gRPC/finger/finger.proto', { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true })
 const fingerprint_proto = grpc.loadPackageDefinition(packageDefinition).fingerprint
 const client = new fingerprint_proto.Fingerprint(grpcUrl, grpc.credentials.createInsecure())
+const client2 = new fingerprint_proto.FingerprintDb(grpcUrl, grpc.credentials.createInsecure())
 // 查看对应环境的指纹槽位是否有重复的
 export const getRepeatedFno = (json: any) => {
   return new Promise((resolve, reject) => {
@@ -55,7 +56,7 @@ export const setFingerData = (json: any) => {
 // 获取指纹传感器状态
 export const getFingerStatus = (json: any) => {
   return new Promise((resolve, reject) => {
-    client.getFingerSensorStatus(json, (err, response) => {
+    client2.getFingerSensorStatus(json, (err, response) => {
       if (err) {
         reject(err)
       } else {

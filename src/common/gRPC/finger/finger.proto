@@ -33,8 +33,14 @@ service Fingerprint {
   rpc downloadFeatureAndCompareOneToMore(GetFeatureRequest) returns (ResFno) {}
   // 下载特征值并保存到指纹传感器指定槽位
   rpc downloadFeatureAndSaveToDsp(GetFnoFeatureRequest) returns (ResFno) {}
+  // 手指按上指纹模块，录入指定槽位，并上传指纹特征验证长度是否达标
+  rpc recordAndUpload(GetFnoRequest) returns (ResRecordMsg) {}
+}
+
+service FingerprintDb {
   // 查看对应环境的指纹槽位是否有重复的
   rpc getRepeatedFno(GetUrlDeviceIdRequest) returns (ResFnoList);
+  //TODO: 环境重复的用户
   // 删除指纹表内不存在但是指纹传感器存在的指纹特征值
   rpc residueFno(GetUrlDeviceIdRequest) returns (Res);
   // 将指纹表存在但指纹传感器不存在的指纹下载到空槽位
@@ -43,16 +49,22 @@ service Fingerprint {
   rpc download2overwrite(GetUrlDeviceIdRequest) returns (Res);
   // 手指按上指纹模块，获取人员信息及是否有权限登录
   rpc compareOneToMore2UserRight(GetUrlDeviceIdRequest) returns (ResMsg) {}
-  // 根据指定环境、指定设备号、指定用户id录入指纹
-  rpc recordUser(GetRecordUserRequest) returns (Res) {}
-  // 手指按上指纹模块，录入指定槽位，并上传指纹特征验证长度是否达标
-  rpc recordAndUpload(GetFnoRequest) returns (ResRecordMsg) {}
   // 验证指纹表&指纹传感器指纹特征长度是否达标
   rpc checkFeatureLength(GetUrlDeviceIdRequest) returns (Res) {}
   // 验证指纹表和指纹特征是否一一匹配
-  rpc checkFeatureMatch(GetUrlDeviceIdRequest) returns (Res) {}
+  rpc checkFeatureMatch(GetUrlDeviceIdRequest) returns (ResErrList) {}
   // 获取指纹传感器状态
-  rpc getFingerSensorStatus(GetUrlRequest) returns (ResData);
+  rpc getFingerSensorStatus(GetUrlDeviceIdRequest) returns (ResData);
+  // 设置指纹参数
+  rpc setFingerParams(GetFingerParamsRequest) returns (Res);
+  // 删除指定用户指纹(指定deviceId需传参)
+  rpc deleteFingerprintByUser(DeleteUserFingerRequest) returns (Res);
+  // 下载指纹特征值到指纹传感器,并绑定指定用户
+  rpc downloadFeature2user(FeatureRecordUserRequest) returns (Res);
+  // 根据指定环境、指定设备号、指定用户id录入指纹
+  rpc recordUser(GetRecordUserRequest) returns (Res) {}
+  // 用特征值获取用户信息
+  rpc feature2user(FeatureToUserRequest) returns (ResUser);
 }
 
 message GetEmptyRequest {}
@@ -64,6 +76,13 @@ message GetUrlRequest {
 message GetUrlDeviceIdRequest {
   string url =1;
   string deviceId=2;
+}
+
+message GetFingerParamsRequest {
+  string url =1;
+  string deviceId=2;
+  string fingerIp=3;
+  uint32 fingerPort=4;
 }
 
 message GetFnoRequest {
@@ -85,6 +104,29 @@ message GetRecordUserRequest {
   uint32 uid =3;
 }
 
+message FeatureRecordUserRequest {
+  string url =1;
+  string deviceId=2;
+  string feature=3;
+  uint32 uid =4;
+  string employeeNo=5;
+  string username=6;
+}
+
+message DeleteUserFingerRequest {
+  string url =1;
+  string deviceId=2;
+  uint32 uid =4;
+  string employeeNo=5;
+  string username=6;
+}
+
+message FeatureToUserRequest {
+  string url =1;
+  string deviceId=2;
+  string feature=3;
+}
+
 message Res {
   string result = 1;
   string error =2;
@@ -96,13 +138,26 @@ message ResData {
   repeated ServiceInfo data=3;
 }
 
+message ResErrList {
+  string result = 1;
+  string error =2;
+  repeated FnoMatchData errList=3;
+}
+
+message FnoMatchData {
+  uint32 dbFno=1;
+  uint32 sensorFno=2;
+}
+
+
 message ServiceInfo {
   string deviceId=1;
   string deviceName=2;
   string fingerIp=3;
-  string ping=4;
-  string port=5;
-  string status=6;
+  uint32 fingerPort=4;
+  string ping=5;
+  string port=6;
+  string status=7;
 }
 
 message ResMsg {
@@ -160,7 +215,18 @@ message ResFeature {
   string result = 1;
   uint32 fno = 2;
   uint32 right = 3;
-  string feature =4;
+  uint32 length =4;
+  string feature =5;
+  string error=6;
+}
+
+message ResUser {
+  string result = 1;
+  uint32 uid=2;
+  string username = 3;
+  string employeeNo = 4;
+  repeated string deviceIdList=5;
+  string error=6;
 }
 
 message ResFnoList {

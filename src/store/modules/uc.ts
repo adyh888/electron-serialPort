@@ -50,6 +50,10 @@ const useUcStore = defineStore('uc', {
     //用户注册
     async userRegister(json: any) {
       return await uc.registerUser(json)
+    },
+    //编辑-修改用户信息
+    async userModify(json: any) {
+      return await uc.modifyUser(json)
     }
   }
 })
