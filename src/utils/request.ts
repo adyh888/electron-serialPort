@@ -19,10 +19,14 @@ export async function Request(actionFun: Function, json: Object) {
   if (res) return res
 }
 
-// export async function grpcRequest(grpcFun: any, json: any) {
-//   let res = grpcFun(json)
-//   console.log(28, res)
-// }
+export async function grpcRequest(grpcFun: any, json: any) {
+  const [err, res] = await to(grpcFun(json))
+  if (err) {
+    messageShow(`gRPC请求错误-${err.message}`, 'error')
+    await ErrorLogInsert(err.message)
+  }
+  if (res) return res
+}
 
 /**
  * 插入错误日志

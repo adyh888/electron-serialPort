@@ -9,6 +9,7 @@ import { funEnum, methodEnum, typeEnum } from '../common/gRPC/enum'
 import { BaseURL, grpcFaceURL, grpcFingerURL } from '../config'
 import { ipcRenderer } from 'electron'
 import { gRPCJson } from '../interface'
+import { grpcRequest } from '../utils/request'
 // import { FaceClient } from '../grpc/protobuf-ts/protos/face.client'
 // import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 /**
@@ -843,7 +844,7 @@ export const useFaceRegister = async (json: any) => {
  * gRPC-request请求封装
  */
 export const useGRPCRequest = async (json: any) => {
-  let res = await Request(useAcStore().grpcRequest, json)
+  let res = await grpcRequest(useAcStore().grpcRequest, json)
   console.log(847, res)
   if (res) return res.data
 }

@@ -754,13 +754,12 @@ const timeoutEvent = () => {
 //请求设备状态
 const getDeviceStatusFun = async () => {
   //获取设备状态
-  let { data } = await getDeviceStatus()
-  // console.log(758, data)
+  let res = await getDeviceStatus()
   //获取设备列表
   let deviceArr = await getDeviceList(1)
-  if (data && data.length > 0) {
+  if (res && res.data && res.data.length > 0) {
     // 遍历deviceStatusArr
-    data.forEach(deviceStatus => {
+    res.data.forEach(deviceStatus => {
       // 查找deviceArr中匹配的deviceId
       let device = deviceArr.find(device => device.value === deviceStatus.deviceId)
       // 如果找到了匹配的设备，并且deviceStatus的status是'online'

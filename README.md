@@ -162,3 +162,5 @@
 #### 1.1.6-pre-22
 * 1.增加GRPC-web调试模式
 * 2.无法打包proto文件改用Restful Api
+#### 1.1.6-pre-23
+* 1.优化gRPC-restful调用接口错误的处理
