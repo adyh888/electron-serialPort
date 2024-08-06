@@ -28,3 +28,21 @@ export enum funEnum {
   // 清除人脸注册(face.uuid)
   faceClear = 'faceClear'
 }
+
+/**
+ * 请求事件的方法
+ */
+export enum methodEnum {
+  /**
+   * 人脸方法
+   */
+  registerByImage = 'registerByImage',
+  unRegisterFace = 'unRegisterFace',
+
+  /**
+   * 指纹方法
+   */
+  getFingerSensorStatus = 'getFingerSensorStatus',
+  getRepeatedFno = 'getRepeatedFno',
+  download2overwrite = 'download2overwrite'
+}

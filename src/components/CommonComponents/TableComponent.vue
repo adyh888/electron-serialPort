@@ -8,9 +8,9 @@
             <el-button link type="primary" size="small" @click="edit(scope.row)"
               ><el-icon><EditPen /></el-icon>编辑</el-button
             >
-            <!--            <el-button link type="danger" size="small" @click="del(scope.row)"-->
-            <!--              ><el-icon><Delete /></el-icon>删除</el-button-->
-            <!--            >-->
+            <el-button link type="danger" size="small" @click="del(scope.row)"
+              ><el-icon><Delete /></el-icon>删除</el-button
+            >
           </template>
         </el-table-column>
         <el-table-column v-if="column.prop === 'tagStatus'" :prop="column.prop" :label="column.label" width="300" :filters="column.filter" :filter-method="filterTag" filter-placement="bottom-end" align="center">

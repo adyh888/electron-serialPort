@@ -69,7 +69,7 @@ import HeadComponent from '../../../components/CommonComponents/HeadComponent.vu
 import TableComponent from '../../../components/CommonComponents/TableComponent.vue'
 import SearchComponent from '../../../components/CommonComponents/SearchComponent.vue'
 import PaginationComponent from '../../../components/CommonComponents/PaginationComponent.vue'
-import { getDeviceList, getDeviceStatus, isIpv4, useGetRepeatedFno, useSetFingerData, useSetFingerNull, useSyncDownFinger } from '../../../hook/useHook'
+import { getDeviceList, getDeviceStatus, isIpv4, useGetRepeatedRequest, useSetFingerDataRequest, useSetFingerNull, useSyncDownFinger } from '../../../hook/useHook'
 import { TfsD400 } from '../../../common/SocketFinger/tfsd400/tfsd400'
 import { funEnum, typeEnum } from '../../../common/gRPC/enum'
 import { ipcRenderer } from 'electron'
@@ -214,7 +214,7 @@ const confirmEvent = async () => {
     url: `http://${selectDeviceObj.value.serviceId}:${selectDeviceObj.value.grpcPort}`,
     deviceId: selectDeviceObj.value.value
   }
-  let { fnoList } = await useGetRepeatedFno(json)
+  let { fnoList } = await useGetRepeatedRequest(json)
   if (fnoList.length > 0) {
     await messageBox(`数据库内重复的no-${fnoList[0]}指纹号，请删除后在重新尝试`, 'warning')
   } else {
@@ -222,7 +222,7 @@ const confirmEvent = async () => {
     if (messageRes) {
       loadingShow()
       //同步指纹槽位数据
-      let setFingerRes = await useSetFingerData(json)
+      let setFingerRes = await useSetFingerDataRequest(json)
       console.log(230, setFingerRes)
       if (setFingerRes.result === grpcResult.ACK_SUCCESS) {
         loading.value?.close()
@@ -755,9 +755,10 @@ const timeoutEvent = () => {
 const getDeviceStatusFun = async () => {
   //获取设备状态
   let { data } = await getDeviceStatus()
+  // console.log(758, data)
   //获取设备列表
   let deviceArr = await getDeviceList(1)
-  if (data.length > 0) {
+  if (data && data.length > 0) {
     // 遍历deviceStatusArr
     data.forEach(deviceStatus => {
       // 查找deviceArr中匹配的deviceId

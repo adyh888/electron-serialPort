@@ -39,6 +39,8 @@ import { useOrganizationPermission } from '../../../hook/useHook'
 import versionReadme from '../../../../versionReadme'
 import { ipcRenderer } from 'electron'
 import { funEnum, typeEnum } from '../../../common/gRPC/enum'
+import { GreeterClient } from '../../../grpc/protobuf-ts/protos/echo.client'
+import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 /**
  * data
  */
@@ -57,6 +59,7 @@ const versionTitle = ref('版本介绍')
  * methods
  */
 const loginClick = async () => {
+  // grpcDemo()
   if (username.value !== '' || password.value !== '') {
     loadingShow()
     let json = {
@@ -113,6 +116,19 @@ const demo = async () => {
   }
   let result = ipcRenderer.sendSync('grpc', json)
   console.log(106, result)
+}
+
+const grpcDemo = () => {
+  const client = new GreeterClient(
+    new GrpcWebFetchTransport({
+      baseUrl: 'http://adyh88.x3322.net:52100'
+    })
+  )
+  console.log(80)
+  client.sayHello({ name: 'message' }).then(value => {
+    const { response } = value
+    console.log(83, response.message)
+  })
 }
 
 /**

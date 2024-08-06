@@ -1,6 +1,6 @@
 {
   "name": "tool-verify-electron",
-  "version": "1.1.6-pre-21",
+  "version": "1.1.6-pre-22",
   "main": "dist-electron/main/index.js",
   "description": "electron  + vite + Vue3 + TypeScript + SerialPort + pinia + Socket",
   "author": "LWW",
@@ -21,12 +21,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "grpc-face": "npx protoc --ts_out ./src/grpc/protobuf-ts  --proto_path . protos/face.proto"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.10",
     "@grpc/proto-loader": "^0.7.13",
-    "@mew/request": "^5.2.673",
+    "@mew/request": "^5.2.703",
+    "@protobuf-ts/grpcweb-transport": "^2.9.4",
+    "@protobuf-ts/plugin": "^2.9.4",
     "await-to-js": "^3.0.0",
     "axios": "^1.6.8",
     "crc": "^4.3.2",

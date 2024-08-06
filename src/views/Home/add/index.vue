@@ -71,14 +71,14 @@ import { provide, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Request, useIndexStore, useUcStore } from '../../../store'
 import { Delete, Edit } from '@element-plus/icons-vue'
-import { base64ToBlob, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useFaceClear, useFaceRegister, useGrpcFun, useLocalFaceUpdateFun, userGradeJson } from '../../../hook/useHook'
+import { base64ToBlob, extractUrlAndPort, fileToBase64, getDeviceList, getSerialPortStatus, getUseOrganizationPermission, useFaceClear, useFaceRegister, useGrpcFun, useGRPCRequest, useLocalFaceUpdateFun, useRemoveFace, userGradeJson } from '../../../hook/useHook'
 import { emitter2 } from '../../../utils/EventsBus'
 import { ElLoadingShow, imageToBuffer, messageBoxHtml, messageBoxShow, messageShow } from '../../../utils'
 import { SerialPortFinger, showErrFinger } from '../../../common/SeialPortFinger/FingerClassSeialPort'
 import { deviceType, grpcResult } from '../../../enum'
 import axios from 'axios'
 import { faceAddRequest, faceDeleteRequest, faceVerifyRequest } from '../../../utils/request'
-import { funEnum, typeEnum } from '../../../common/gRPC/enum'
+import { funEnum, methodEnum, typeEnum } from '../../../common/gRPC/enum'
 /**
  * data
  */
@@ -459,9 +459,11 @@ const confirmSubmit = async () => {
           //代表有更换图片
           //更换人脸图片-先删除原图片
           if (routerParams.value.faceUuid !== '') {
-            let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
+            let faceClearRes = await useRemoveFace(routerParams.value.faceUuid)
+            // let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
             if (faceClearRes.result !== grpcResult.ACK_SUCCESS) {
-              messageShow('人员照片--删除失败')
+              messageShow(`人员照片--删除失败--${faceClearRes.error}`, 'error')
+              goBack()
               return
             }
           }
@@ -481,10 +483,12 @@ const confirmSubmit = async () => {
           //代表没有人脸照片，就删除人脸
           //删除原图片
           if (routerParams.value.faceUuid !== '') {
-            let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
-            console.log(475, faceClearRes)
+            // let faceClearRes = await useFaceClear(routerParams.value.faceUuid)
+            // console.log(475, faceClearRes)
+            let faceClearRes = await useRemoveFace(routerParams.value.faceUuid)
             if (faceClearRes && faceClearRes.result !== grpcResult.ACK_SUCCESS) {
-              messageShow('人员照片--删除失败')
+              messageShow(`人员照片--删除失败--${faceClearRes.error}`, 'error')
+              goBack()
               return
             }
           }
@@ -514,6 +518,13 @@ const confirmSubmit = async () => {
     messageBoxShow('提示', '必须项必填,请填写完整信息', 'error')
     return
   }
+  loading.value.close()
+  setTimeout(() => {
+    cancel()
+  }, 1000)
+}
+
+const goBack = () => {
   loading.value.close()
   setTimeout(() => {
     cancel()

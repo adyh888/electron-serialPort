@@ -2,13 +2,15 @@
 /**
  * imports
  */
-import { Request, useDcStore, useIndexStore, useUcStore } from '../store'
+import { Request, useDcStore, useIndexStore, useUcStore, useAcStore } from '../store'
 import { deviceType, grpcResult } from '../enum'
 import { asyncForEach, messageBoxShow, messageShow } from '../utils'
-import { funEnum, typeEnum } from '../common/gRPC/enum'
-import { BaseURL } from '../config'
+import { funEnum, methodEnum, typeEnum } from '../common/gRPC/enum'
+import { BaseURL, grpcFaceURL, grpcFingerURL } from '../config'
 import { ipcRenderer } from 'electron'
 import { gRPCJson } from '../interface'
+// import { FaceClient } from '../grpc/protobuf-ts/protos/face.client'
+// import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 /**
  * 组织架构权限处理
  */
@@ -238,14 +240,24 @@ export async function getDeviceList(type) {
  * 获取服务器设备列表的设备状态
  */
 export async function getDeviceStatus() {
+  // let grpcJson = {
+  //   type: typeEnum.finger,
+  //   fun: funEnum.getFingerStatus,
+  //   json: {
+  //     url: BaseURL()
+  //   }
+  // }
+  // return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
+  const { url, port } = extractUrlAndPort(grpcFingerURL())
   let grpcJson = {
-    type: typeEnum.finger,
-    fun: funEnum.getFingerStatus,
-    json: {
+    method: methodEnum.getFingerSensorStatus,
+    grpcIp: url,
+    grpcPort: port,
+    params: {
       url: BaseURL()
     }
   }
-  return useRequestErrorFun(ipcRenderer.sendSync('grpc', grpcJson))
+  return await useGRPCRequest(grpcJson)
 }
 
 /**
@@ -756,22 +768,50 @@ export const useFaceRegister = async (json: any) => {
   const regexId = /ID:([0-9]+)/
   const regexIp = /IP:([\d.]+)/
   const regex = /:([^:]*)$/
-  let grpcJson = {
-    type: typeEnum.face,
-    fun: funEnum.faceRegister,
-    json: {
-      name: json.name,
-      uid: json.uid,
-      imageData: await fileToBase64(json.file)
-    }
-  }
+  // const { url, port } = extractUrlAndPort(grpcFaceURL())
+  // let grpcJson = {
+  //   method: methodEnum.registerByImage,
+  //   grpcIp: url,
+  //   grpcPort: port,
+  //   params: {
+  //     name: json.name,
+  //     uid: json.uid,
+  //     imageData: await fileToBase64(json.file)
+  //   }
+  // }
+  // let gRPCRes = await useGRPCRequest(grpcJson)
+  // let grpcJson = {
+  //   type: typeEnum.face,
+  //   fun: funEnum.faceRegister,
+  //   json: {
+  //     name: json.name,
+  //     uid: json.uid,
+  //     imageData: await fileToBase64(json.file)
+  //   }
+  // }
+  // let gRPCRes = await useGrpcFun(grpcJson)
+  // const client = new FaceClient(
+  //   new GrpcWebFetchTransport({
+  //     baseUrl: 'http://172.16.10.62:8081'
+  //   })
+  // )
+  // let json2 = {
+  //   name: json.name,
+  //   uid: json.uid,
+  //   imageData: await fileToBase64(json.file)
+  // }
+  // console.log(785, json2)
+  // client.registerByImage(json2).then(value => {
+  //   const { response } = value
+  //   console.log(788, response)
+  // })
+  // console.log(469, gRPCRes)
+  let gRPCRes = await useRegisterFace(json)
   let resArrObj = {
     deviceListFail: [],
     deviceListSuccess: []
   }
-  let gRPCRes = await useGrpcFun(grpcJson)
-  // console.log(469, gRPCRes)
-  if (gRPCRes.result !== '') {
+  if (gRPCRes && gRPCRes.result !== '') {
     let res = JSON.parse(gRPCRes.result)
     console.log(464, res)
     if (res.length > 0) {
@@ -797,4 +837,97 @@ export const useFaceRegister = async (json: any) => {
     }
   }
   return resArrObj
+}
+
+/**
+ * gRPC-request请求封装
+ */
+export const useGRPCRequest = async (json: any) => {
+  let res = await Request(useAcStore().grpcRequest, json)
+  console.log(847, res)
+  if (res) return res.data
+}
+
+/**
+ * 正则方式 -取出url和端口号
+ *  'http://172.16.10.249:50052';
+ */
+export function extractUrlAndPort(input) {
+  // 使用正则表达式匹配IP地址和端口号
+  const match = input.match(/^(?:http:\/\/)?([^:]+):(\d+)$/)
+
+  if (match) {
+    // 如果匹配成功，match[1] 是IP地址，match[2] 是端口号
+    const url = match[1]
+    const port = parseInt(match[2], 10) // 将端口号转换为整数
+
+    return { url, port }
+  } else {
+    // 如果没有匹配成功，返回null或者一个包含错误信息的对象
+    return null // 或者 { error: 'Invalid input format' };
+  }
+}
+
+/**
+ * 人脸删除的方法-grpc-request方法
+ */
+export async function useRemoveFace(uuid) {
+  const { url, port } = extractUrlAndPort(grpcFaceURL())
+  let grpcJson = {
+    method: methodEnum.unRegisterFace,
+    grpcIp: url,
+    grpcPort: port,
+    params: {
+      uuid
+    }
+  }
+  return await useGRPCRequest(grpcJson)
+}
+
+/**
+ * 注册人脸的方法-grpc-request方法
+ */
+export async function useRegisterFace(json: any) {
+  const { url, port } = extractUrlAndPort(grpcFaceURL())
+  let grpcJson = {
+    method: methodEnum.registerByImage,
+    grpcIp: url,
+    grpcPort: port,
+    params: {
+      name: json.name,
+      uid: json.uid,
+      imageData: await fileToBase64(json.file)
+    }
+  }
+  return await useGRPCRequest(grpcJson)
+}
+
+/**
+ * 指纹方法-grpc-request方法
+ * 获取查看对应环境的指纹槽位是否有重复的
+ */
+export async function useGetRepeatedRequest(json) {
+  const { url, port } = extractUrlAndPort(grpcFingerURL())
+  let grpcJson = {
+    method: methodEnum.getRepeatedFno,
+    grpcIp: url,
+    grpcPort: port,
+    params: json
+  }
+  return await useGRPCRequest(grpcJson)
+}
+
+/**
+ * 指纹方法-grpc-request方法
+ * 用指纹表数据覆盖指纹传感器数据
+ */
+export async function useSetFingerDataRequest(json) {
+  const { url, port } = extractUrlAndPort(grpcFingerURL())
+  let grpcJson = {
+    method: methodEnum.download2overwrite,
+    grpcIp: url,
+    grpcPort: port,
+    params: json
+  }
+  return await useGRPCRequest(grpcJson)
 }

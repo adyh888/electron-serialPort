@@ -18,6 +18,9 @@ const useAcStore = defineStore('ac', {
   actions: {
     async alarmSelect(json: AlarmSelectProperty) {
       return await ac.alarm.select(json)
+    },
+    async grpcRequest(json: any) {
+      return await ac.grpcRequest(json)
     }
   }
   //本地持久化
