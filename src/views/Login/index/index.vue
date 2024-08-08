@@ -35,12 +35,14 @@ import { ElLoadingShow, messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
 import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
-import { useOrganizationPermission } from '../../../hook/useHook'
+import { useGetGrpcVersionRequest, useOrganizationPermission } from '../../../hook/useHook'
 import versionReadme from '../../../../versionReadme'
 import { ipcRenderer } from 'electron'
 import { funEnum, typeEnum } from '../../../common/gRPC/enum'
 import { GreeterClient } from '../../../grpc/protobuf-ts/protos/echo.client'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
+import { grpcResult, versionEnum } from '../../../enum'
+import { compareVersions } from '../../../hook'
 /**
  * data
  */
@@ -55,39 +57,48 @@ const configCount = ref(0)
 const version = ref('')
 const content = ref('')
 const versionTitle = ref('版本介绍')
+const grpcRes = ref(false)
 /**
  * methods
  */
 const loginClick = async () => {
-  // grpcDemo()
-  if (username.value !== '' || password.value !== '') {
-    loadingShow()
-    let json = {
-      username: username.value,
-      password: password.value
-    }
-    //1。先拿token
-    let tokenRes = await Request(useMcStore().getToken, json)
-    if (tokenRes) {
-      let authUserToken = tokenRes.data.access_token
-      storage.set('accessToken', authUserToken)
-      //2。在登录
-      let managerRes = await Request(useMcStore().managerSelect, json)
-      if (managerRes && managerRes.total > 0) {
-        user.userInfo = managerRes.data[0]
-        storage.set('user', json)
-        //获取组织架构
-        await useOrganizationPermission()
-        loading.value.close()
-        // 登录
-        await router.push('/home')
+  let versionRes = await grpcFingerVersion()
+  //代表grpc请求通了
+  if (grpcRes.value) {
+    if (versionRes) {
+      // grpcDemo()
+      if (username.value !== '' || password.value !== '') {
+        loadingShow()
+        let json = {
+          username: username.value,
+          password: password.value
+        }
+        //1。先拿token
+        let tokenRes = await Request(useMcStore().getToken, json)
+        if (tokenRes) {
+          let authUserToken = tokenRes.data.access_token
+          storage.set('accessToken', authUserToken)
+          //2。在登录
+          let managerRes = await Request(useMcStore().managerSelect, json)
+          if (managerRes && managerRes.total > 0) {
+            user.userInfo = managerRes.data[0]
+            storage.set('user', json)
+            //获取组织架构
+            await useOrganizationPermission()
+            loading.value.close()
+            // 登录
+            await router.push('/home')
+          }
+        } else {
+          loading.value.close()
+          return
+        }
+      } else {
+        messageShow('请输入账号和密码', 'error')
       }
     } else {
-      loading.value.close()
-      return
+      messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
     }
-  } else {
-    messageShow('请输入账号和密码', 'error')
   }
 }
 
@@ -105,19 +116,6 @@ const configClick = () => {
   }
 }
 
-const demo = async () => {
-  let json = {
-    type: typeEnum.finger,
-    fun: funEnum.getRepeatedFno,
-    json: {
-      url: 'http://172.16.10.249:50300',
-      deviceId: '042311009'
-    }
-  }
-  let result = ipcRenderer.sendSync('grpc', json)
-  console.log(106, result)
-}
-
 const grpcDemo = () => {
   const client = new GreeterClient(
     new GrpcWebFetchTransport({
@@ -129,6 +127,19 @@ const grpcDemo = () => {
     const { response } = value
     console.log(83, response.message)
   })
+}
+
+const grpcFingerVersion = async () => {
+  let res = await useGetGrpcVersionRequest()
+  if (res && res.result === grpcResult.ACK_SUCCESS) {
+    let version = res.version
+    if (version) {
+      grpcRes.value = true
+      return compareVersions(version, versionEnum.fingerVersion)
+    }
+  } else {
+    messageShow('grpc请求失败-请查看grpc请求', 'error')
+  }
 }
 
 /**

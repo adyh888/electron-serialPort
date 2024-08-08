@@ -23,3 +23,10 @@ export enum grpcInitAddress {
 
   grpcFaceUrl = '172.16.10.249:50052'
 }
+
+/**
+ * 版本号
+ */
+export enum versionEnum {
+  fingerVersion = '1.0.1'
+}

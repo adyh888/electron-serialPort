@@ -22,8 +22,11 @@
         <el-select v-model="selectValue" :placeholder="selectLoading ? '数据加载中请稍等..' : '请选择设备'" style="width: 500px" :loading="selectLoading" @change="selectChangeDialog">
           <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
             <span style="float: left">{{ item.label }}</span>
-            <el-icon style="margin-left: 5px; color: green; font-size: 10px" v-if="item.status"><SuccessFilled /></el-icon>
-            <el-icon style="margin-left: 5px; color: red; font-size: 10px" v-else><WarningFilled /></el-icon>
+            <el-tooltip placement="top">
+              <template #content> 设备状态--{{ item.status ? '已连接' : '未连接' }} </template>
+              <el-icon style="margin-left: 5px; color: green; font-size: 18px; margin-top: 7px" v-if="item.status"><SuccessFilled /></el-icon>
+              <el-icon style="margin-left: 5px; color: red; font-size: 18px; margin-top: 7px" v-else><WarningFilled /></el-icon>
+            </el-tooltip>
             <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">{{ item.value }}</span>
           </el-option>
         </el-select>

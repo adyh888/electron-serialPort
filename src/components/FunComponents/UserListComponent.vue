@@ -289,9 +289,9 @@ const userSelect = async () => {
         status: item.status
       }
     })
-  } else {
-    tableLoading.value = false
   }
+  pagination.total = userRes.total
+  tableLoading.value = false
 }
 
 //列表的编辑按钮

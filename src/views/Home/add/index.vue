@@ -38,7 +38,9 @@
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" clearable v-if="item.type === 'input'" />
               <el-input v-model="item.value" :disabled="item.disabled" style="width: 350px; margin-left: 5px" :placeholder="item.placeholder" type="password" :show-password="showPassword" clearable v-if="item.type === 'password'" />
               <div>
-                <span v-if="item.faceStatus === '已录入'" style="color: red">人脸已经录入，重新上传将覆盖人脸</span>
+                <div v-if="item.faceStatus === '已录入'" style="color: red; text-align: left">人脸已经录入，重新上传将覆盖人脸</div>
+                <div v-if="item.faceStatus" style="color: #3595fb; text-align: left">图片只能上传png,jpg,jpeg格式</div>
+                <div v-if="item.faceStatus" style="color: #3595fb; text-align: left">图片最大上传大小1MB内</div>
                 <div style="margin-top: 5px">
                   <CropperUploadComponent v-if="item.type === 'image'" v-model="urlList" :multiple="false" :size="1024 * 1024" />
                 </div>
