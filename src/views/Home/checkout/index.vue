@@ -197,6 +197,7 @@ const confirm = type => {
 //选中事件
 const selectChangeDialog = () => {
   selectDeviceObj.value = cities.value.find(item => item.value === selectValue.value)
+  // console.log(200, selectDeviceObj.value)
   if (!selectDeviceObj.value.status) {
     confirmDisabled.value = true
     messageBoxShow('提示', `设备${selectDeviceObj.value.label}--未连接`, 'warning')
@@ -213,28 +214,36 @@ const selectChangeDialog = () => {
 
 //确定事件
 const confirmEvent = async () => {
-  let json = {
-    url: `http://${selectDeviceObj.value.serviceId}:${selectDeviceObj.value.grpcPort}`,
-    deviceId: selectDeviceObj.value.value
-  }
-  let { fnoList } = await useGetRepeatedRequest(json)
-  if (fnoList.length > 0) {
-    await messageBox(`数据库内重复的no-${fnoList[0]}指纹号，请删除后在重新尝试`, 'warning')
-  } else {
-    let messageRes = await messageBox('确认是否同步指纹表数据到指纹传感器', 'warning')
-    if (messageRes) {
-      loadingShow()
-      //同步指纹槽位数据
-      let setFingerRes = await useSetFingerDataRequest(json)
-      console.log(230, setFingerRes)
-      if (setFingerRes.result === grpcResult.ACK_SUCCESS) {
-        loading.value?.close()
-        messageShow('设备同步成功即将返回主界面')
-        setTimeout(() => {
-          router.back()
-        }, 1500)
-      }
+  if (selectDeviceObj.value.serviceId && selectDeviceObj.value.grpcPort) {
+    let json = {
+      url: `http://${selectDeviceObj.value.serviceId}:${selectDeviceObj.value.grpcPort}`,
+      deviceId: selectDeviceObj.value.value
     }
+    let repeatedRes = await useGetRepeatedRequest(json)
+    if (repeatedRes && repeatedRes.result === grpcResult.ACK_SUCCESS) {
+      if (repeatedRes.fnoList.length > 0) {
+        await messageBox(`数据库内重复的no-${repeatedRes.fnoList[0]}指纹号，请删除后在重新尝试`, 'warning')
+      } else {
+        let messageRes = await messageBox('确认是否同步指纹表数据到指纹传感器', 'warning')
+        if (messageRes) {
+          loadingShow()
+          //同步指纹槽位数据
+          let setFingerRes = await useSetFingerDataRequest(json)
+          console.log(230, setFingerRes)
+          if (setFingerRes.result === grpcResult.ACK_SUCCESS) {
+            loading.value?.close()
+            messageShow('设备同步成功即将返回主界面')
+            setTimeout(() => {
+              router.back()
+            }, 1500)
+          }
+        }
+      }
+    } else {
+      messageBoxShow('提示', `指纹的grpc设备请求出现了问题--${repeatedRes.error}`, 'warning')
+    }
+  } else {
+    messageBoxShow('提示', `设备的serviceId:${selectDeviceObj.value.serviceId}--设备的grpcPort:${selectDeviceObj.value.grpcPort}不能为空`, 'warning')
   }
 }
 //选中事件
