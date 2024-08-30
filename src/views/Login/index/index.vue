@@ -62,43 +62,41 @@ const grpcRes = ref(false)
  * methods
  */
 const loginClick = async () => {
-  let versionRes = await grpcFingerVersion()
-  //代表grpc请求通了
-  if (grpcRes.value) {
-    if (versionRes) {
-      // grpcDemo()
-      if (username.value !== '' || password.value !== '') {
-        loadingShow()
-        let json = {
-          username: username.value,
-          password: password.value
-        }
-        //1。先拿token
-        let tokenRes = await Request(useMcStore().getToken, json)
-        if (tokenRes) {
-          let authUserToken = tokenRes.data.access_token
-          storage.set('accessToken', authUserToken)
-          //2。在登录
-          let managerRes = await Request(useMcStore().managerSelect, json)
-          if (managerRes && managerRes.total > 0) {
-            user.userInfo = managerRes.data[0]
-            storage.set('user', json)
-            //获取组织架构
-            await useOrganizationPermission()
-            loading.value.close()
-            // 登录
-            await router.push('/home')
-          }
-        } else {
+  // grpcDemo()
+  if (username.value !== '' || password.value !== '') {
+    loadingShow()
+    let json = {
+      username: username.value,
+      password: password.value
+    }
+    //1。先拿token
+    let tokenRes = await Request(useMcStore().getToken, json)
+    if (tokenRes) {
+      let authUserToken = tokenRes.data.access_token
+      storage.set('accessToken', authUserToken)
+      //2。获取grpc版本
+      let versionRes = await grpcFingerVersion()
+      if (versionRes) {
+        //3。在登录
+        let managerRes = await Request(useMcStore().managerSelect, json)
+        if (managerRes && managerRes.total > 0) {
+          user.userInfo = managerRes.data[0]
+          storage.set('user', json)
+          //获取组织架构
+          await useOrganizationPermission()
           loading.value.close()
-          return
+          // 登录
+          await router.push('/home')
         }
       } else {
-        messageShow('请输入账号和密码', 'error')
+        messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
       }
     } else {
-      messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
+      loading.value.close()
+      return
     }
+  } else {
+    messageShow('请输入账号和密码', 'error')
   }
 }
 
