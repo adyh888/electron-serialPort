@@ -28,5 +28,8 @@ export enum grpcInitAddress {
  * 版本号
  */
 export enum versionEnum {
-  fingerVersion = '1.0.1'
+  fingerVersion = '1.0.1',
+
+  //APK版本
+  APKVersion = '1.4.0'
 }

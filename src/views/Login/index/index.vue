@@ -35,10 +35,10 @@ import { ElLoadingShow, messageShow } from '../../../utils'
 import { useRouter } from 'vue-router'
 import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
-import { useGetGrpcVersionRequest, useOrganizationPermission } from '../../../hook/useHook'
+import { useGetGrpcVersionRequest, useOrganizationPermission, useTypeGRPCRequest } from '../../../hook/useHook'
 import versionReadme from '../../../../versionReadme'
 import { ipcRenderer } from 'electron'
-import { funEnum, typeEnum } from '../../../common/gRPC/enum'
+import { funEnum, methodEnum, typeEnum } from '../../../common/gRPC/enum'
 import { GreeterClient } from '../../../grpc/protobuf-ts/protos/echo.client'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { grpcResult, versionEnum } from '../../../enum'
@@ -74,7 +74,9 @@ const loginClick = async () => {
     if (tokenRes) {
       let authUserToken = tokenRes.data.access_token
       storage.set('accessToken', authUserToken)
-      //2。获取grpc版本
+      //2.获取apk版本
+      await apkVersionCheck()
+      //3.获取grpc版本
       let versionRes = await grpcFingerVersion()
       if (versionRes) {
         //3。在登录
@@ -88,8 +90,12 @@ const loginClick = async () => {
           // 登录
           await router.push('/home')
         }
-      } else {
+      } else if (versionRes === false) {
         messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
+        loading.value.close()
+      } else {
+        loading.value.close()
+        return
       }
     } else {
       loading.value.close()
@@ -120,7 +126,6 @@ const grpcDemo = () => {
       baseUrl: 'http://adyh88.x3322.net:52100'
     })
   )
-  console.log(80)
   client.sayHello({ name: 'message' }).then(value => {
     const { response } = value
     console.log(83, response.message)
@@ -136,8 +141,17 @@ const grpcFingerVersion = async () => {
       return compareVersions(version, versionEnum.fingerVersion)
     }
   } else {
-    messageShow('grpc请求失败-请查看grpc请求', 'error')
+    messageShow('grpc请求失败-请查看grpc请求日志', 'error')
+    return null
   }
+}
+
+//APK版本验证
+const apkVersionCheck = async () => {
+  let res = await useTypeGRPCRequest(methodEnum.getDeviceInfo, {})
+  console.log(149, res)
+  // let res = compareVersions('1.4.2', versionEnum.APKVersion)
+  // console.log(147, res)
 }
 
 /**

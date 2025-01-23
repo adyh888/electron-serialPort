@@ -6,6 +6,7 @@ import { useLcStore } from '../store'
 import { messageShow } from './index'
 import axios from 'axios'
 import { fileToBase64 } from '../hook/useHook'
+import { larkSendMessage } from './LarkWebHook'
 
 /**
  * 请求的封装
@@ -15,15 +16,35 @@ import { fileToBase64 } from '../hook/useHook'
  */
 export async function Request(actionFun: Function, json: Object) {
   const [err, res] = await to(actionFun(json))
-  if (err) await ErrorLogInsert(err.message)
+  if (err) {
+    let objectJson = {
+      请求状态: '失败',
+      请求项目: '人脸指纹验证工具',
+      请求方法: actionFun,
+      请求参数: json,
+      错误信息: err.message
+    }
+    await ErrorLogInsert(err.message)
+    //飞书消息通知
+    await larkSendMessage(JSON.stringify(objectJson))
+  }
   if (res) return res
 }
 
 export async function grpcRequest(grpcFun: any, json: any) {
   const [err, res] = await to(grpcFun(json))
   if (err) {
-    messageShow(`gRPC请求错误-${err.message}`, 'error')
+    // messageShow(`gRPC请求错误-${err.message}`, 'error')
+    let objectJson = {
+      请求状态: '失败',
+      请求项目: '人脸指纹验证工具',
+      请求方法: grpcFun,
+      请求参数: json,
+      错误信息: err.message
+    }
     await ErrorLogInsert(err.message)
+    //飞书消息通知
+    await larkSendMessage(JSON.stringify(objectJson))
   }
   if (res) return res
 }

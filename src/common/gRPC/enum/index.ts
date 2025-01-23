@@ -38,7 +38,7 @@ export enum methodEnum {
    */
   registerByImage = 'registerByImage',
   unRegisterFace = 'unRegisterFace',
-
+  getDeviceInfo = 'getDeviceInfo',
   /**
    * 指纹方法
    */

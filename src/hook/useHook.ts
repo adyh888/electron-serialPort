@@ -845,7 +845,6 @@ export const useFaceRegister = async (json: any) => {
  */
 export const useGRPCRequest = async (json: any) => {
   let res = await grpcRequest(useAcStore().grpcRequest, json)
-  console.log(848, res)
   if (res) return res.data
 }
 
@@ -944,6 +943,33 @@ export async function useGetGrpcVersionRequest() {
     grpcIp: url,
     grpcPort: port,
     params: {}
+  }
+  return await useGRPCRequest(grpcJson)
+}
+
+/**
+ * 通用的grpc-request方法
+ * @param method grpc方法
+ * @param json
+ * @param urlType  0:人脸  1：指纹
+ *
+ */
+export async function useTypeGRPCRequest(method: string, json: any, urlType: number = 0) {
+  let grpcUrl
+  switch (urlType) {
+    case 0:
+      grpcUrl = extractUrlAndPort(grpcFaceURL())
+      break
+    case 1:
+      grpcUrl = extractUrlAndPort(grpcFingerURL())
+      break
+  }
+  const { url, port } = grpcUrl
+  let grpcJson = {
+    method: method,
+    grpcIp: url,
+    grpcPort: port,
+    params: json
   }
   return await useGRPCRequest(grpcJson)
 }
