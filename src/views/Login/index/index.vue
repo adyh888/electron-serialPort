@@ -37,10 +37,7 @@ import { useMcStore, Request, useIndexStore } from '../../../store'
 import { StorageCache } from '../../../common/StorageClass'
 import { useGetGrpcVersionRequest, useOrganizationPermission, useTypeGRPCRequest } from '../../../hook/useHook'
 import versionReadme from '../../../../versionReadme'
-import { ipcRenderer } from 'electron'
 import { funEnum, methodEnum, typeEnum } from '../../../common/gRPC/enum'
-import { GreeterClient } from '../../../grpc/protobuf-ts/protos/echo.client'
-import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { grpcResult, versionEnum } from '../../../enum'
 import { compareVersions } from '../../../hook'
 /**
@@ -118,18 +115,6 @@ const configClick = () => {
     router.push('/config')
     configCount.value = 0
   }
-}
-
-const grpcDemo = () => {
-  const client = new GreeterClient(
-    new GrpcWebFetchTransport({
-      baseUrl: 'http://adyh88.x3322.net:52100'
-    })
-  )
-  client.sayHello({ name: 'message' }).then(value => {
-    const { response } = value
-    console.log(83, response.message)
-  })
 }
 
 const grpcFingerVersion = async () => {
