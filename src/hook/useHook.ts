@@ -6,7 +6,7 @@ import { Request, useDcStore, useIndexStore, useUcStore, useAcStore } from '../s
 import { deviceType, grpcResult } from '../enum'
 import { asyncForEach, messageBoxShow, messageShow } from '../utils'
 import { funEnum, methodEnum, typeEnum } from '../common/gRPC/enum'
-import { BaseURL, grpcFaceURL, grpcFingerURL } from '../config'
+import { BaseURL, grpcFaceSwitch, grpcFaceURL, grpcFingerSwitch, grpcFingerURL } from '../config'
 import { ipcRenderer } from 'electron'
 import { gRPCJson } from '../interface'
 import { grpcRequest } from '../utils/request'
@@ -934,17 +934,26 @@ export async function useSetFingerDataRequest(json) {
 
 /**
  * 指纹方法-grpc-request方法
- * 获取指纹gRPC版本号
+ * 获取gRPC版本号 --指纹或者人脸接口
  */
 export async function useGetGrpcVersionRequest() {
-  const { url, port } = extractUrlAndPort(grpcFingerURL())
-  let grpcJson = {
-    method: methodEnum.getGrpcVersion,
-    grpcIp: url,
-    grpcPort: port,
-    params: {}
+  let res: any
+  if (grpcFingerSwitch()) {
+    res = extractUrlAndPort(grpcFingerURL())
+  } else if (grpcFaceSwitch()) {
+    res = extractUrlAndPort(grpcFaceURL())
   }
-  return await useGRPCRequest(grpcJson)
+  if (res) {
+    let grpcJson = {
+      method: methodEnum.getGrpcVersion,
+      grpcIp: res.url,
+      grpcPort: res.port,
+      params: {}
+    }
+    return await useGRPCRequest(grpcJson)
+  } else {
+    return null
+  }
 }
 
 /**

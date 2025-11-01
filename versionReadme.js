@@ -1,5 +1,5 @@
 const versionReadme = {
-  version: '1.1.6-pre-29',
-  description: '* 1.修改grpc登录的报错提示\n' + '* 2.增加飞书的报错通知'
+  version: '1.1.7',
+  description: '* 1.增加指纹或者人脸的单个开启功能'
 }
 export default versionReadme

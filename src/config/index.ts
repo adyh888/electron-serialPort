@@ -27,3 +27,21 @@ export const grpcFaceURL = () => {
     return grpcInitAddress.grpcFaceUrl
   }
 }
+
+//grpcFingerSwitch
+export const grpcFingerSwitch = () => {
+  if (storageRes && storageRes.grpcFingerSwitch !== undefined) {
+    return storageRes.grpcFingerSwitch
+  } else {
+    return true
+  }
+}
+
+//grpcFaceSwitch
+export const grpcFaceSwitch = () => {
+  if (storageRes && storageRes.grpcFaceSwitch !== undefined) {
+    return storageRes.grpcFaceSwitch
+  } else {
+    return true
+  }
+}
