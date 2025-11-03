@@ -40,6 +40,7 @@ import versionReadme from '../../../../versionReadme'
 import { funEnum, methodEnum, typeEnum } from '../../../common/gRPC/enum'
 import { grpcResult, versionEnum } from '../../../enum'
 import { compareVersions } from '../../../hook'
+import { grpcFaceSwitch, grpcFingerSwitch } from '../../../config'
 /**
  * data
  */
@@ -72,7 +73,7 @@ const loginClick = async () => {
       let authUserToken = tokenRes.data.access_token
       storage.set('accessToken', authUserToken)
       //2.获取apk版本
-      await apkVersionCheck()
+      // await apkVersionCheck()
       //3.获取grpc版本
       let versionRes = await grpcFingerVersion()
       if (versionRes) {
@@ -88,7 +89,11 @@ const loginClick = async () => {
           await router.push('/home')
         }
       } else if (versionRes === false) {
-        messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
+        if (grpcFingerSwitch()) {
+          messageShow(`grpc环境版本请不低于此版本(${versionEnum.fingerVersion})`, 'error')
+        } else if (grpcFaceSwitch()) {
+          messageShow(`grpc环境版本请不低于此版本(${versionEnum.faceVersion})`, 'error')
+        }
         loading.value.close()
       } else {
         loading.value.close()
@@ -123,7 +128,11 @@ const grpcFingerVersion = async () => {
     let version = res.version
     if (version) {
       grpcRes.value = true
-      return compareVersions(version, versionEnum.fingerVersion)
+      if (grpcFingerSwitch()) {
+        return compareVersions(version, versionEnum.fingerVersion)
+      } else if (grpcFaceSwitch()) {
+        return compareVersions(version, versionEnum.faceVersion)
+      }
     }
   } else {
     messageShow('grpc请求失败-请查看grpc请求日志', 'error')

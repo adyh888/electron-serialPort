@@ -940,19 +940,30 @@ export async function useGetGrpcVersionRequest() {
   let res: any
   if (grpcFingerSwitch()) {
     res = extractUrlAndPort(grpcFingerURL())
+    if (res) {
+      let grpcJson = {
+        method: methodEnum.getGrpcVersion,
+        grpcIp: res.url,
+        grpcPort: res.port,
+        params: {}
+      }
+      return await useGRPCRequest(grpcJson)
+    } else {
+      return null
+    }
   } else if (grpcFaceSwitch()) {
     res = extractUrlAndPort(grpcFaceURL())
-  }
-  if (res) {
-    let grpcJson = {
-      method: methodEnum.getGrpcVersion,
-      grpcIp: res.url,
-      grpcPort: res.port,
-      params: {}
+    if (res) {
+      let grpcJson = {
+        method: methodEnum.getFaceGrpcVersion,
+        grpcIp: res.url,
+        grpcPort: res.port,
+        params: {}
+      }
+      return await useGRPCRequest(grpcJson)
+    } else {
+      return null
     }
-    return await useGRPCRequest(grpcJson)
-  } else {
-    return null
   }
 }
 

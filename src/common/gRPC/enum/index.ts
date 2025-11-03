@@ -45,5 +45,6 @@ export enum methodEnum {
   getFingerSensorStatus = 'getFingerSensorStatus',
   getRepeatedFno = 'getRepeatedFno',
   download2overwrite = 'download2overwrite',
-  getGrpcVersion = 'getGrpcVersion'
+  getGrpcVersion = 'getGrpcVersion',
+  getFaceGrpcVersion = 'getFaceGrpcVersion'
 }
