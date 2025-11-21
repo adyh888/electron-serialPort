@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
+import path from 'path'
 const NODE_ENV = process.env.NODE_ENV // 新增
 // @ts-ignore
 // import { main } from '../../src/common/gRPC/gRpcClient'
@@ -45,7 +46,7 @@ async function createWindow() {
     title: 'Main window',
     width: 1366,
     height: 768,
-    icon: join(process.env.PUBLIC, 'favicon.ico'),
+    icon: path.join(__dirname, '../icon/icon.ico'),
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
