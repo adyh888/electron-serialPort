@@ -46,7 +46,7 @@ async function createWindow() {
     title: 'Main window',
     width: 1366,
     height: 768,
-    icon: path.join(__dirname, '../icon/icon.ico'),
+    icon: path.join(__dirname, 'icon.ico'), // 设置ico
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production

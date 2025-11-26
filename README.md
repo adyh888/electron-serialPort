@@ -185,3 +185,4 @@
 * 1.增加指纹或者人脸的单个开启功能
 * 2:getGrpcVersion对应指纹版本获取
 * 3:getFaceGrpcVersion对应人脸版本获取
+* 4:增加应用图标和配置项
